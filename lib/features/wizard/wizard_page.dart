@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/models/mission_type.dart';
 import 'property_composition/models/room_item.dart';
+import 'report/models/report_settings.dart';
 import 'report/models/visit_report_snapshot.dart';
 import 'step_exit_calculations.dart';
 import 'step_exit_closure.dart';
@@ -74,6 +75,9 @@ class _WizardPageState extends State<WizardPage> {
   }
 
   bool get _isExit => widget.missionType == MissionType.exit;
+  InspectionReportType get _reportType => _isExit
+      ? InspectionReportType.exit
+      : InspectionReportType.entry;
   int get _visitStepIndex => _isExit ? 2 : 4;
   int get _compositionStepIndex => _isExit ? 1 : 3;
   int get _signatureStepIndex => _isExit ? 5 : 5;
@@ -155,7 +159,10 @@ class _WizardPageState extends State<WizardPage> {
           onPostpone: _openReportFromSignatures,
         );
       case 6:
-        return StepReport(snapshot: _reportSnapshot);
+        return StepReport(
+          snapshot: _reportSnapshot,
+          initialReportType: _reportType,
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -182,7 +189,10 @@ class _WizardPageState extends State<WizardPage> {
       case 5:
         return StepExitClosure();
       case 6:
-        return StepReport(snapshot: _reportSnapshot);
+        return StepReport(
+          snapshot: _reportSnapshot,
+          initialReportType: _reportType,
+        );
       default:
         return const SizedBox.shrink();
     }
