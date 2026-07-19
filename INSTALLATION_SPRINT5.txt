@@ -1,0 +1,16 @@
+SPRINT 5 - PHOTOS
+
+1. Remplacer le dossier lib par celui du ZIP.
+2. Dans le terminal VS Code, à la racine du projet :
+
+flutter pub add image_picker
+flutter analyze
+flutter run -d windows
+
+3. Sur Windows, utilisez « Choisir des photos ».
+4. La prise de photo directe est destinée à Android/iOS.
+5. Si tout fonctionne :
+
+git add .
+git commit -m "Sprint 5 - photos et préremplissage"
+git push

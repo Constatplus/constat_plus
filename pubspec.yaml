@@ -1,0 +1,38 @@
+name: flutter_app
+description: "Project GEO - Constat+"
+publish_to: "none"
+
+version: 1.0.1+2
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.3.3
+  image_picker: ^1.2.3
+  http: ^1.6.0
+  supabase_flutter: ^2.16.0
+
+  # Export Word et boîte de dialogue d'enregistrement.
+  docx_dart: ^1.2.0
+  file_selector: ^1.1.0
+
+  # Post-traitement OOXML des styles Word.
+  archive: ^4.0.7
+  xml: ^6.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
