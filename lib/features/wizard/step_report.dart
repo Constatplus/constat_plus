@@ -8,10 +8,12 @@ import 'report/services/word_report_service.dart';
 
 class StepReport extends StatefulWidget {
   final VisitReportSnapshot snapshot;
+  final InspectionReportType initialReportType;
 
   const StepReport({
     super.key,
     required this.snapshot,
+    this.initialReportType = InspectionReportType.entry,
   });
 
   @override
@@ -20,10 +22,11 @@ class StepReport extends StatefulWidget {
 
 class _StepReportState extends State<StepReport> {
   final WordReportService _wordService = WordReportService();
-  final ReportPreferencesService _preferencesService = ReportPreferencesService();
+  final ReportPreferencesService _preferencesService =
+      ReportPreferencesService();
   ReportPreferences? _savedPreferences;
 
-  InspectionReportType _reportType = InspectionReportType.entry;
+  late InspectionReportType _reportType;
   late final TextEditingController _titleController;
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
@@ -53,6 +56,7 @@ class _StepReportState extends State<StepReport> {
   @override
   void initState() {
     super.initState();
+    _reportType = widget.initialReportType;
     _titleController = TextEditingController(text: _reportType.label);
     _loadSavedPreferences();
   }
@@ -101,7 +105,6 @@ class _StepReportState extends State<StepReport> {
         .where((line) => line.isNotEmpty)
         .toList();
   }
-
 
   List<String> _notesForType(
     ReportPreferences preferences,
