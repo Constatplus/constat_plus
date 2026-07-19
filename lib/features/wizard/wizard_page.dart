@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/models/mission_type.dart';
 import 'property_composition/models/room_item.dart';
 import 'report/models/visit_report_snapshot.dart';
+import 'step_exit_compensation.dart';
+import 'step_exit_observations.dart';
 import 'step_general_info.dart';
 import 'step_keys_meters.dart';
 import 'step_property_composition.dart';
@@ -34,18 +36,53 @@ class _WizardPageState extends State<WizardPage> {
   VisitReportSnapshot _reportSnapshot =
       const VisitReportSnapshot(rooms: <VisitRoomReport>[]);
 
-  static const List<String> _steps = <String>[
-    'Type de bien',
-    'Informations générales',
-    'Clés • Compteurs • Documents',
-    'Composition du bien',
-    'Visite',
-    'Signatures',
-    'Rapport',
-  ];
+  List<String> get _steps {
+    switch (widget.missionType) {
+      case MissionType.entry:
+        return const <String>[
+          'Type de bien',
+          'Informations générales',
+          'Clés • Compteurs • Documents',
+          'Composition du bien',
+          "Visite d'entrée",
+          'Signatures',
+          "Rapport d'entrée",
+        ];
+      case MissionType.exit:
+        return const <String>[
+          'Type de bien',
+          'Informations générales',
+          'Clés • Compteurs • Documents',
+          'Composition du bien',
+          'Visite comparative de sortie',
+          'Observations de sortie',
+          'Calcul des indemnités',
+          'Signatures',
+          'Rapport de sortie',
+        ];
+      case MissionType.beforeWorks:
+        return const <String>[
+          'Type de bien',
+          'Informations générales',
+          'Clés • Compteurs • Documents',
+          'Composition du bien',
+          'Visite avant travaux',
+          'Signatures',
+          'Rapport avant travaux',
+        ];
+    }
+  }
 
-  bool get _isSignatureStep => currentStep == 5;
-  bool get _isLastStep => currentStep == _steps.length - 1;
+  int get _visitStepIndex => 4;
+
+  int get _signatureStepIndex {
+    return widget.missionType == MissionType.exit ? 7 : 5;
+  }
+
+  int get _reportStepIndex => _steps.length - 1;
+
+  bool get _isSignatureStep => currentStep == _signatureStepIndex;
+  bool get _isLastStep => currentStep == _reportStepIndex;
 
   void _nextStep() {
     if (currentStep == 3 && selectedRooms.isEmpty) {
@@ -57,7 +94,7 @@ class _WizardPageState extends State<WizardPage> {
       return;
     }
 
-    if (currentStep == 4) {
+    if (currentStep == _visitStepIndex) {
       _reportSnapshot = _visitController.read();
     }
 
@@ -72,7 +109,7 @@ class _WizardPageState extends State<WizardPage> {
     if (!mounted) return;
 
     setState(() {
-      currentStep = 6;
+      currentStep = _reportStepIndex;
     });
   }
 
@@ -88,6 +125,14 @@ class _WizardPageState extends State<WizardPage> {
   }
 
   Widget _buildStepContent() {
+    if (widget.missionType == MissionType.exit) {
+      return _buildExitStepContent();
+    }
+
+    return _buildStandardStepContent();
+  }
+
+  Widget _buildStandardStepContent() {
     switch (currentStep) {
       case 0:
         return const StepPropertyType();
@@ -112,6 +157,41 @@ class _WizardPageState extends State<WizardPage> {
           onPostpone: _openReportFromSignatures,
         );
       case 6:
+        return StepReport(snapshot: _reportSnapshot);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildExitStepContent() {
+    switch (currentStep) {
+      case 0:
+        return const StepPropertyType();
+      case 1:
+        return const StepGeneralInfo();
+      case 2:
+        return const StepKeysMeters();
+      case 3:
+        return StepPropertyComposition(
+          rooms: selectedRooms,
+          onRoomsChanged: () => setState(() {}),
+        );
+      case 4:
+        return StepVisit(
+          rooms: selectedRooms,
+          controller: _visitController,
+        );
+      case 5:
+        return StepExitObservations(rooms: selectedRooms);
+      case 6:
+        return const StepExitCompensation();
+      case 7:
+        return StepSignature(
+          controller: _signatureController,
+          onContinue: _openReportFromSignatures,
+          onPostpone: _openReportFromSignatures,
+        );
+      case 8:
         return StepReport(snapshot: _reportSnapshot);
       default:
         return const SizedBox.shrink();
