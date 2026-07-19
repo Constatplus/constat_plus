@@ -6,6 +6,7 @@ import 'report/models/report_settings.dart';
 import 'report/models/visit_report_snapshot.dart';
 import 'step_exit_calculations.dart';
 import 'step_exit_closure.dart';
+import 'step_exit_comparison.dart';
 import 'step_exit_mission_order.dart';
 import 'step_exit_observations.dart';
 import 'step_general_info.dart';
@@ -55,7 +56,7 @@ class _WizardPageState extends State<WizardPage> {
         return const <String>[
           'Ordre de mission et parties présentes',
           "Composition issue de l'état des lieux d'entrée",
-          'Visite comparative de sortie',
+          'Remarques comparatives de sortie',
           'Dégâts et observations de sortie',
           'Calcul des indemnités',
           'Clôture contradictoire et signatures',
@@ -96,7 +97,7 @@ class _WizardPageState extends State<WizardPage> {
       return;
     }
 
-    if (currentStep == _visitStepIndex) {
+    if (currentStep == _visitStepIndex && !_isExit) {
       _reportSnapshot = _visitController.read();
     }
 
@@ -178,14 +179,11 @@ class _WizardPageState extends State<WizardPage> {
           onRoomsChanged: () => setState(() {}),
         );
       case 2:
-        return StepVisit(
-          rooms: selectedRooms,
-          controller: _visitController,
-        );
+        return StepExitComparison(rooms: selectedRooms);
       case 3:
         return StepExitObservations(rooms: selectedRooms);
       case 4:
-        return const StepExitCalculations();
+        return StepExitCalculations(rooms: selectedRooms);
       case 5:
         return StepExitClosure();
       case 6:
