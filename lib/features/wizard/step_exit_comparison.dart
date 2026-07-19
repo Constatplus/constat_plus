@@ -1,12 +1,13 @@
+import 'dart:typed_data';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import 'entry_pdf_viewer_page.dart';
 import 'property_composition/models/room_item.dart';
 
 class StepExitComparison extends StatefulWidget {
-  const StepExitComparison({
-    super.key,
-    required this.rooms,
-  });
+  const StepExitComparison({super.key, required this.rooms});
 
   final List<RoomItem> rooms;
 
@@ -33,6 +34,54 @@ class _StepExitComparisonState extends State<StepExitComparison> {
   ];
 
   final List<_ExitRemark> _remarks = <_ExitRemark>[_ExitRemark()];
+  Uint8List? _entryPdfBytes;
+  String? _entryPdfName;
+  bool _isPickingPdf = false;
+
+  Future<void> _pickEntryPdf() async {
+    if (_isPickingPdf) return;
+
+    setState(() => _isPickingPdf = true);
+    try {
+      const pdfGroup = XTypeGroup(
+        label: "État des lieux d'entrée (PDF)",
+        extensions: <String>['pdf'],
+        mimeTypes: <String>['application/pdf'],
+      );
+      final file = await openFile(
+        acceptedTypeGroups: const <XTypeGroup>[pdfGroup],
+      );
+      if (file == null) return;
+
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _entryPdfBytes = bytes;
+        _entryPdfName = file.name;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de sélectionner le PDF : $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPickingPdf = false);
+      }
+    }
+  }
+
+  Future<void> _openEntryPdf() async {
+    final bytes = _entryPdfBytes;
+    final name = _entryPdfName;
+    if (bytes == null || name == null) return;
+
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => EntryPdfViewerPage(pdfBytes: bytes, fileName: name),
+      ),
+    );
+  }
 
   void _addRemark() {
     setState(() => _remarks.add(_ExitRemark()));
@@ -61,13 +110,61 @@ class _StepExitComparisonState extends State<StepExitComparison> {
     return ListView(
       children: <Widget>[
         const Text(
-          'Remarques de sortie',
+          'Remarques comparatives de sortie',
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 8),
         const Text(
           "L'état des lieux d'entrée reste la référence. Ajoutez uniquement les différences constatées lors de la sortie.",
           style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+        ),
+        const SizedBox(height: 22),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
+          ),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              const Icon(
+                Icons.picture_as_pdf_outlined,
+                color: Color(0xFF1D4ED8),
+              ),
+              SizedBox(
+                width: 280,
+                child: Text(
+                  _entryPdfName ?? "Aucun PDF d'entrée sélectionné",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isPickingPdf ? null : _pickEntryPdf,
+                icon: _isPickingPdf
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.upload_file_outlined),
+                label: Text(
+                  _entryPdfBytes == null
+                      ? "Sélectionner le PDF d'entrée"
+                      : 'Remplacer le PDF',
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: _entryPdfBytes == null ? null : _openEntryPdf,
+                icon: const Icon(Icons.visibility_outlined),
+                label: const Text("Consulter l'état des lieux d'entrée"),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 22),
         if (roomNames.isEmpty)
@@ -130,9 +227,8 @@ class _StepExitComparisonState extends State<StepExitComparison> {
                               ),
                             )
                             .toList(),
-                        onChanged: (value) => setState(
-                          () => _remarks[i].room = value,
-                        ),
+                        onChanged: (value) =>
+                            setState(() => _remarks[i].room = value),
                       ),
                     ),
                     SizedBox(
@@ -148,9 +244,8 @@ class _StepExitComparisonState extends State<StepExitComparison> {
                               ),
                             )
                             .toList(),
-                        onChanged: (value) => setState(
-                          () => _remarks[i].post = value,
-                        ),
+                        onChanged: (value) =>
+                            setState(() => _remarks[i].post = value),
                       ),
                     ),
                   ],
@@ -160,9 +255,7 @@ class _StepExitComparisonState extends State<StepExitComparison> {
                   controller: _remarks[i].description,
                   minLines: 3,
                   maxLines: 8,
-                  decoration: _input(
-                    'Remarque constatée à la sortie',
-                  ).copyWith(
+                  decoration: _input('Remarque constatée à la sortie').copyWith(
                     hintText:
                         'Ex. Présence de deux griffes verticales sur le mur droit.',
                   ),
@@ -200,13 +293,11 @@ class _StepExitComparisonState extends State<StepExitComparison> {
   }
 
   InputDecoration _input(String label) => InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      );
+    labelText: label,
+    filled: true,
+    fillColor: Colors.white,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+  );
 }
 
 class _ExitRemark {

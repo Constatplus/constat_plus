@@ -180,7 +180,7 @@ class _FoldersPageState extends State<FoldersPage> {
                     )
                   : ListView.separated(
                       itemCount: visibleFolders.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      separatorBuilder: (_, _) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
                         final folder = visibleFolders[index];
 

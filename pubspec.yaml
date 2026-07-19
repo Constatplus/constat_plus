@@ -20,6 +20,7 @@ dependencies:
   # Export Word et boîte de dialogue d'enregistrement.
   docx_dart: ^1.2.0
   file_selector: ^1.1.0
+  pdfrx: 2.4.5
 
   # Post-traitement OOXML des styles Word.
   archive: ^4.0.7

@@ -459,10 +459,9 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
               itemCount: _preferences!.sections.length,
-              onReorder: (oldIndex, newIndex) {
+              onReorderItem: (oldIndex, newIndex) {
                 setState(() {
                   final sections = [..._preferences!.sections];
-                  if (newIndex > oldIndex) newIndex--;
                   final item = sections.removeAt(oldIndex);
                   sections.insert(newIndex, item);
                   _preferences = _preferences!.copyWith(sections: sections);

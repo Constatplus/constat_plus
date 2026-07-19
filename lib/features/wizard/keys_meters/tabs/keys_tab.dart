@@ -242,6 +242,5 @@ class _KeyItem {
     required this.id,
     required this.name,
     required this.quantity,
-    this.observation = '',
-  });
+  }) : observation = '';
 }

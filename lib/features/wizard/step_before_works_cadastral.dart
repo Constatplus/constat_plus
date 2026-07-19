@@ -20,7 +20,9 @@ class _StepBeforeWorksCadastralState extends State<StepBeforeWorksCadastral> {
 
   @override
   void dispose() {
-    for (final c in _persons) c.dispose();
+    for (final c in _persons) {
+      c.dispose();
+    }
     super.dispose();
   }
 

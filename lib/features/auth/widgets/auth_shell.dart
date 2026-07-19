@@ -53,8 +53,8 @@ class AuthShell extends StatelessWidget {
                               _FormPanel(
                                 title: title,
                                 subtitle: subtitle,
-                                child: child,
                                 compact: true,
+                                child: child,
                               ),
                             ],
                           )
@@ -71,8 +71,8 @@ class AuthShell extends StatelessWidget {
                                   child: _FormPanel(
                                     title: title,
                                     subtitle: subtitle,
-                                    child: child,
                                     compact: false,
+                                    child: child,
                                   ),
                                 ),
                               ],

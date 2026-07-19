@@ -175,11 +175,10 @@ class _MaintenanceItem {
   String company;
   String observation;
 
-  _MaintenanceItem(
-    this.name, {
-    this.selected = false,
-    this.date,
-    this.company = '',
-    this.observation = '',
-  }) : id = '${DateTime.now().microsecondsSinceEpoch}-$name';
+  _MaintenanceItem(this.name)
+      : selected = false,
+        date = null,
+        company = '',
+        observation = '',
+        id = '${DateTime.now().microsecondsSinceEpoch}-$name';
 }

@@ -259,7 +259,7 @@ class _WitnessCard extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: witness.represents,
+                  initialValue: witness.represents,
                   decoration: InputDecoration(
                     labelText: 'Représente',
                     filled: true,

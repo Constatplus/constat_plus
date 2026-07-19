@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:docx_dart/docx_dart.dart' as docx;
-import 'package:docx_dart/src/shared.dart';
 import 'package:file_selector/file_selector.dart';
 
 import '../models/report_settings.dart';
@@ -330,7 +329,7 @@ class WordReportService {
     _addSubtitle(document, 'PHOTOS');
     for (var index = 0; index < paths.length; index++) {
       try {
-        document.addPicture(paths[index], width: Inches(3));
+        document.addPicture(paths[index], width: docx.Inches(3));
         document.addParagraph(
           text: '${room.name} - Photo ${index + 1}',
         );

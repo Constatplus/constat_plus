@@ -127,9 +127,8 @@ class _DocumentItem {
   bool selected;
   String observation;
 
-  _DocumentItem(
-    this.name, {
-    this.selected = false,
-    this.observation = '',
-  }) : id = '${DateTime.now().microsecondsSinceEpoch}-$name';
+  _DocumentItem(this.name)
+      : selected = false,
+        observation = '',
+        id = '${DateTime.now().microsecondsSinceEpoch}-$name';
 }

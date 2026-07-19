@@ -217,7 +217,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
         Expanded(
           child: ListView.separated(
             itemCount: _roomTemplates.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final room = _roomTemplates[index];
               return Material(
@@ -338,9 +338,8 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
               : ReorderableListView.builder(
                   buildDefaultDragHandles: false,
                   itemCount: _rooms.length,
-                  onReorder: (oldIndex, newIndex) {
+                  onReorderItem: (oldIndex, newIndex) {
                     setState(() {
-                      if (newIndex > oldIndex) newIndex--;
                       final room = _rooms.removeAt(oldIndex);
                       _rooms.insert(newIndex, room);
                     });

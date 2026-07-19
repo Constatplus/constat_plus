@@ -46,7 +46,7 @@ class CPSection extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+            ?trailing,
           ],
         ),
         const SizedBox(height: CPSpacing.xl),

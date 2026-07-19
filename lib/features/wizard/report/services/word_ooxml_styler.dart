@@ -103,21 +103,11 @@ class WordOoxmlStyler {
     );
 
     final encoded = ZipEncoder().encode(archive);
-    if (encoded == null) {
-      throw StateError('Impossible de finaliser le document Word.');
-    }
-
     await file.writeAsBytes(encoded, flush: true);
   }
 
   Uint8List _archiveFileBytes(ArchiveFile file) {
-    final content = file.content;
-    if (content is Uint8List) return content;
-    if (content is List<int>) return Uint8List.fromList(content);
-
-    throw StateError(
-      'Le contenu de ${file.name} ne peut pas etre lu.',
-    );
+    return file.content;
   }
 
   String _normalize(String value) {

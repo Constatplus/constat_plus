@@ -188,9 +188,8 @@ class _StepVisitState extends State<StepVisit> {
             height: 340,
             child: ReorderableListView.builder(
               itemCount: workingOrder.length,
-              onReorder: (oldIndex, newIndex) {
+              onReorderItem: (oldIndex, newIndex) {
                 setDialogState(() {
-                  if (newIndex > oldIndex) newIndex--;
                   final wall = workingOrder.removeAt(oldIndex);
                   workingOrder.insert(newIndex, wall);
                 });
@@ -1298,7 +1297,7 @@ class _StepVisitState extends State<StepVisit> {
         Expanded(
           child: ListView.separated(
             itemCount: widget.rooms.length,
-            separatorBuilder: (_, __) {
+            separatorBuilder: (_, _) {
               return const SizedBox(height: 8);
             },
             itemBuilder: (context, index) {
@@ -1501,7 +1500,7 @@ class _StepVisitState extends State<StepVisit> {
         Expanded(
           child: ListView.separated(
             itemCount: _sections.length,
-            separatorBuilder: (_, __) {
+            separatorBuilder: (_, _) {
               return const SizedBox(height: 7);
             },
             itemBuilder: (context, index) {
@@ -1720,7 +1719,7 @@ class _StepVisitState extends State<StepVisit> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: unit.type,
+                          initialValue: unit.type,
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Type d’élément',
@@ -2242,7 +2241,7 @@ class _StepVisitState extends State<StepVisit> {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: photos.length,
-                      separatorBuilder: (_, __) {
+                      separatorBuilder: (_, _) {
                         return const SizedBox(width: 10);
                       },
                       itemBuilder: (context, index) {

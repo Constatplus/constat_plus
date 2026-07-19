@@ -8,7 +8,6 @@ import 'step_exit_calculations.dart';
 import 'step_exit_closure.dart';
 import 'step_exit_comparison.dart';
 import 'step_exit_mission_order.dart';
-import 'step_exit_observations.dart';
 import 'step_general_info.dart';
 import 'step_keys_meters.dart';
 import 'step_property_composition.dart';
@@ -18,10 +17,7 @@ import 'step_signatures.dart';
 import 'step_visit.dart';
 
 class WizardPage extends StatefulWidget {
-  const WizardPage({
-    super.key,
-    required this.missionType,
-  });
+  const WizardPage({super.key, required this.missionType});
 
   final MissionType missionType;
 
@@ -37,8 +33,9 @@ class _WizardPageState extends State<WizardPage> {
   final StepSignatureController _signatureController =
       StepSignatureController();
 
-  VisitReportSnapshot _reportSnapshot =
-      const VisitReportSnapshot(rooms: <VisitRoomReport>[]);
+  VisitReportSnapshot _reportSnapshot = const VisitReportSnapshot(
+    rooms: <VisitRoomReport>[],
+  );
 
   List<String> get _steps {
     switch (widget.missionType) {
@@ -57,7 +54,6 @@ class _WizardPageState extends State<WizardPage> {
           'Ordre de mission et parties présentes',
           "Composition issue de l'état des lieux d'entrée",
           'Remarques comparatives de sortie',
-          'Dégâts et observations de sortie',
           'Calcul des indemnités',
           'Clôture contradictoire et signatures',
           'Rapport de sortie',
@@ -76,12 +72,11 @@ class _WizardPageState extends State<WizardPage> {
   }
 
   bool get _isExit => widget.missionType == MissionType.exit;
-  InspectionReportType get _reportType => _isExit
-      ? InspectionReportType.exit
-      : InspectionReportType.entry;
+  InspectionReportType get _reportType =>
+      _isExit ? InspectionReportType.exit : InspectionReportType.entry;
   int get _visitStepIndex => _isExit ? 2 : 4;
   int get _compositionStepIndex => _isExit ? 1 : 3;
-  int get _signatureStepIndex => _isExit ? 5 : 5;
+  int get _signatureStepIndex => _isExit ? 4 : 5;
   int get _reportStepIndex => _steps.length - 1;
 
   bool get _isSignatureStep => currentStep == _signatureStepIndex;
@@ -149,10 +144,7 @@ class _WizardPageState extends State<WizardPage> {
           onRoomsChanged: () => setState(() {}),
         );
       case 4:
-        return StepVisit(
-          rooms: selectedRooms,
-          controller: _visitController,
-        );
+        return StepVisit(rooms: selectedRooms, controller: _visitController);
       case 5:
         return StepSignature(
           controller: _signatureController,
@@ -181,12 +173,10 @@ class _WizardPageState extends State<WizardPage> {
       case 2:
         return StepExitComparison(rooms: selectedRooms);
       case 3:
-        return StepExitObservations(rooms: selectedRooms);
-      case 4:
         return StepExitCalculations(rooms: selectedRooms);
-      case 5:
+      case 4:
         return StepExitClosure();
-      case 6:
+      case 5:
         return StepReport(
           snapshot: _reportSnapshot,
           initialReportType: _reportType,
@@ -249,10 +239,7 @@ class _WizardPageState extends State<WizardPage> {
                   Text(
                     '${widget.missionType.shortLabel} • '
                     'Étape ${currentStep + 1} / ${_steps.length}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                 ],
               ),
@@ -274,9 +261,7 @@ class _WizardPageState extends State<WizardPage> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: _isExit ? FontWeight.w700 : FontWeight.normal,
-                    color: _isExit
-                        ? const Color(0xFFB91C1C)
-                        : Colors.black54,
+                    color: _isExit ? const Color(0xFFB91C1C) : Colors.black54,
                   ),
                 ),
               ),
