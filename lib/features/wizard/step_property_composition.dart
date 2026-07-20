@@ -10,7 +10,7 @@ class StepPropertyComposition extends StatefulWidget {
   final String missionId;
   final DiscoveryAccessState? discoveryAccess;
   final Future<bool> Function(int roomsUsed, int roomLimit)?
-  onDiscoveryLimitReached;
+      onDiscoveryLimitReached;
 
   const StepPropertyComposition({
     super.key,
@@ -94,29 +94,16 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
   }
 
   Future<void> _addRoom(String type) async {
-    final access = widget.discoveryAccess;
-    if (access == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Les règles du Mode Découverte sont indisponibles. Reconnectez-vous pour les synchroniser.',
-          ),
-        ),
-      );
-      return;
-    }
-    if (!access.canAddRoom(widget.missionId, _rooms.length)) {
-      final unlocked = await widget.onDiscoveryLimitReached?.call(
-        _rooms.length,
-        access.policy.maxFullyDescribedRooms,
-      );
-      if (unlocked != true || !mounted) return;
-    }
     setState(() {
       _rooms.add(
-        RoomItem(type: type, name: type, level: _defaultLevelFor(type)),
+        RoomItem(
+          type: type,
+          name: type,
+          level: _defaultLevelFor(type),
+        ),
       );
     });
+
     _notifyChanged();
   }
 
@@ -128,25 +115,50 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
       'Façade arrière',
       'Façade latérale gauche',
       'Façade latérale droite',
+      'Façade',
+      'Pignon',
+      'Mur mitoyen',
+      'Toiture',
+      'Trottoir',
+      'Voirie',
+      'Clôture',
+      'Mur de soutènement',
+      'Bâtiment voisin',
     };
 
-    if (exteriorRooms.contains(type)) return 'Extérieur';
-    if (type == 'Cave') return 'Sous-sol';
-    if (type == 'Grenier') return 'Combles';
+    if (exteriorRooms.contains(type)) {
+      return 'Extérieur';
+    }
+
+    if (type == 'Cave') {
+      return 'Sous-sol';
+    }
+
+    if (type == 'Grenier') {
+      return 'Combles';
+    }
+
     return 'Rez-de-chaussée';
   }
 
   Future<void> _addCustomRoom() async {
     final name = _customRoomController.text.trim();
+
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Indiquez le nom de la pièce.')),
+        const SnackBar(
+          content: Text('Indiquez le nom de la pièce.'),
+        ),
       );
       return;
     }
 
     await _addRoom(name);
-    if (!mounted) return;
+
+    if (!mounted) {
+      return;
+    }
+
     _customRoomController.clear();
   }
 
@@ -154,24 +166,33 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     setState(() {
       _rooms.removeAt(index);
     });
+
     _notifyChanged();
   }
 
   void _moveRoomUp(int index) {
-    if (index <= 0) return;
+    if (index <= 0) {
+      return;
+    }
+
     setState(() {
       final room = _rooms.removeAt(index);
       _rooms.insert(index - 1, room);
     });
+
     _notifyChanged();
   }
 
   void _moveRoomDown(int index) {
-    if (index >= _rooms.length - 1) return;
+    if (index >= _rooms.length - 1) {
+      return;
+    }
+
     setState(() {
       final room = _rooms.removeAt(index);
       _rooms.insert(index + 1, room);
     });
+
     _notifyChanged();
   }
 
@@ -181,42 +202,71 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
       case 'Hall de nuit':
       case 'Dégagement':
         return Icons.meeting_room_outlined;
+
       case 'Séjour':
       case 'Salon':
       case 'Salle à manger':
         return Icons.weekend_outlined;
+
       case 'Cuisine':
         return Icons.kitchen_outlined;
+
       case 'WC':
         return Icons.wc_outlined;
+
       case 'Salle de bain':
       case 'Salle de douche':
         return Icons.bathtub_outlined;
+
       case 'Chambre':
         return Icons.bed_outlined;
+
       case 'Bureau':
         return Icons.business_center_outlined;
+
       case 'Dressing':
         return Icons.checkroom_outlined;
+
       case 'Buanderie':
         return Icons.local_laundry_service_outlined;
+
       case 'Cave':
         return Icons.inventory_2_outlined;
+
       case 'Grenier':
         return Icons.roofing_outlined;
+
       case 'Garage':
         return Icons.garage_outlined;
+
       case 'Local technique':
         return Icons.build_outlined;
+
       case 'Terrasse':
         return Icons.deck_outlined;
+
       case 'Jardin':
         return Icons.yard_outlined;
+
       case 'Façade avant':
       case 'Façade arrière':
       case 'Façade latérale gauche':
       case 'Façade latérale droite':
+      case 'Façade':
+      case 'Pignon':
+      case 'Mur mitoyen':
+      case 'Toiture':
+      case 'Bâtiment voisin':
         return Icons.home_work_outlined;
+
+      case 'Trottoir':
+      case 'Voirie':
+        return Icons.add_road_outlined;
+
+      case 'Clôture':
+      case 'Mur de soutènement':
+        return Icons.fence_outlined;
+
       default:
         return Icons.add_home_work_outlined;
     }
@@ -233,9 +283,14 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(width: 330, child: _buildTemplatesPanel()),
+        SizedBox(
+          width: 330,
+          child: _buildTemplatesPanel(),
+        ),
         const SizedBox(width: 28),
-        Expanded(child: _buildCompositionPanel()),
+        Expanded(
+          child: _buildCompositionPanel(),
+        ),
       ],
     );
   }
@@ -255,7 +310,11 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
         const SizedBox(height: 6),
         const Text(
           'Cliquez plusieurs fois sur une pièce pour l’ajouter plusieurs fois.',
-          style: TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF64748B)),
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.4,
+            color: Color(0xFF64748B),
+          ),
         ),
         const SizedBox(height: 18),
         Expanded(
@@ -264,6 +323,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final room = _roomTemplates[index];
+
               return Material(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
@@ -319,7 +379,9 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             labelText: 'Pièce personnalisée',
             hintText: 'Exemple : Véranda',
             prefixIcon: const Icon(Icons.edit_outlined),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
           onSubmitted: (_) => _addCustomRoom(),
         ),
@@ -337,27 +399,9 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
   }
 
   Widget _buildCompositionPanel() {
-    final access = widget.discoveryAccess;
-    final paid = access?.hasPaidAccessFor(widget.missionId) ?? false;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (access != null && !paid) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7ED),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFFDBA74)),
-            ),
-            child: Text(
-              'Mode Découverte : ${_rooms.length} pièces sur ${access.policy.maxFullyDescribedRooms} utilisées.',
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ),
-          const SizedBox(height: 14),
-        ],
         Row(
           children: [
             Expanded(
@@ -373,7 +417,10 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 8,
+              ),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF2FF),
                 borderRadius: BorderRadius.circular(999),
@@ -391,7 +438,10 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
         const SizedBox(height: 6),
         const Text(
           'Renommez les pièces et indiquez leur niveau dans l’ordre de la visite.',
-          style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF64748B),
+          ),
         ),
         const SizedBox(height: 18),
         Expanded(
@@ -405,10 +455,14 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
                       final room = _rooms.removeAt(oldIndex);
                       _rooms.insert(newIndex, room);
                     });
+
                     _notifyChanged();
                   },
                   itemBuilder: (context, index) {
-                    return _buildRoomCard(room: _rooms[index], index: index);
+                    return _buildRoomCard(
+                      room: _rooms[index],
+                      index: index,
+                    );
                   },
                 ),
         ),
@@ -422,13 +476,19 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+        ),
       ),
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.home_work_outlined, size: 62, color: Color(0xFF94A3B8)),
+            Icon(
+              Icons.home_work_outlined,
+              size: 62,
+              color: Color(0xFF94A3B8),
+            ),
             SizedBox(height: 16),
             Text(
               'Aucune pièce ajoutée',
@@ -441,7 +501,9 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             SizedBox(height: 6),
             Text(
               'Cliquez sur une pièce proposée pour commencer.',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(
+                color: Color(0xFF64748B),
+              ),
             ),
           ],
         ),
@@ -449,14 +511,19 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     );
   }
 
-  Widget _buildRoomCard({required RoomItem room, required int index}) {
+  Widget _buildRoomCard({
+    required RoomItem room,
+    required int index,
+  }) {
     return Card(
       key: ValueKey(room),
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: const BorderSide(
+          color: Color(0xFFE2E8F0),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -500,21 +567,27 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             Expanded(
               flex: 2,
               child: DropdownButtonFormField<String>(
-                initialValue: _levels.contains(room.level)
-                    ? room.level
-                    : _levels.first,
+                initialValue:
+                    _levels.contains(room.level) ? room.level : _levels.first,
                 decoration: const InputDecoration(
                   labelText: 'Niveau',
                   isDense: true,
                 ),
                 items: _levels.map((level) {
-                  return DropdownMenuItem(value: level, child: Text(level));
+                  return DropdownMenuItem<String>(
+                    value: level,
+                    child: Text(level),
+                  );
                 }).toList(),
                 onChanged: (value) {
-                  if (value == null) return;
+                  if (value == null) {
+                    return;
+                  }
+
                   setState(() {
                     room.level = value;
                   });
+
                   _notifyChanged();
                 },
               ),
@@ -522,19 +595,27 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             const SizedBox(width: 8),
             IconButton(
               tooltip: 'Monter',
-              onPressed: index == 0 ? null : () => _moveRoomUp(index),
+              onPressed: index == 0
+                  ? null
+                  : () {
+                      _moveRoomUp(index);
+                    },
               icon: const Icon(Icons.arrow_upward),
             ),
             IconButton(
               tooltip: 'Descendre',
               onPressed: index == _rooms.length - 1
                   ? null
-                  : () => _moveRoomDown(index),
+                  : () {
+                      _moveRoomDown(index);
+                    },
               icon: const Icon(Icons.arrow_downward),
             ),
             IconButton(
               tooltip: 'Supprimer',
-              onPressed: () => _removeRoom(index),
+              onPressed: () {
+                _removeRoom(index);
+              },
               icon: const Icon(Icons.delete_outline),
             ),
           ],
