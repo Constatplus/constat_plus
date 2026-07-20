@@ -1,24 +1,42 @@
-# Constat+ - Sprint 6 Word V3
+# Intégration Constat+ — paiement et conditions générales
 
-Cette livraison ajoute l'export Word pour les états des lieux d'entrée et de sortie.
+## Fichiers
 
-## Structure du rapport
+- `lib/features/commercial/presentation/secure_checkout_page.dart`
+- `lib/features/legal/legal_documents_page.dart`
 
-1. Page de garde
-2. Table des matières contenant uniquement les titres des pièces
-3. Notes liminaires
-4. Désignation des parties
-5. Clés, entretiens, manuels et documents
-6. Généralités
-7. Description pièce par pièce
-8. Photos de chaque pièce
-9. Conclusion
-10. Signatures propriétaire, locataire et expert si activé
+## Exemple d’ouverture
 
-## Charte graphique
+```dart
+Navigator.of(context).push(
+  MaterialPageRoute(
+    builder: (_) => SecureCheckoutPage(
+      planName: plan.name,
+      priceLabel: plan.formattedPrice,
+      billingLabel: plan.billingPeriod == 'monthly' ? '/ mois' : '',
+      features: const [
+        '5 états des lieux par mois',
+        '50 analyses Gianni IA',
+        'Rapports Word et PDF',
+        'Sauvegarde Cloud',
+      ],
+      onCheckout: () async {
+        // Appeler ici le service Stripe / Google Play / Apple existant.
+      },
+    ),
+  ),
+);
+```
 
-- Titres de pièces : noir
-- Titres Plafond, Mur, Sol et Mobilier : bleu
-- Titres Électricité, Chauffage et Menuiseries : vert
-- Toutes les descriptions : noir
-- Police demandée dans le document : Aptos, avec substitution automatique par Word si elle n'est pas disponible
+## Test
+
+1. Ouvrir une offre.
+2. Vérifier l’affichage sur fenêtre large et étroite.
+3. Cliquer sur les liens CGU et CGV.
+4. Vérifier que le bouton refuse le paiement sans acceptation.
+5. Cocher les conditions et vérifier que `onCheckout` est appelé.
+6. Exécuter `flutter analyze`.
+
+## Important
+
+Les textes juridiques sont une base de travail à faire relire par un avocat belge avant mise en production.
