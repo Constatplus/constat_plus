@@ -6,10 +6,7 @@ import 'package:image_picker/image_picker.dart';
 class PhotoPickerSection extends StatefulWidget {
   final String title;
 
-  const PhotoPickerSection({
-    super.key,
-    this.title = 'Photos',
-  });
+  const PhotoPickerSection({super.key, this.title = 'Photos'});
 
   @override
   State<PhotoPickerSection> createState() => _PhotoPickerSectionState();
@@ -40,9 +37,7 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'La caméra n’est pas disponible sur cet appareil.',
-          ),
+          content: Text('La caméra n’est pas disponible sur cet appareil.'),
         ),
       );
     }
@@ -50,9 +45,7 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
 
   Future<void> _selectPhotos() async {
     try {
-      final photos = await _picker.pickMultiImage(
-        imageQuality: 85,
-      );
+      final photos = await _picker.pickMultiImage(imageQuality: 85);
 
       if (photos.isEmpty || !mounted) return;
 
@@ -63,11 +56,7 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Impossible d’ouvrir la galerie.',
-          ),
-        ),
+        const SnackBar(content: Text('Impossible d’ouvrir la galerie.')),
       );
     }
   }
@@ -97,9 +86,7 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
                       height: 350,
                       color: Colors.white,
                       alignment: Alignment.center,
-                      child: const Text(
-                        'Impossible d’afficher cette photo.',
-                      ),
+                      child: const Text('Impossible d’afficher cette photo.'),
                     );
                   },
                 ),
@@ -129,19 +116,14 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.photo_library_outlined,
-                color: Colors.blue,
-              ),
+              const Icon(Icons.photo_library_outlined, color: Colors.blue),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -197,9 +179,7 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
                                 height: 110,
                                 color: Colors.grey.shade200,
                                 alignment: Alignment.center,
-                                child: const Icon(
-                                  Icons.broken_image_outlined,
-                                ),
+                                child: const Icon(Icons.broken_image_outlined),
                               );
                             },
                           ),
@@ -212,10 +192,7 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
                           tooltip: 'Supprimer la photo',
                           visualDensity: VisualDensity.compact,
                           onPressed: () => _removePhoto(index),
-                          icon: const Icon(
-                            Icons.close,
-                            size: 17,
-                          ),
+                          icon: const Icon(Icons.close, size: 17),
                         ),
                       ),
                     ],

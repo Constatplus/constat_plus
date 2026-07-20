@@ -45,11 +45,7 @@ class CPCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor ?? CPColors.surface,
         borderRadius: CPRadius.radiusLg,
-        border: outlined
-            ? Border.all(
-                color: CPColors.border,
-              )
-            : null,
+        border: outlined ? Border.all(color: CPColors.border) : null,
         boxShadow: shadow ?? CPShadows.md,
       ),
       child: child,

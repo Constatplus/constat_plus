@@ -36,10 +36,9 @@ class FolderCard extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withValues(alpha: 0.10),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(_icon, color: Theme.of(context).colorScheme.primary),
@@ -49,9 +48,15 @@ class FolderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(folder.title, style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    folder.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 4),
-                  Text(folder.address, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    folder.address,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '${folder.client} • ${folder.missionLabel}',
@@ -66,10 +71,7 @@ class FolderCard extends StatelessWidget {
               icon: const Icon(Icons.delete_outline_rounded),
             ),
             const SizedBox(width: 4),
-            FilledButton(
-              onPressed: onOpen,
-              child: const Text('Ouvrir'),
-            ),
+            FilledButton(onPressed: onOpen, child: const Text('Ouvrir')),
           ],
         ),
       ),

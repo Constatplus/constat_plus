@@ -25,24 +25,24 @@ class PlanStroke {
 
 extension MissionKindX on MissionKind {
   String get label => switch (this) {
-        MissionKind.entry => 'État des lieux d’entrée',
-        MissionKind.exit => 'État des lieux de sortie',
-        MissionKind.beforeWorks => 'Constat avant travaux',
-      };
+    MissionKind.entry => 'État des lieux d’entrée',
+    MissionKind.exit => 'État des lieux de sortie',
+    MissionKind.beforeWorks => 'Constat avant travaux',
+  };
 
   String get shortLabel => switch (this) {
-        MissionKind.entry => 'Entrée',
-        MissionKind.exit => 'Sortie',
-        MissionKind.beforeWorks => 'Avant travaux',
-      };
+    MissionKind.entry => 'Entrée',
+    MissionKind.exit => 'Sortie',
+    MissionKind.beforeWorks => 'Avant travaux',
+  };
 }
 
 extension MissionStatusX on MissionStatus {
   String get label => switch (this) {
-        MissionStatus.draft => 'Brouillon',
-        MissionStatus.inProgress => 'En cours',
-        MissionStatus.completed => 'Terminé',
-      };
+    MissionStatus.draft => 'Brouillon',
+    MissionStatus.inProgress => 'En cours',
+    MissionStatus.completed => 'Terminé',
+  };
 }
 
 class PartyData {
@@ -115,7 +115,17 @@ class RoomData {
   final List<RoomPhoto> photos = [];
 
   int get completion {
-    final fields = [floor, ceiling, walls, woodwork, electricity, heating, furniture, sanitary, observations];
+    final fields = [
+      floor,
+      ceiling,
+      walls,
+      woodwork,
+      electricity,
+      heating,
+      furniture,
+      sanitary,
+      observations,
+    ];
     final filled = fields.where((value) => value.trim().isNotEmpty).length;
     return ((filled / fields.length) * 100).round();
   }
@@ -156,20 +166,27 @@ class MissionData {
   String get displayTitle => title.trim().isNotEmpty
       ? title.trim()
       : address.trim().isNotEmpty
-          ? address.trim()
-          : kind.label;
+      ? address.trim()
+      : kind.label;
 
-  double get damagesTotal => damages.fold(0, (sum, item) => sum + item.totalIncVat);
+  double get damagesTotal =>
+      damages.fold(0, (sum, item) => sum + item.totalIncVat);
 
   int get progress {
     var score = 0;
     var total = 6;
     if (address.trim().isNotEmpty) score++;
     if (client.trim().isNotEmpty) score++;
-    if (parties.isNotEmpty && parties.any((p) => p.name.trim().isNotEmpty)) score++;
+    if (parties.isNotEmpty && parties.any((p) => p.name.trim().isNotEmpty)) {
+      score++;
+    }
     if (rooms.isNotEmpty) score++;
-    if (rooms.isNotEmpty && rooms.every((room) => room.completion >= 30)) score++;
-    if (signatureExpert.trim().isNotEmpty || signatureParty.trim().isNotEmpty) score++;
+    if (rooms.isNotEmpty && rooms.every((room) => room.completion >= 30)) {
+      score++;
+    }
+    if (signatureExpert.trim().isNotEmpty || signatureParty.trim().isNotEmpty) {
+      score++;
+    }
     return ((score / total) * 100).round();
   }
 }

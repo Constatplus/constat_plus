@@ -5,20 +5,18 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/ai/vision_service.dart';
 import '../../core/access/access_service.dart';
-import '../paywall/occasional_paywall_dialog.dart';
+import '../commercial/infrastructure/repositories/supabase_discovery_access_repository.dart';
+import '../commercial/presentation/pages/discovery_paywall_page.dart';
 import 'property_composition/models/room_item.dart';
 import 'visit/widgets/electrical_panel.dart';
 import 'report/models/visit_report_snapshot.dart';
-
 
 class _KitchenUnit {
   String type;
   final TextEditingController commentController;
 
-  _KitchenUnit({
-    required this.type,
-    String comment = '',
-  }) : commentController = TextEditingController(text: comment);
+  _KitchenUnit({required this.type, String comment = ''})
+    : commentController = TextEditingController(text: comment);
 
   void dispose() {
     commentController.dispose();
@@ -26,11 +24,15 @@ class _KitchenUnit {
 }
 
 class StepVisit extends StatefulWidget {
+  final String missionId;
+  final String missionType;
   final List<RoomItem> rooms;
   final StepVisitController controller;
 
   const StepVisit({
     super.key,
+    required this.missionId,
+    required this.missionType,
     required this.rooms,
     required this.controller,
   });
@@ -86,7 +88,6 @@ class _StepVisitState extends State<StepVisit> {
     'Électroménager',
     'Autre mobilier',
   ];
-
 
   final List<String> _kitchenWorktopEquipment = const [
     'Évier',
@@ -175,7 +176,6 @@ class _StepVisitState extends State<StepVisit> {
   RoomItem get _currentRoom => widget.rooms[_selectedRoomIndex];
   String get _currentSection => _sections[_selectedSectionIndex];
 
-
   Future<void> _reorderWalls() async {
     final workingOrder = List<String>.from(_walls);
     final accepted = await showDialog<bool>(
@@ -237,11 +237,11 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   bool _wallsSetContains(String value) => const {
-        'Mur avant',
-        'Mur droit',
-        'Mur arrière',
-        'Mur gauche',
-      }.contains(value);
+    'Mur avant',
+    'Mur droit',
+    'Mur arrière',
+    'Mur gauche',
+  }.contains(value);
 
   String _roomKey(int roomIndex) {
     final room = widget.rooms[roomIndex];
@@ -260,69 +260,38 @@ class _StepVisitState extends State<StepVisit> {
     return '${_roomKey(roomIndex)}::furniture::$item';
   }
 
-  TextEditingController _controllerFor(
-    int roomIndex,
-    String section,
-  ) {
+  TextEditingController _controllerFor(int roomIndex, String section) {
     final key = _sectionKey(roomIndex, section);
 
-    return _controllers.putIfAbsent(
-      key,
-      TextEditingController.new,
-    );
+    return _controllers.putIfAbsent(key, TextEditingController.new);
   }
 
-  List<XFile> _photosFor(
-    int roomIndex,
-    String section,
-  ) {
+  List<XFile> _photosFor(int roomIndex, String section) {
     final key = _sectionKey(roomIndex, section);
 
-    return _photos.putIfAbsent(
-      key,
-      () => <XFile>[],
-    );
+    return _photos.putIfAbsent(key, () => <XFile>[]);
   }
 
   List<XFile> _prefillPhotosForRoom(int roomIndex) {
-    return _roomPrefillPhotos.putIfAbsent(
-      _roomKey(roomIndex),
-      () => <XFile>[],
-    );
+    return _roomPrefillPhotos.putIfAbsent(_roomKey(roomIndex), () => <XFile>[]);
   }
 
-  bool _isConform(
-    int roomIndex,
-    String section,
-  ) {
-    return _conformToGeneralities[
-          _sectionKey(roomIndex, section)] ??
-        false;
+  bool _isConform(int roomIndex, String section) {
+    return _conformToGeneralities[_sectionKey(roomIndex, section)] ?? false;
   }
 
-  Map<String, int> _electricalItemsFor(
-    int roomIndex,
-    String wall,
-  ) {
+  Map<String, int> _electricalItemsFor(int roomIndex, String wall) {
     return _electricalQuantities.putIfAbsent(
       _wallKey(roomIndex, wall),
       () => <String, int>{},
     );
   }
 
-  int _blockQuantityFor(
-    int roomIndex,
-    String wall,
-  ) {
-    return _electricalBlockQuantities[
-          _wallKey(roomIndex, wall)] ??
-        0;
+  int _blockQuantityFor(int roomIndex, String wall) {
+    return _electricalBlockQuantities[_wallKey(roomIndex, wall)] ?? 0;
   }
 
-  Set<String> _blockComponentsFor(
-    int roomIndex,
-    String wall,
-  ) {
+  Set<String> _blockComponentsFor(int roomIndex, String wall) {
     return _electricalBlockComponents.putIfAbsent(
       _wallKey(roomIndex, wall),
       () => <String>{},
@@ -332,22 +301,15 @@ class _StepVisitState extends State<StepVisit> {
   Set<String> _furnitureItemsFor(int roomIndex) {
     final key = '${_roomKey(roomIndex)}::furniture';
 
-    return _furnitureEquipment.putIfAbsent(
-      key,
-      () => <String>{},
-    );
+    return _furnitureEquipment.putIfAbsent(key, () => <String>{});
   }
 
-  TextEditingController _furnitureControllerFor(
-    int roomIndex,
-    String item,
-  ) {
+  TextEditingController _furnitureControllerFor(int roomIndex, String item) {
     return _furnitureControllers.putIfAbsent(
       _furnitureKey(roomIndex, item),
       TextEditingController.new,
     );
   }
-
 
   String _kitchenKey(int roomIndex, String suffix) {
     return '${_roomKey(roomIndex)}::kitchen::$suffix';
@@ -374,38 +336,27 @@ class _StepVisitState extends State<StepVisit> {
     );
   }
 
-  TextEditingController _kitchenControllerFor(
-    int roomIndex,
-    String field,
-  ) {
-    return _furnitureControllerFor(
-      roomIndex,
-      'Cuisine équipée::$field',
-    );
+  TextEditingController _kitchenControllerFor(int roomIndex, String field) {
+    return _furnitureControllerFor(roomIndex, 'Cuisine équipée::$field');
   }
 
   bool _hasElectricalSelection(int roomIndex) {
     return _walls.any((wall) {
       final quantities = _electricalItemsFor(roomIndex, wall);
-      final hasEquipment =
-          quantities.values.any((quantity) => quantity > 0);
-      final hasBlock = _blockQuantityFor(roomIndex, wall) > 0 &&
+      final hasEquipment = quantities.values.any((quantity) => quantity > 0);
+      final hasBlock =
+          _blockQuantityFor(roomIndex, wall) > 0 &&
           _blockComponentsFor(roomIndex, wall).isNotEmpty;
 
       return hasEquipment || hasBlock;
     });
   }
 
-  bool _sectionHasContent(
-    int roomIndex,
-    String section,
-  ) {
-    final controller =
-        _controllers[_sectionKey(roomIndex, section)];
+  bool _sectionHasContent(int roomIndex, String section) {
+    final controller = _controllers[_sectionKey(roomIndex, section)];
     final photos = _photos[_sectionKey(roomIndex, section)];
 
-    final hasText =
-        controller != null && controller.text.trim().isNotEmpty;
+    final hasText = controller != null && controller.text.trim().isNotEmpty;
     final hasPhotos = photos != null && photos.isNotEmpty;
     final isConform = _isConform(roomIndex, section);
 
@@ -421,24 +372,18 @@ class _StepVisitState extends State<StepVisit> {
 
       final hasFurnitureDescription = selectedItems.any(
         (item) =>
-            _furnitureControllerFor(roomIndex, item)
-                .text
-                .trim()
-                .isNotEmpty,
+            _furnitureControllerFor(roomIndex, item).text.trim().isNotEmpty,
       );
       final hasKitchenDescription =
           selectedItems.contains('Cuisine équipée') &&
-              (_kitchenControllerFor(roomIndex, 'general')
-                      .text
-                      .trim()
-                      .isNotEmpty ||
-                  _kitchenControllerFor(roomIndex, 'worktop')
-                      .text
-                      .trim()
-                      .isNotEmpty ||
-                  _worktopEquipmentFor(roomIndex).isNotEmpty ||
-                  _upperUnitsFor(roomIndex).isNotEmpty ||
-                  _lowerUnitsFor(roomIndex).isNotEmpty);
+          (_kitchenControllerFor(roomIndex, 'general').text.trim().isNotEmpty ||
+              _kitchenControllerFor(
+                roomIndex,
+                'worktop',
+              ).text.trim().isNotEmpty ||
+              _worktopEquipmentFor(roomIndex).isNotEmpty ||
+              _upperUnitsFor(roomIndex).isNotEmpty ||
+              _lowerUnitsFor(roomIndex).isNotEmpty);
 
       return hasText ||
           hasPhotos ||
@@ -458,9 +403,46 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   Future<void> _selectRoom(int index) async {
-    if (!AccessService.instance.canOpenRoom(index)) {
-      final unlocked = await showOccasionalPaywallDialog(context);
+    if (!AccessService.instance.canOpenRoom(widget.missionId, index)) {
+      final access = AccessService.instance.discoveryAccess;
+      if (access == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Droits commerciaux indisponibles.')),
+        );
+        return;
+      }
+      try {
+        final synchronized = await SupabaseDiscoveryAccessRepository()
+            .registerMission(
+              missionId: widget.missionId,
+              missionType: widget.missionType,
+              allowOffline: false,
+            );
+        AccessService.instance.setDiscoveryAccess(synchronized);
+      } catch (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Synchronisez le brouillon avant de lancer le paiement : $error',
+            ),
+          ),
+        );
+        return;
+      }
+      if (!mounted) return;
+      final unlocked = await showDiscoveryPaywall(
+        context,
+        missionId: widget.missionId,
+        roomsUsed: widget.rooms.length,
+        roomLimit: access.policy.maxFullyDescribedRooms,
+      );
       if (!unlocked || !mounted) return;
+      final refreshed = await SupabaseDiscoveryAccessRepository().getState(
+        forceRefresh: true,
+      );
+      AccessService.instance.setDiscoveryAccess(refreshed);
+      if (!refreshed.hasPaidAccessFor(widget.missionId)) return;
     }
 
     setState(() {
@@ -502,15 +484,9 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   void _toggleGeneralities(bool value) {
-    final key = _sectionKey(
-      _selectedRoomIndex,
-      _currentSection,
-    );
+    final key = _sectionKey(_selectedRoomIndex, _currentSection);
 
-    final controller = _controllerFor(
-      _selectedRoomIndex,
-      _currentSection,
-    );
+    final controller = _controllerFor(_selectedRoomIndex, _currentSection);
 
     setState(() {
       _conformToGeneralities[key] = value;
@@ -524,15 +500,8 @@ class _StepVisitState extends State<StepVisit> {
     });
   }
 
-  void _setElectricalQuantity(
-    String wall,
-    String item,
-    int quantity,
-  ) {
-    final quantities = _electricalItemsFor(
-      _selectedRoomIndex,
-      wall,
-    );
+  void _setElectricalQuantity(String wall, String item, int quantity) {
+    final quantities = _electricalItemsFor(_selectedRoomIndex, wall);
 
     setState(() {
       if (quantity <= 0) {
@@ -543,34 +512,21 @@ class _StepVisitState extends State<StepVisit> {
     });
   }
 
-  void _setBlockQuantity(
-    String wall,
-    int quantity,
-  ) {
+  void _setBlockQuantity(String wall, int quantity) {
     final key = _wallKey(_selectedRoomIndex, wall);
 
     setState(() {
       if (quantity <= 0) {
         _electricalBlockQuantities.remove(key);
-        _blockComponentsFor(
-          _selectedRoomIndex,
-          wall,
-        ).clear();
+        _blockComponentsFor(_selectedRoomIndex, wall).clear();
       } else {
         _electricalBlockQuantities[key] = quantity;
       }
     });
   }
 
-  void _toggleBlockComponent(
-    String wall,
-    String component,
-    bool selected,
-  ) {
-    final components = _blockComponentsFor(
-      _selectedRoomIndex,
-      wall,
-    );
+  void _toggleBlockComponent(String wall, String component, bool selected) {
+    final components = _blockComponentsFor(_selectedRoomIndex, wall);
 
     setState(() {
       if (selected) {
@@ -581,10 +537,7 @@ class _StepVisitState extends State<StepVisit> {
     });
   }
 
-  void _toggleFurnitureItem(
-    String item,
-    bool selected,
-  ) {
+  void _toggleFurnitureItem(String item, bool selected) {
     final items = _furnitureItemsFor(_selectedRoomIndex);
 
     setState(() {
@@ -592,16 +545,14 @@ class _StepVisitState extends State<StepVisit> {
         items.add(item);
       } else {
         items.remove(item);
-        _furnitureControllerFor(
-          _selectedRoomIndex,
-          item,
-        ).clear();
+        _furnitureControllerFor(_selectedRoomIndex, item).clear();
 
         if (item == 'Cuisine équipée') {
           _kitchenControllerFor(_selectedRoomIndex, 'general').clear();
           _kitchenControllerFor(_selectedRoomIndex, 'worktop').clear();
-          for (final equipmentItem
-              in _worktopEquipmentFor(_selectedRoomIndex).toList()) {
+          for (final equipmentItem in _worktopEquipmentFor(
+            _selectedRoomIndex,
+          ).toList()) {
             _kitchenControllerFor(
               _selectedRoomIndex,
               'worktop-equipment::$equipmentItem',
@@ -632,18 +583,13 @@ class _StepVisitState extends State<StepVisit> {
       if (selectedPhotos.isEmpty || !mounted) return;
 
       setState(() {
-        _photosFor(
-          _selectedRoomIndex,
-          _currentSection,
-        ).addAll(selectedPhotos);
+        _photosFor(_selectedRoomIndex, _currentSection).addAll(selectedPhotos);
       });
     } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible d’ouvrir la galerie.'),
-        ),
+        const SnackBar(content: Text('Impossible d’ouvrir la galerie.')),
       );
     }
   }
@@ -658,19 +604,14 @@ class _StepVisitState extends State<StepVisit> {
       if (photo == null || !mounted) return;
 
       setState(() {
-        _photosFor(
-          _selectedRoomIndex,
-          _currentSection,
-        ).add(photo);
+        _photosFor(_selectedRoomIndex, _currentSection).add(photo);
       });
     } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'La caméra n’est pas disponible sur cet appareil.',
-          ),
+          content: Text('La caméra n’est pas disponible sur cet appareil.'),
         ),
       );
     }
@@ -685,9 +626,7 @@ class _StepVisitState extends State<StepVisit> {
       if (selectedPhotos.isEmpty || !mounted) return;
 
       setState(() {
-        _prefillPhotosForRoom(
-          _selectedRoomIndex,
-        ).addAll(selectedPhotos);
+        _prefillPhotosForRoom(_selectedRoomIndex).addAll(selectedPhotos);
       });
 
       if (!mounted) return;
@@ -705,30 +644,54 @@ class _StepVisitState extends State<StepVisit> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Impossible d’importer les photos de la pièce.',
-          ),
+          content: Text('Impossible d’importer les photos de la pièce.'),
         ),
       );
     }
   }
 
-
   String _closestKitchenUnitType(String proposed, List<String> allowed) {
     final normalized = proposed.toLowerCase();
     for (final type in allowed) {
-      if (normalized.contains(type.toLowerCase()) || type.toLowerCase().contains(normalized)) return type;
+      if (normalized.contains(type.toLowerCase()) ||
+          type.toLowerCase().contains(normalized)) {
+        return type;
+      }
     }
     return 'Autre';
   }
 
   Future<void> _analyzeAndPrefillCurrentRoom() async {
+    if (AccessService.instance.isDemo) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Analyse IA indisponible en démo'),
+          content: const Text(
+            'Connectez-vous avec un abonnement actif pour analyser des photos. '
+            'Aucune clé privée n’est stockée dans l’application.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Compris'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     final roomIndex = _selectedRoomIndex;
     final photos = List<XFile>.from(_prefillPhotosForRoom(roomIndex));
     if (photos.isEmpty) return;
+    final idempotencyKey =
+        'ai:${widget.missionId}:${DateTime.now().microsecondsSinceEpoch}';
     setState(() => _isAnalyzingRoom = true);
     try {
       final analysis = await _visionService.analyzeRoom(
+        missionId: widget.missionId,
+        missionType: widget.missionType,
+        idempotencyKey: idempotencyKey,
         roomName: widget.rooms[roomIndex].name,
         roomType: widget.rooms[roomIndex].type,
         photos: photos,
@@ -736,26 +699,67 @@ class _StepVisitState extends State<StepVisit> {
       if (!mounted) return;
       setState(() {
         for (final entry in analysis.sections.entries) {
-          if (entry.value.trim().isNotEmpty && _sections.contains(entry.key)) _controllerFor(roomIndex, entry.key).text = entry.value.trim();
+          if (entry.value.trim().isNotEmpty && _sections.contains(entry.key)) {
+            _controllerFor(roomIndex, entry.key).text = entry.value.trim();
+          }
         }
         if (analysis.hasKitchen) {
           _furnitureItemsFor(roomIndex).add('Cuisine équipée');
-          _kitchenControllerFor(roomIndex, 'general').text = analysis.kitchenGeneral;
+          _kitchenControllerFor(roomIndex, 'general').text =
+              analysis.kitchenGeneral;
           _kitchenControllerFor(roomIndex, 'worktop').text = analysis.worktop;
           final selectedEquipment = _worktopEquipmentFor(roomIndex);
           for (final entry in analysis.worktopEquipment.entries) {
             if (entry.value.trim().isEmpty) continue;
-            final known = _kitchenWorktopEquipment.firstWhere((item) => item.toLowerCase() == entry.key.toLowerCase(), orElse: () => 'Autre équipement');
+            final known = _kitchenWorktopEquipment.firstWhere(
+              (item) => item.toLowerCase() == entry.key.toLowerCase(),
+              orElse: () => 'Autre équipement',
+            );
             selectedEquipment.add(known);
-            _kitchenControllerFor(roomIndex, 'worktop-equipment::$known').text = entry.value;
+            _kitchenControllerFor(roomIndex, 'worktop-equipment::$known').text =
+                entry.value;
           }
-          for (final unit in _upperUnitsFor(roomIndex)) { unit.dispose(); }
-          _upperUnitsFor(roomIndex)..clear()..addAll(analysis.upperUnits.map((unit) => _KitchenUnit(type: _closestKitchenUnitType(unit['type'] ?? '', _kitchenUpperUnitTypes), comment: unit['comment'] ?? '')));
-          for (final unit in _lowerUnitsFor(roomIndex)) { unit.dispose(); }
-          _lowerUnitsFor(roomIndex)..clear()..addAll(analysis.lowerUnits.map((unit) => _KitchenUnit(type: _closestKitchenUnitType(unit['type'] ?? '', _kitchenLowerUnitTypes), comment: unit['comment'] ?? '')));
+          for (final unit in _upperUnitsFor(roomIndex)) {
+            unit.dispose();
+          }
+          _upperUnitsFor(roomIndex)
+            ..clear()
+            ..addAll(
+              analysis.upperUnits.map(
+                (unit) => _KitchenUnit(
+                  type: _closestKitchenUnitType(
+                    unit['type'] ?? '',
+                    _kitchenUpperUnitTypes,
+                  ),
+                  comment: unit['comment'] ?? '',
+                ),
+              ),
+            );
+          for (final unit in _lowerUnitsFor(roomIndex)) {
+            unit.dispose();
+          }
+          _lowerUnitsFor(roomIndex)
+            ..clear()
+            ..addAll(
+              analysis.lowerUnits.map(
+                (unit) => _KitchenUnit(
+                  type: _closestKitchenUnitType(
+                    unit['type'] ?? '',
+                    _kitchenLowerUnitTypes,
+                  ),
+                  comment: unit['comment'] ?? '',
+                ),
+              ),
+            );
         }
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Analyse terminée. Vérifiez et corrigez les propositions avant validation.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Analyse terminée. Vérifiez et corrigez les propositions avant validation.',
+          ),
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
 
@@ -789,8 +793,7 @@ class _StepVisitState extends State<StepVisit> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final photos =
-                _prefillPhotosForRoom(_selectedRoomIndex);
+            final photos = _prefillPhotosForRoom(_selectedRoomIndex);
 
             return AlertDialog(
               title: Text(
@@ -807,10 +810,7 @@ class _StepVisitState extends State<StepVisit> {
                       'Vous ne devez pas les classer manuellement. '
                       'L’analyse visuelle proposera automatiquement des descriptions '
                       'pour les différents postes. Chaque proposition reste modifiable.',
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        height: 1.45,
-                      ),
+                      style: TextStyle(color: Color(0xFF64748B), height: 1.45),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -823,19 +823,13 @@ class _StepVisitState extends State<StepVisit> {
                               setDialogState(() {});
                             }
                           },
-                          icon: const Icon(
-                            Icons.add_photo_alternate_outlined,
-                          ),
-                          label: const Text(
-                            'Choisir les photos',
-                          ),
+                          icon: const Icon(Icons.add_photo_alternate_outlined),
+                          label: const Text('Choisir les photos'),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           '${photos.length} photo(s)',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -845,18 +839,16 @@ class _StepVisitState extends State<StepVisit> {
                           ? const Center(
                               child: Text(
                                 'Aucune photo sélectionnée.',
-                                style: TextStyle(
-                                  color: Colors.black45,
-                                ),
+                                style: TextStyle(color: Colors.black45),
                               ),
                             )
                           : GridView.builder(
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                              ),
+                                    crossAxisCount: 4,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
                               itemCount: photos.length,
                               itemBuilder: (context, index) {
                                 final photo = photos[index];
@@ -865,27 +857,20 @@ class _StepVisitState extends State<StepVisit> {
                                   children: [
                                     Positioned.fill(
                                       child: ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(12),
                                         child: Image.file(
                                           File(photo.path),
                                           fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return Container(
-                                              color:
-                                                  Colors.grey.shade200,
-                                              alignment:
-                                                  Alignment.center,
-                                              child: const Icon(
-                                                Icons
-                                                    .broken_image_outlined,
-                                              ),
-                                            );
-                                          },
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey.shade200,
+                                                  alignment: Alignment.center,
+                                                  child: const Icon(
+                                                    Icons.broken_image_outlined,
+                                                  ),
+                                                );
+                                              },
                                         ),
                                       ),
                                     ),
@@ -893,18 +878,14 @@ class _StepVisitState extends State<StepVisit> {
                                       right: 4,
                                       top: 4,
                                       child: IconButton.filled(
-                                        visualDensity:
-                                            VisualDensity.compact,
+                                        visualDensity: VisualDensity.compact,
                                         onPressed: () {
                                           setState(() {
                                             photos.removeAt(index);
                                           });
                                           setDialogState(() {});
                                         },
-                                        icon: const Icon(
-                                          Icons.close,
-                                          size: 16,
-                                        ),
+                                        icon: const Icon(Icons.close, size: 16),
                                       ),
                                     ),
                                   ],
@@ -963,10 +944,7 @@ class _StepVisitState extends State<StepVisit> {
 
   void _removePhoto(int index) {
     setState(() {
-      _photosFor(
-        _selectedRoomIndex,
-        _currentSection,
-      ).removeAt(index);
+      _photosFor(_selectedRoomIndex, _currentSection).removeAt(index);
     });
   }
 
@@ -980,10 +958,7 @@ class _StepVisitState extends State<StepVisit> {
           child: Stack(
             children: [
               InteractiveViewer(
-                child: Image.file(
-                  File(photo.path),
-                  fit: BoxFit.contain,
-                ),
+                child: Image.file(File(photo.path), fit: BoxFit.contain),
               ),
               Positioned(
                 top: 8,
@@ -1001,50 +976,37 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   void _clearCurrentSection() {
-    final key = _sectionKey(
-      _selectedRoomIndex,
-      _currentSection,
-    );
+    final key = _sectionKey(_selectedRoomIndex, _currentSection);
 
     setState(() {
-      _controllerFor(
-        _selectedRoomIndex,
-        _currentSection,
-      ).clear();
+      _controllerFor(_selectedRoomIndex, _currentSection).clear();
 
-      _photosFor(
-        _selectedRoomIndex,
-        _currentSection,
-      ).clear();
+      _photosFor(_selectedRoomIndex, _currentSection).clear();
 
       _conformToGeneralities[key] = false;
 
       if (_currentSection == 'Électricité') {
         for (final wall in _walls) {
-          _electricalItemsFor(
-            _selectedRoomIndex,
-            wall,
-          ).clear();
+          _electricalItemsFor(_selectedRoomIndex, wall).clear();
 
           _setBlockQuantity(wall, 0);
         }
       }
 
       if (_currentSection == 'Mobilier') {
-        final selectedFurniture =
-            _furnitureItemsFor(_selectedRoomIndex).toList();
+        final selectedFurniture = _furnitureItemsFor(
+          _selectedRoomIndex,
+        ).toList();
 
         for (final item in selectedFurniture) {
-          _furnitureControllerFor(
-            _selectedRoomIndex,
-            item,
-          ).clear();
+          _furnitureControllerFor(_selectedRoomIndex, item).clear();
         }
 
         _kitchenControllerFor(_selectedRoomIndex, 'general').clear();
         _kitchenControllerFor(_selectedRoomIndex, 'worktop').clear();
-        for (final equipmentItem
-            in _worktopEquipmentFor(_selectedRoomIndex).toList()) {
+        for (final equipmentItem in _worktopEquipmentFor(
+          _selectedRoomIndex,
+        ).toList()) {
           _kitchenControllerFor(
             _selectedRoomIndex,
             'worktop-equipment::$equipmentItem',
@@ -1074,10 +1036,8 @@ class _StepVisitState extends State<StepVisit> {
       final sections = <String, String>{};
 
       for (final section in _sections) {
-        final value = _controllers[_sectionKey(roomIndex, section)]
-                ?.text
-                .trim() ??
-            '';
+        final value =
+            _controllers[_sectionKey(roomIndex, section)]?.text.trim() ?? '';
         if (value.isNotEmpty) {
           sections[section] = value;
         }
@@ -1130,10 +1090,14 @@ class _StepVisitState extends State<StepVisit> {
         }
 
         kitchen = KitchenReport(
-          generalDescription:
-              _kitchenControllerFor(roomIndex, 'general').text.trim(),
-          worktopDescription:
-              _kitchenControllerFor(roomIndex, 'worktop').text.trim(),
+          generalDescription: _kitchenControllerFor(
+            roomIndex,
+            'general',
+          ).text.trim(),
+          worktopDescription: _kitchenControllerFor(
+            roomIndex,
+            'worktop',
+          ).text.trim(),
           worktopEquipment: equipment,
           upperUnits: _upperUnitsFor(roomIndex)
               .map(
@@ -1215,10 +1179,7 @@ class _StepVisitState extends State<StepVisit> {
       return const Center(
         child: Text(
           'Aucune pièce disponible.',
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: 18, color: Colors.black54),
         ),
       );
     }
@@ -1227,18 +1188,13 @@ class _StepVisitState extends State<StepVisit> {
     final roomCompleted = _completedRooms.contains(
       _roomKey(_selectedRoomIndex),
     );
-    final completedSections =
-        _completedSectionCount(_selectedRoomIndex);
-    final roomProgress =
-        completedSections / _sections.length;
+    final completedSections = _completedSectionCount(_selectedRoomIndex);
+    final roomProgress = completedSections / _sections.length;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 260,
-          child: _buildRoomList(),
-        ),
+        SizedBox(width: 260, child: _buildRoomList()),
         const SizedBox(width: 22),
         Expanded(
           child: Column(
@@ -1255,14 +1211,9 @@ class _StepVisitState extends State<StepVisit> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 225,
-                      child: _buildSectionList(),
-                    ),
+                    SizedBox(width: 225, child: _buildSectionList()),
                     const SizedBox(width: 18),
-                    Expanded(
-                      child: _buildEditor(),
-                    ),
+                    Expanded(child: _buildEditor()),
                   ],
                 ),
               ),
@@ -1281,17 +1232,12 @@ class _StepVisitState extends State<StepVisit> {
       children: [
         const Text(
           'Pièces du bien',
-          style: TextStyle(
-            fontSize: 21,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
         Text(
           '${widget.rooms.length} pièce(s)',
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-          ),
+          style: const TextStyle(color: Color(0xFF64748B)),
         ),
         const SizedBox(height: 14),
         Expanded(
@@ -1303,11 +1249,8 @@ class _StepVisitState extends State<StepVisit> {
             itemBuilder: (context, index) {
               final room = widget.rooms[index];
               final selected = index == _selectedRoomIndex;
-              final completed = _completedRooms.contains(
-                _roomKey(index),
-              );
-              final completedSections =
-                  _completedSectionCount(index);
+              final completed = _completedRooms.contains(_roomKey(index));
+              final completedSections = _completedSectionCount(index);
 
               return Material(
                 color: selected
@@ -1350,8 +1293,7 @@ class _StepVisitState extends State<StepVisit> {
                         const SizedBox(width: 11),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 room.name,
@@ -1393,8 +1335,7 @@ class _StepVisitState extends State<StepVisit> {
     required int completedSections,
     required double roomProgress,
   }) {
-    final prefillPhotoCount =
-        _prefillPhotosForRoom(_selectedRoomIndex).length;
+    final prefillPhotoCount = _prefillPhotosForRoom(_selectedRoomIndex).length;
 
     return Column(
       children: [
@@ -1415,18 +1356,14 @@ class _StepVisitState extends State<StepVisit> {
                   const SizedBox(height: 4),
                   Text(
                     '${room.level} • Pièce ${_selectedRoomIndex + 1} / ${widget.rooms.length}',
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
-                    ),
+                    style: const TextStyle(color: Color(0xFF64748B)),
                   ),
                 ],
               ),
             ),
             OutlinedButton.icon(
               onPressed: _showAutomaticPrefillDialog,
-              icon: const Icon(
-                Icons.auto_awesome_outlined,
-              ),
+              icon: const Icon(Icons.auto_awesome_outlined),
               label: Text(
                 prefillPhotoCount == 0
                     ? 'Préremplir avec des photos'
@@ -1437,14 +1374,10 @@ class _StepVisitState extends State<StepVisit> {
             OutlinedButton.icon(
               onPressed: _toggleRoomCompleted,
               icon: Icon(
-                roomCompleted
-                    ? Icons.restart_alt
-                    : Icons.check_circle_outline,
+                roomCompleted ? Icons.restart_alt : Icons.check_circle_outline,
               ),
               label: Text(
-                roomCompleted
-                    ? 'Rouvrir la pièce'
-                    : 'Terminer la pièce',
+                roomCompleted ? 'Rouvrir la pièce' : 'Terminer la pièce',
               ),
             ),
           ],
@@ -1458,8 +1391,7 @@ class _StepVisitState extends State<StepVisit> {
                 child: LinearProgressIndicator(
                   value: roomProgress,
                   minHeight: 9,
-                  backgroundColor:
-                      const Color(0xFFE2E8F0),
+                  backgroundColor: const Color(0xFFE2E8F0),
                 ),
               ),
             ),
@@ -1505,24 +1437,14 @@ class _StepVisitState extends State<StepVisit> {
             },
             itemBuilder: (context, index) {
               final section = _sections[index];
-              final selected =
-                  index == _selectedSectionIndex;
-              final completed = _sectionHasContent(
-                _selectedRoomIndex,
-                section,
-              );
-              final photoCount = _photos[
-                      _sectionKey(
-                        _selectedRoomIndex,
-                        section,
-                      )]
-                  ?.length ??
+              final selected = index == _selectedSectionIndex;
+              final completed = _sectionHasContent(_selectedRoomIndex, section);
+              final photoCount =
+                  _photos[_sectionKey(_selectedRoomIndex, section)]?.length ??
                   0;
 
               return Material(
-                color: selected
-                    ? const Color(0xFFEAF2FF)
-                    : Colors.white,
+                color: selected ? const Color(0xFFEAF2FF) : Colors.white,
                 borderRadius: BorderRadius.circular(13),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(13),
@@ -1573,14 +1495,11 @@ class _StepVisitState extends State<StepVisit> {
                             ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFEAF2FF),
-                              borderRadius:
-                                  BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               '📷 $photoCount',
-                              style: const TextStyle(
-                                fontSize: 11,
-                              ),
+                              style: const TextStyle(fontSize: 11),
                             ),
                           ),
                       ],
@@ -1811,19 +1730,13 @@ class _StepVisitState extends State<StepVisit> {
           title: 'Description générale du mobilier de cuisine',
           hintText:
               'Décrivez la composition, les matériaux, les couleurs et l’état général...',
-          controller: _kitchenControllerFor(
-            _selectedRoomIndex,
-            'general',
-          ),
+          controller: _kitchenControllerFor(_selectedRoomIndex, 'general'),
         ),
         _buildKitchenTextField(
           title: 'Plan de travail',
           hintText:
               'Décrivez le matériau, la couleur, la disposition, l’état et les défauts...',
-          controller: _kitchenControllerFor(
-            _selectedRoomIndex,
-            'worktop',
-          ),
+          controller: _kitchenControllerFor(_selectedRoomIndex, 'worktop'),
         ),
         Container(
           width: double.infinity,
@@ -1873,9 +1786,9 @@ class _StepVisitState extends State<StepVisit> {
               ),
               if (equipment.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                ..._kitchenWorktopEquipment
-                    .where(equipment.contains)
-                    .map((item) {
+                ..._kitchenWorktopEquipment.where(equipment.contains).map((
+                  item,
+                ) {
                   final controller = _kitchenControllerFor(
                     _selectedRoomIndex,
                     'worktop-equipment::$item',
@@ -1888,9 +1801,7 @@ class _StepVisitState extends State<StepVisit> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                      ),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1941,8 +1852,7 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   Widget _buildFurnitureEquipment() {
-    final selectedItems =
-        _furnitureItemsFor(_selectedRoomIndex);
+    final selectedItems = _furnitureItemsFor(_selectedRoomIndex);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1953,9 +1863,7 @@ class _StepVisitState extends State<StepVisit> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xFFE2E8F0),
-            ),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Wrap(
             spacing: 10,
@@ -1992,9 +1900,7 @@ class _StepVisitState extends State<StepVisit> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFE2E8F0),
-                ),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2016,8 +1922,7 @@ class _StepVisitState extends State<StepVisit> {
                       hintText:
                           'Décrivez le mobilier, son état et ses défauts...',
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     onChanged: (_) {
@@ -2034,27 +1939,16 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   Widget _buildEditor() {
-    final controller = _controllerFor(
-      _selectedRoomIndex,
-      _currentSection,
-    );
-    final photos = _photosFor(
-      _selectedRoomIndex,
-      _currentSection,
-    );
-    final conform = _isConform(
-      _selectedRoomIndex,
-      _currentSection,
-    );
+    final controller = _controllerFor(_selectedRoomIndex, _currentSection);
+    final photos = _photosFor(_selectedRoomIndex, _currentSection);
+    final conform = _isConform(_selectedRoomIndex, _currentSection);
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2073,9 +1967,7 @@ class _StepVisitState extends State<StepVisit> {
               IconButton(
                 tooltip: 'Effacer le poste',
                 onPressed: _clearCurrentSection,
-                icon: const Icon(
-                  Icons.delete_sweep_outlined,
-                ),
+                icon: const Icon(Icons.delete_sweep_outlined),
               ),
             ],
           ),
@@ -2085,13 +1977,10 @@ class _StepVisitState extends State<StepVisit> {
                 CheckboxListTile(
                   value: conform,
                   contentPadding: EdgeInsets.zero,
-                  controlAffinity:
-                      ListTileControlAffinity.leading,
+                  controlAffinity: ListTileControlAffinity.leading,
                   title: const Text(
                     'Conforme aux généralités',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: const Text(
                     'Insère automatiquement cette mention dans la description.',
@@ -2146,34 +2035,20 @@ class _StepVisitState extends State<StepVisit> {
                   const SizedBox(height: 10),
                   ElectricalPanel(
                     walls: _walls,
-                    quantitiesForWall: (wall) => _electricalItemsFor(
-                      _selectedRoomIndex,
-                      wall,
-                    ),
-                    blockQuantityForWall: (wall) => _blockQuantityFor(
-                      _selectedRoomIndex,
-                      wall,
-                    ),
-                    blockComponentsForWall: (wall) => _blockComponentsFor(
-                      _selectedRoomIndex,
-                      wall,
-                    ),
+                    quantitiesForWall: (wall) =>
+                        _electricalItemsFor(_selectedRoomIndex, wall),
+                    blockQuantityForWall: (wall) =>
+                        _blockQuantityFor(_selectedRoomIndex, wall),
+                    blockComponentsForWall: (wall) =>
+                        _blockComponentsFor(_selectedRoomIndex, wall),
                     onQuantityChanged: (wall, item, quantity) {
                       _setElectricalQuantity(wall, item, quantity);
                     },
                     onBlockQuantityChanged: (wall, quantity) {
                       _setBlockQuantity(wall, quantity);
                     },
-                    onBlockComponentChanged: (
-                      wall,
-                      component,
-                      selected,
-                    ) {
-                      _toggleBlockComponent(
-                        wall,
-                        component,
-                        selected,
-                      );
+                    onBlockComponentChanged: (wall, component, selected) {
+                      _toggleBlockComponent(wall, component, selected);
                     },
                   ),
                 ],
@@ -2192,8 +2067,7 @@ class _StepVisitState extends State<StepVisit> {
                       maxLines: null,
                       textAlignVertical: TextAlignVertical.top,
                       decoration: InputDecoration(
-                        hintText:
-                            'Décrivez l’état général de ce poste...',
+                        hintText: 'Décrivez l’état général de ce poste...',
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -2211,17 +2085,13 @@ class _StepVisitState extends State<StepVisit> {
                   children: [
                     OutlinedButton.icon(
                       onPressed: _selectPhotos,
-                      icon: const Icon(
-                        Icons.collections_outlined,
-                      ),
+                      icon: const Icon(Icons.collections_outlined),
                       label: const Text('Galerie'),
                     ),
                     const SizedBox(width: 10),
                     FilledButton.icon(
                       onPressed: _takePhoto,
-                      icon: const Icon(
-                        Icons.photo_camera_outlined,
-                      ),
+                      icon: const Icon(Icons.photo_camera_outlined),
                       label: const Text('Photo'),
                     ),
                     const Spacer(),
@@ -2253,8 +2123,7 @@ class _StepVisitState extends State<StepVisit> {
                             InkWell(
                               onTap: () => _showPhoto(photo),
                               child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12),
                                 child: Image.file(
                                   File(photo.path),
                                   width: 95,
@@ -2267,15 +2136,11 @@ class _StepVisitState extends State<StepVisit> {
                               right: -7,
                               top: -7,
                               child: IconButton.filled(
-                                visualDensity:
-                                    VisualDensity.compact,
+                                visualDensity: VisualDensity.compact,
                                 onPressed: () {
                                   _removePhoto(index);
                                 },
-                                icon: const Icon(
-                                  Icons.close,
-                                  size: 16,
-                                ),
+                                icon: const Icon(Icons.close, size: 16),
                               ),
                             ),
                           ],
@@ -2296,19 +2161,15 @@ class _StepVisitState extends State<StepVisit> {
     return Row(
       children: [
         OutlinedButton.icon(
-          onPressed: _selectedRoomIndex == 0
-              ? null
-              : _previousRoom,
+          onPressed: _selectedRoomIndex == 0 ? null : _previousRoom,
           icon: const Icon(Icons.arrow_back),
           label: const Text('Pièce précédente'),
         ),
         const Spacer(),
         FilledButton.icon(
-          onPressed:
-              _selectedRoomIndex ==
-                      widget.rooms.length - 1
-                  ? null
-                  : _nextRoom,
+          onPressed: _selectedRoomIndex == widget.rooms.length - 1
+              ? null
+              : _nextRoom,
           icon: const Icon(Icons.arrow_forward),
           label: const Text('Pièce suivante'),
         ),

@@ -94,7 +94,10 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
       exitPreliminaryNotes: _exitNotes.text.trim(),
       beforeWorksPreliminaryNotes: _beforeWorksNotes.text.trim(),
       primaryColorHex: _cleanHex(_primaryColor.text, current.primaryColorHex),
-      secondaryColorHex: _cleanHex(_secondaryColor.text, current.secondaryColorHex),
+      secondaryColorHex: _cleanHex(
+        _secondaryColor.text,
+        current.secondaryColorHex,
+      ),
       headingColorHex: _cleanHex(_headingColor.text, current.headingColorHex),
       bodyColorHex: _cleanHex(_bodyColor.text, current.bodyColorHex),
     );
@@ -229,27 +232,48 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
           title: 'Modèle',
           subtitle: 'Nommez ce modèle pour l’identifier facilement.',
           children: [
-            _field(_templateName, 'Nom du modèle', icon: Icons.bookmark_outline),
+            _field(
+              _templateName,
+              'Nom du modèle',
+              icon: Icons.bookmark_outline,
+            ),
           ],
         ),
         _section(
           title: 'Identité professionnelle',
-          subtitle: 'Ces informations apparaîtront sur la page de garde et dans le pied de page.',
+          subtitle:
+              'Ces informations apparaîtront sur la page de garde et dans le pied de page.',
           children: [
             _twoColumns(
               _field(_companyName, 'Nom de la société', icon: Icons.business),
-              _field(_professionalNumber, 'Numéro professionnel', icon: Icons.badge_outlined),
+              _field(
+                _professionalNumber,
+                'Numéro professionnel',
+                icon: Icons.badge_outlined,
+              ),
             ),
-            _field(_companyAddress, 'Adresse', icon: Icons.location_on_outlined),
+            _field(
+              _companyAddress,
+              'Adresse',
+              icon: Icons.location_on_outlined,
+            ),
             _twoColumns(
               _field(_companyPhone, 'Téléphone', icon: Icons.phone_outlined),
               _field(_companyEmail, 'E-mail', icon: Icons.email_outlined),
             ),
             _twoColumns(
               _field(_companyWebsite, 'Site internet', icon: Icons.language),
-              _field(_vatNumber, 'Numéro de TVA', icon: Icons.receipt_long_outlined),
+              _field(
+                _vatNumber,
+                'Numéro de TVA',
+                icon: Icons.receipt_long_outlined,
+              ),
             ),
-            _field(_logoPath, 'Chemin ou URL du logo', icon: Icons.image_outlined),
+            _field(
+              _logoPath,
+              'Chemin ou URL du logo',
+              icon: Icons.image_outlined,
+            ),
             _field(
               _footerText,
               'Texte du pied de page',
@@ -265,7 +289,9 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
               contentPadding: EdgeInsets.zero,
               value: _preferences!.showLogo,
               title: const Text('Afficher le logo'),
-              subtitle: const Text('Sur la page de garde et, selon le modèle, dans l’en-tête.'),
+              subtitle: const Text(
+                'Sur la page de garde et, selon le modèle, dans l’en-tête.',
+              ),
               onChanged: (value) => setState(
                 () => _preferences = _preferences!.copyWith(showLogo: value),
               ),
@@ -275,7 +301,9 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
               value: _preferences!.showPageNumbers,
               title: const Text('Afficher les numéros de page'),
               onChanged: (value) => setState(
-                () => _preferences = _preferences!.copyWith(showPageNumbers: value),
+                () => _preferences = _preferences!.copyWith(
+                  showPageNumbers: value,
+                ),
               ),
             ),
           ],
@@ -293,7 +321,8 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
       children: [
         _section(
           title: 'Palette du rapport',
-          subtitle: 'Chaque changement est visible immédiatement dans l’aperçu.',
+          subtitle:
+              'Chaque changement est visible immédiatement dans l’aperçu.',
           children: [
             _colorField('Couleur principale', _primaryColor),
             _colorField('Couleur secondaire', _secondaryColor),
@@ -310,19 +339,25 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
                 labelText: 'Police principale',
                 border: OutlineInputBorder(),
               ),
-              items: const [
-                'Sylfaen',
-                'Arial',
-                'Calibri',
-                'Georgia',
-                'Times New Roman',
-                'Verdana',
-              ]
-                  .map((font) => DropdownMenuItem(value: font, child: Text(font)))
-                  .toList(),
+              items:
+                  const [
+                        'Sylfaen',
+                        'Arial',
+                        'Calibri',
+                        'Georgia',
+                        'Times New Roman',
+                        'Verdana',
+                      ]
+                      .map(
+                        (font) =>
+                            DropdownMenuItem(value: font, child: Text(font)),
+                      )
+                      .toList(),
               onChanged: (font) {
                 if (font == null) return;
-                setState(() => _preferences = _preferences!.copyWith(fontFamily: font));
+                setState(
+                  () => _preferences = _preferences!.copyWith(fontFamily: font),
+                );
               },
             ),
             const SizedBox(height: 20),
@@ -332,7 +367,8 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
               16,
               32,
               (size) => setState(
-                () => _preferences = _preferences!.copyWith(titleFontSize: size),
+                () =>
+                    _preferences = _preferences!.copyWith(titleFontSize: size),
               ),
             ),
             _slider(
@@ -341,7 +377,9 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
               11,
               22,
               (size) => setState(
-                () => _preferences = _preferences!.copyWith(headingFontSize: size),
+                () => _preferences = _preferences!.copyWith(
+                  headingFontSize: size,
+                ),
               ),
             ),
             _slider(
@@ -381,7 +419,9 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
               value: value.showPageNumbers,
               title: const Text('Afficher les numéros de page'),
               onChanged: (enabled) => setState(
-                () => _preferences = _preferences!.copyWith(showPageNumbers: enabled),
+                () => _preferences = _preferences!.copyWith(
+                  showPageNumbers: enabled,
+                ),
               ),
             ),
           ],
@@ -435,13 +475,16 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
         ),
         _section(
           title: 'État des lieux de sortie',
-          subtitle: 'Ce texte doit rappeler la comparaison avec l’état des lieux d’entrée.',
+          subtitle:
+              'Ce texte doit rappeler la comparaison avec l’état des lieux d’entrée.',
           children: [_field(_exitNotes, 'Notes liminaires', maxLines: 9)],
         ),
         _section(
           title: 'État des lieux avant travaux',
           subtitle: 'Texte spécifique à la preuve des désordres préexistants.',
-          children: [_field(_beforeWorksNotes, 'Notes liminaires', maxLines: 9)],
+          children: [
+            _field(_beforeWorksNotes, 'Notes liminaires', maxLines: 9),
+          ],
         ),
       ],
     );
@@ -452,7 +495,8 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
       children: [
         _section(
           title: 'Ordre et contenu du rapport',
-          subtitle: 'Glissez les sections pour les réordonner et désactivez celles qui ne doivent pas apparaître.',
+          subtitle:
+              'Glissez les sections pour les réordonner et désactivez celles qui ne doivent pas apparaître.',
           children: [
             ReorderableListView.builder(
               shrinkWrap: true,
@@ -483,7 +527,11 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
                       onChanged: (enabled) {
                         final sections = [..._preferences!.sections];
                         sections[index] = section.copyWith(enabled: enabled);
-                        setState(() => _preferences = _preferences!.copyWith(sections: sections));
+                        setState(
+                          () => _preferences = _preferences!.copyWith(
+                            sections: sections,
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -522,10 +570,20 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: 5),
-              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blueGrey)),
+              Text(
+                subtitle,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.blueGrey),
+              ),
             ],
             const SizedBox(height: 20),
             ...children.expand((child) => [child, const SizedBox(height: 14)]),
@@ -560,14 +618,27 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
         if (constraints.maxWidth < 650) {
           return Column(children: [left, const SizedBox(height: 14), right]);
         }
-        return Row(children: [Expanded(child: left), const SizedBox(width: 14), Expanded(child: right)]);
+        return Row(
+          children: [
+            Expanded(child: left),
+            const SizedBox(width: 14),
+            Expanded(child: right),
+          ],
+        );
       },
     );
   }
 
   Widget _colorField(String label, TextEditingController controller) {
     final color = _hexColor(_cleanHex(controller.text, '1E5AA8'));
-    const presets = ['1E5AA8', '0F766E', '7C3AED', 'B45309', '9F1239', '111827'];
+    const presets = [
+      '1E5AA8',
+      '0F766E',
+      '7C3AED',
+      'B45309',
+      '9F1239',
+      '111827',
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -607,7 +678,9 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
                   color: _hexColor(hex),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 3)],
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x33000000), blurRadius: 3),
+                  ],
                 ),
               ),
             );
@@ -630,11 +703,22 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
       children: [
         Row(
           children: [
-            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
             Text('${value.toStringAsFixed(0)} $suffix'),
           ],
         ),
-        Slider(value: value.clamp(min, max).toDouble(), min: min, max: max, divisions: (max - min).round(), onChanged: onChanged),
+        Slider(
+          value: value.clamp(min, max).toDouble(),
+          min: min,
+          max: max,
+          divisions: (max - min).round(),
+          onChanged: onChanged,
+        ),
       ],
     );
   }

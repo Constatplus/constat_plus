@@ -122,7 +122,10 @@ class _StepGeneralInfoState extends State<StepGeneralInfo> {
 
           const SizedBox(height: 30),
 
-          const _SectionTitle(icon: Icons.calendar_today_outlined, title: 'Date'),
+          const _SectionTitle(
+            icon: Icons.calendar_today_outlined,
+            title: 'Date',
+          ),
           const SizedBox(height: 14),
 
           Row(
@@ -146,9 +149,7 @@ class _StepGeneralInfoState extends State<StepGeneralInfo> {
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
-                child: _InputField(label: 'Heure'),
-              ),
+              const Expanded(child: _InputField(label: 'Heure')),
             ],
           ),
 
@@ -255,7 +256,10 @@ class _WitnessCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(flex: 2, child: _InputField(label: 'Nom du témoin')),
+              const Expanded(
+                flex: 2,
+                child: _InputField(label: 'Nom du témoin'),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: DropdownButtonFormField<String>(
@@ -270,8 +274,14 @@ class _WitnessCard extends StatelessWidget {
                     ),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'Bailleur', child: Text('Bailleur')),
-                    DropdownMenuItem(value: 'Locataire', child: Text('Locataire')),
+                    DropdownMenuItem(
+                      value: 'Bailleur',
+                      child: Text('Bailleur'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Locataire',
+                      child: Text('Locataire'),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -306,10 +316,7 @@ class _SectionTitle extends StatelessWidget {
   final IconData icon;
   final String title;
 
-  const _SectionTitle({
-    required this.icon,
-    required this.title,
-  });
+  const _SectionTitle({required this.icon, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -329,9 +336,7 @@ class _SectionTitle extends StatelessWidget {
 class _InputField extends StatelessWidget {
   final String label;
 
-  const _InputField({
-    required this.label,
-  });
+  const _InputField({required this.label});
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../features/auth/login_page.dart';
+import '../features/auth/auth_gate.dart';
 import 'theme.dart';
 
 class ProjectGeoApp extends StatelessWidget {
-  const ProjectGeoApp({super.key});
+  final Object? startupError;
+  final Widget? home;
+
+  const ProjectGeoApp({super.key, this.startupError, this.home});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +15,7 @@ class ProjectGeoApp extends StatelessWidget {
       title: 'Constat+',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginPage(),
+      home: home ?? AuthGate(startupError: startupError),
     );
   }
 }

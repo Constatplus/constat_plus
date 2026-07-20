@@ -33,7 +33,9 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
       'Châssis': TextEditingController(text: inspection.windows),
       'Chauffage': TextEditingController(text: inspection.heating),
       'Sanitaires': TextEditingController(text: inspection.sanitary),
-      'Observations': TextEditingController(text: inspection.generalObservations),
+      'Observations': TextEditingController(
+        text: inspection.generalObservations,
+      ),
     };
   }
 
@@ -173,7 +175,10 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
     }
 
     fill('Sol', 'Revêtement de sol à décrire sur la base des vues générales.');
-    fill('Murs', 'Murs visibles sur les photographies, état à confirmer lors de la visite.');
+    fill(
+      'Murs',
+      'Murs visibles sur les photographies, état à confirmer lors de la visite.',
+    );
     fill('Plafond', 'Plafond visible, état à contrôler et compléter.');
     fill(
       'Observations',
@@ -188,9 +193,9 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -217,7 +222,8 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
               children: [
                 _section(
                   title: 'Photos et préremplissage',
-                  subtitle: 'Ajoutez des vues générales. Elles ne sont pas liées à un élément précis.',
+                  subtitle:
+                      'Ajoutez des vues générales. Elles ne sont pas liées à un élément précis.',
                   icon: Icons.photo_camera_outlined,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,7 +249,9 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                             label: const Text('Choisir des photos'),
                           ),
                           FilledButton.icon(
-                            onPressed: _isLoadingPhotos ? null : _preFillFromPhotos,
+                            onPressed: _isLoadingPhotos
+                                ? null
+                                : _preFillFromPhotos,
                             icon: const Icon(Icons.auto_awesome_outlined),
                             label: const Text('Préremplir les postes'),
                           ),
@@ -264,7 +272,8 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                 const SizedBox(height: 18),
                 _section(
                   title: 'Description de la pièce',
-                  subtitle: 'Complétez uniquement les postes présents ou utiles.',
+                  subtitle:
+                      'Complétez uniquement les postes présents ou utiles.',
                   icon: Icons.description_outlined,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -294,7 +303,8 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                                 decoration: InputDecoration(
                                   labelText: label,
                                   alignLabelWithHint: true,
-                                  hintText: 'Décrivez l’état, la matière, la teinte et les défauts.',
+                                  hintText:
+                                      'Décrivez l’état, la matière, la teinte et les défauts.',
                                 ),
                               ),
                             ),
@@ -306,7 +316,8 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                 const SizedBox(height: 18),
                 _section(
                   title: 'Électricité',
-                  subtitle: 'Cochez les équipements présents et indiquez leur quantité.',
+                  subtitle:
+                      'Cochez les équipements présents et indiquez leur quantité.',
                   icon: Icons.electrical_services_outlined,
                   child: Column(
                     children: [
@@ -321,7 +332,8 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                 const SizedBox(height: 18),
                 _section(
                   title: 'Mobilier et équipements',
-                  subtitle: 'Sélectionnez un élément puis décrivez-le sous son titre.',
+                  subtitle:
+                      'Sélectionnez un élément puis décrivez-le sous son titre.',
                   icon: Icons.chair_outlined,
                   child: Column(
                     children: [
@@ -336,7 +348,8 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                 const SizedBox(height: 18),
                 _section(
                   title: 'Observations complémentaires',
-                  subtitle: 'Ajoutez toute information non reprise dans les postes précédents.',
+                  subtitle:
+                      'Ajoutez toute information non reprise dans les postes précédents.',
                   icon: Icons.notes_outlined,
                   child: TextField(
                     controller: _controllers['Observations'],
@@ -386,9 +399,15 @@ class _RoomVisitPageState extends State<RoomVisitPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: 4),
-                      Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -425,7 +444,10 @@ class _ElectricalRow extends StatelessWidget {
               },
             ),
             Expanded(
-              child: Text(item.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+              child: Text(
+                item.label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
             IconButton(
               onPressed: item.selected && item.quantity > 1

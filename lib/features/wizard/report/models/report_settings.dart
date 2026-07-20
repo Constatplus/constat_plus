@@ -1,13 +1,12 @@
-enum InspectionReportType {
-  entry,
-  exit,
-}
+enum InspectionReportType { entry, exit, beforeWorks, afterWorks }
 
 extension InspectionReportTypeLabel on InspectionReportType {
   String get label => switch (this) {
-        InspectionReportType.entry => 'État des lieux d’entrée',
-        InspectionReportType.exit => 'État des lieux de sortie',
-      };
+    InspectionReportType.entry => 'État des lieux d’entrée',
+    InspectionReportType.exit => 'État des lieux de sortie',
+    InspectionReportType.beforeWorks => 'Constat avant travaux',
+    InspectionReportType.afterWorks => 'Récolement après travaux',
+  };
 }
 
 class ReportSettings {
@@ -92,6 +91,20 @@ class ReportSettings {
       return <String>[
         ...common,
         'Le présent état des lieux de sortie permet la comparaison avec l’état des lieux d’entrée et relève les modifications, dégradations ou manquements visibles à la fin de l’occupation.',
+      ];
+    }
+
+    if (type == InspectionReportType.beforeWorks) {
+      return <String>[
+        ...common,
+        'Le présent constat constitue le rapport de référence de l’état apparent des zones accessibles avant le commencement des travaux.',
+      ];
+    }
+
+    if (type == InspectionReportType.afterWorks) {
+      return <String>[
+        ...common,
+        'Le présent récolement compare les constatations visibles après travaux au rapport avant travaux de référence.',
       ];
     }
 

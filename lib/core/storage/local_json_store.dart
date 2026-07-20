@@ -19,7 +19,10 @@ class LocalJsonStore {
     if (raw == null || raw.isEmpty) return const [];
     final decoded = jsonDecode(raw);
     if (decoded is! List) return const [];
-    return decoded.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    return decoded
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   Future<void> writeObject(String key, Map<String, dynamic> value) async {

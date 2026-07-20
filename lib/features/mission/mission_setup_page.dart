@@ -54,7 +54,10 @@ class _MissionSetupPageState extends State<MissionSetupPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Créer le dossier', style: Theme.of(context).textTheme.headlineMedium),
+                      Text(
+                        'Créer le dossier',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         'Complétez les informations principales avant de commencer la visite.',
@@ -84,7 +87,9 @@ class _MissionSetupPageState extends State<MissionSetupPage> {
                       ),
                       const SizedBox(height: 16),
                       ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                        ),
                         leading: const Icon(Icons.calendar_month_outlined),
                         title: const Text('Date de la mission'),
                         subtitle: Text(
@@ -111,7 +116,9 @@ class _MissionSetupPageState extends State<MissionSetupPage> {
                             if (_formKey.currentState!.validate()) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Dossier créé. Le parcours métier arrive au sprint suivant.'),
+                                  content: Text(
+                                    'Dossier créé. Le parcours métier arrive au sprint suivant.',
+                                  ),
                                 ),
                               );
                             }

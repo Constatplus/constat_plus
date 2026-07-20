@@ -13,19 +13,9 @@ class MetersTab extends StatefulWidget {
 class _MetersTabState extends State<MetersTab> {
   final List<MeterItem> meters = [];
 
-  void _addMeter(
-    String type,
-    IconData icon,
-    String defaultName,
-  ) {
+  void _addMeter(String type, IconData icon, String defaultName) {
     setState(() {
-      meters.add(
-        MeterItem(
-          type: type,
-          icon: icon,
-          name: defaultName,
-        ),
-      );
+      meters.add(MeterItem(type: type, icon: icon, name: defaultName));
     });
   }
 
@@ -43,11 +33,7 @@ class _MetersTabState extends State<MetersTab> {
                 _tile(
                   Icons.water_drop,
                   "Compteur d'eau",
-                  () => _addMeter(
-                    "Eau",
-                    Icons.water_drop,
-                    "Compteur d'eau",
-                  ),
+                  () => _addMeter("Eau", Icons.water_drop, "Compteur d'eau"),
                 ),
                 _tile(
                   Icons.flash_on,
@@ -70,11 +56,8 @@ class _MetersTabState extends State<MetersTab> {
                 _tile(
                   Icons.thermostat,
                   "Calorimètre",
-                  () => _addMeter(
-                    "Calorimètre",
-                    Icons.thermostat,
-                    "Calorimètre",
-                  ),
+                  () =>
+                      _addMeter("Calorimètre", Icons.thermostat, "Calorimètre"),
                 ),
                 _tile(
                   Icons.heat_pump,
@@ -111,11 +94,7 @@ class _MetersTabState extends State<MetersTab> {
     );
   }
 
-  Widget _tile(
-    IconData icon,
-    String title,
-    VoidCallback onTap,
-  ) {
+  Widget _tile(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.blue),
       title: Text(title),
@@ -146,10 +125,7 @@ class _MetersTabState extends State<MetersTab> {
               ? const Center(
                   child: Text(
                     "Aucun compteur ajouté.",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black45,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.black45),
                   ),
                 )
               : ListView.builder(

@@ -243,19 +243,14 @@ class _FolderCard extends StatelessWidget {
   final InventoryFolderPreview folder;
   final VoidCallback onMenuTap;
 
-  const _FolderCard({
-    required this.folder,
-    required this.onMenuTap,
-  });
+  const _FolderCard({required this.folder, required this.onMenuTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
       color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         onTap: onMenuTap,
@@ -280,10 +275,7 @@ class _FolderCard extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 5,
-                    backgroundColor: folder.statusColor,
-                  ),
+                  CircleAvatar(radius: 5, backgroundColor: folder.statusColor),
                   const SizedBox(width: 8),
                   Text(folder.statusLabel),
                   const Spacer(),
@@ -343,8 +335,4 @@ class InventoryFolderPreview {
   }
 }
 
-enum FolderStatus {
-  draft,
-  inProgress,
-  completed,
-}
+enum FolderStatus { draft, inProgress, completed }

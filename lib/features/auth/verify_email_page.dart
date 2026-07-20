@@ -22,7 +22,9 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       await AuthService.resendConfirmation(widget.email);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Un nouvel e-mail de confirmation a été envoyé.')),
+        const SnackBar(
+          content: Text('Un nouvel e-mail de confirmation a été envoyé.'),
+        ),
       );
     } on AuthException catch (error) {
       if (!mounted) return;
@@ -41,7 +43,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   Widget build(BuildContext context) {
     return AuthShell(
       title: 'Confirmez votre adresse e-mail',
-      subtitle: 'Une dernière étape protège votre compte et vos futurs dossiers.',
+      subtitle:
+          'Une dernière étape protège votre compte et vos futurs dossiers.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -54,7 +57,11 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
             ),
             child: Column(
               children: [
-                const Icon(Icons.outgoing_mail, size: 48, color: Color(0xFF1264F6)),
+                const Icon(
+                  Icons.outgoing_mail,
+                  size: 48,
+                  color: Color(0xFF1264F6),
+                ),
                 const SizedBox(height: 14),
                 const Text(
                   'Consultez votre boîte de réception',
@@ -77,7 +84,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
           ),
           const SizedBox(height: 22),
           FilledButton(
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
             child: const Text('Retour à la connexion'),
           ),
           const SizedBox(height: 10),

@@ -7,7 +7,8 @@ class StepExitClosure extends StatelessWidget {
 
   final SignaturesData _signatures = SignaturesData();
 
-  static const String legalText = '''Les parties reconnaissent que la mission de l’expert est terminée. Elles déclarent avoir pris connaissance des observations, des relevés, des clés remises et, le cas échéant, des montants proposés. Le rapport peut être clôturé même en cas de réserve, de refus ou d’absence de signature d’une partie, ces circonstances étant alors mentionnées au procès-verbal.
+  static const String legalText =
+      '''Les parties reconnaissent que la mission de l’expert est terminée. Elles déclarent avoir pris connaissance des observations, des relevés, des clés remises et, le cas échéant, des montants proposés. Le rapport peut être clôturé même en cas de réserve, de refus ou d’absence de signature d’une partie, ces circonstances étant alors mentionnées au procès-verbal.
 
 Nature et valeur juridique du document
 Le présent procès-verbal est destiné à constater contradictoirement l’état matériel du bien à la sortie du preneur. Il constitue un élément de preuve entre les parties pour les constatations qui y figurent.
@@ -29,14 +30,33 @@ Le procès-verbal signé, y compris par signature électronique, peut être prod
 
   @override
   Widget build(BuildContext context) {
-    return ListView(children: [
-      const Text('Clôture du rapport', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
-      const SizedBox(height: 8),
-      const Text('Relisez les mentions de clôture et invitez les parties à signer.', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
-      const SizedBox(height: 22),
-      Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE2E8F0))), child: const SelectableText(legalText, style: TextStyle(height: 1.55))),
-      const SizedBox(height: 24),
-      StepSignatures(data: _signatures, includeExpert: true, embedded: true),
-    ]);
+    return ListView(
+      children: [
+        const Text(
+          'Clôture du rapport',
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Relisez les mentions de clôture et invitez les parties à signer.',
+          style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+        ),
+        const SizedBox(height: 22),
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: const SelectableText(
+            legalText,
+            style: TextStyle(height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 24),
+        StepSignatures(data: _signatures, includeExpert: true, embedded: true),
+      ],
+    );
   }
 }

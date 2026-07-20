@@ -100,15 +100,14 @@ class _InspectionPageState extends State<InspectionPage> {
                       isSelected
                           ? Icons.radio_button_checked
                           : Icons.radio_button_unchecked,
-                      color: isSelected
-                          ? const Color(0xFF1565C0)
-                          : Colors.grey,
+                      color: isSelected ? const Color(0xFF1565C0) : Colors.grey,
                     ),
                     title: Text(
                       rooms[index],
                       style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                     onTap: () {
@@ -141,10 +140,7 @@ class _InspectionPageState extends State<InspectionPage> {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 10,
-                  ),
+                  LinearProgressIndicator(value: progress, minHeight: 10),
                   const SizedBox(height: 28),
                   Wrap(
                     spacing: 10,
@@ -174,10 +170,7 @@ class _InspectionPageState extends State<InspectionPage> {
                   const SizedBox(height: 12),
                   Expanded(
                     child: TextField(
-                      controller: _controllerFor(
-                        currentRoom,
-                        selectedSection,
-                      ),
+                      controller: _controllerFor(currentRoom, selectedSection),
                       expands: true,
                       maxLines: null,
                       minLines: null,
@@ -197,8 +190,9 @@ class _InspectionPageState extends State<InspectionPage> {
                   Row(
                     children: [
                       OutlinedButton.icon(
-                        onPressed:
-                            selectedRoomIndex == 0 ? null : _previousRoom,
+                        onPressed: selectedRoomIndex == 0
+                            ? null
+                            : _previousRoom,
                         icon: const Icon(Icons.arrow_back),
                         label: const Text('Pièce précédente'),
                       ),

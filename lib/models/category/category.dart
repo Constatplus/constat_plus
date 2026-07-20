@@ -6,17 +6,9 @@ class Category {
 
   final List<Element> elements;
 
-  const Category({
-    this.id = '',
-    this.name = '',
-    this.elements = const [],
-  });
+  const Category({this.id = '', this.name = '', this.elements = const []});
 
-  Category copyWith({
-    String? id,
-    String? name,
-    List<Element>? elements,
-  }) {
+  Category copyWith({String? id, String? name, List<Element>? elements}) {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,

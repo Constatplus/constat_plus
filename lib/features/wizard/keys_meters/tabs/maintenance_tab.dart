@@ -77,9 +77,7 @@ class _MaintenanceTabState extends State<MaintenanceTab>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: item.selected
-                  ? Colors.blue
-                  : Colors.grey.shade300,
+              color: item.selected ? Colors.blue : Colors.grey.shade300,
             ),
           ),
           child: Padding(
@@ -96,13 +94,9 @@ class _MaintenanceTabState extends State<MaintenanceTab>
                   ),
                   title: Text(
                     item.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  subtitle: const Text(
-                    'Entretien ou contrôle disponible',
-                  ),
+                  subtitle: const Text('Entretien ou contrôle disponible'),
                   onChanged: (value) {
                     setState(() {
                       item.selected = value ?? false;
@@ -116,9 +110,7 @@ class _MaintenanceTabState extends State<MaintenanceTab>
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => _selectDate(item),
-                          icon: const Icon(
-                            Icons.calendar_month_outlined,
-                          ),
+                          icon: const Icon(Icons.calendar_month_outlined),
                           label: Text(_formatDate(item.date)),
                         ),
                       ),
@@ -151,9 +143,7 @@ class _MaintenanceTabState extends State<MaintenanceTab>
                   ),
                   const SizedBox(height: 14),
                   PhotoPickerSection(
-                    key: ValueKey(
-                      'maintenance-photo-${item.id}',
-                    ),
+                    key: ValueKey('maintenance-photo-${item.id}'),
                     title: 'Photos de l’entretien',
                   ),
                 ],
@@ -176,9 +166,9 @@ class _MaintenanceItem {
   String observation;
 
   _MaintenanceItem(this.name)
-      : selected = false,
-        date = null,
-        company = '',
-        observation = '',
-        id = '${DateTime.now().microsecondsSinceEpoch}-$name';
+    : selected = false,
+      date = null,
+      company = '',
+      observation = '',
+      id = '${DateTime.now().microsecondsSinceEpoch}-$name';
 }

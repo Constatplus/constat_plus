@@ -13,28 +13,19 @@ class SentenceGenerator {
 
     if (observation.material != null) {
       buffer.write(
-        ' ${_grammar.material(
-          observation.material!.id,
-          observation.material!.name,
-        )}',
+        ' ${_grammar.material(observation.material!.id, observation.material!.name)}',
       );
     }
 
     if (observation.covering != null) {
       buffer.write(
-        ' ${_grammar.covering(
-          observation.covering!.id,
-          observation.covering!.name,
-        )}',
+        ' ${_grammar.covering(observation.covering!.id, observation.covering!.name)}',
       );
     }
 
     if (observation.condition != null) {
       buffer.write(
-        ', ${_grammar.condition(
-          observation.condition!.id,
-          observation.condition!.name,
-        )}',
+        ', ${_grammar.condition(observation.condition!.id, observation.condition!.name)}',
       );
     }
 

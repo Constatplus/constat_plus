@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 class RecentFiles extends StatefulWidget {
   final VoidCallback onOpenFolders;
 
-  const RecentFiles({
-    super.key,
-    required this.onOpenFolders,
-  });
+  const RecentFiles({super.key, required this.onOpenFolders});
 
   @override
   State<RecentFiles> createState() => _RecentFilesState();
@@ -111,8 +108,7 @@ class _RecentFilesState extends State<RecentFiles> {
 
   void _showPreviousAdvice() {
     setState(() {
-      _currentAdvice =
-          (_currentAdvice - 1 + _advices.length) % _advices.length;
+      _currentAdvice = (_currentAdvice - 1 + _advices.length) % _advices.length;
     });
   }
 
@@ -132,9 +128,7 @@ class _RecentFilesState extends State<RecentFiles> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -175,10 +169,7 @@ class _RecentFilesState extends State<RecentFiles> {
                     SizedBox(height: 3),
                     Text(
                       'Les bonnes pratiques d’un Géomètre-Expert de terrain',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF64748B),
-                      ),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                     ),
                   ],
                 ),
@@ -201,9 +192,7 @@ class _RecentFilesState extends State<RecentFiles> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: const Color(0xFFE2E8F0),
-                ),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
@@ -286,25 +275,22 @@ class _RecentFilesState extends State<RecentFiles> {
               const SizedBox(width: 18),
               Expanded(
                 child: Row(
-                  children: List.generate(
-                    _advices.length,
-                    (index) {
-                      final selected = index == _currentAdvice;
+                  children: List.generate(_advices.length, (index) {
+                    final selected = index == _currentAdvice;
 
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        width: selected ? 24 : 8,
-                        height: 8,
-                        margin: const EdgeInsets.only(right: 7),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? const Color(0xFF1264F6)
-                              : const Color(0xFFCBD5E1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      );
-                    },
-                  ),
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      width: selected ? 24 : 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(right: 7),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? const Color(0xFF1264F6)
+                            : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    );
+                  }),
                 ),
               ),
               Text(

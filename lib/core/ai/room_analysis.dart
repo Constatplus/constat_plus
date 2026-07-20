@@ -40,9 +40,7 @@ class RoomAnalysis {
           sections[entry.key.toString()] = SectionAnalysis.fromJson(value);
         } else if (value is Map) {
           sections[entry.key.toString()] = SectionAnalysis.fromJson(
-            value.map(
-              (key, item) => MapEntry(key.toString(), item),
-            ),
+            value.map((key, item) => MapEntry(key.toString(), item)),
           );
         } else if (value != null) {
           sections[entry.key.toString()] = SectionAnalysis(
@@ -64,9 +62,7 @@ class RoomAnalysis {
       sections: sections,
       kitchen: rawKitchen is Map
           ? KitchenAnalysis.fromJson(
-              rawKitchen.map(
-                (key, value) => MapEntry(key.toString(), value),
-              ),
+              rawKitchen.map((key, value) => MapEntry(key.toString(), value)),
             )
           : const KitchenAnalysis.empty(),
       warnings: _asStringList(json['warnings']),
@@ -78,9 +74,7 @@ class RoomAnalysis {
       'schemaVersion': schemaVersion,
       'roomName': roomName,
       'roomType': roomType,
-      'sections': sections.map(
-        (key, value) => MapEntry(key, value.toJson()),
-      ),
+      'sections': sections.map((key, value) => MapEntry(key, value.toJson())),
       'kitchen': kitchen.toJson(),
       'warnings': warnings,
     };
@@ -105,23 +99,17 @@ class SectionAnalysis {
   });
 
   const SectionAnalysis.empty()
-      : description = '',
-        confidence = 0,
-        detectedItems = const <DetectedItem>[],
-        defects = const <DetectedDefect>[];
+    : description = '',
+      confidence = 0,
+      detectedItems = const <DetectedItem>[],
+      defects = const <DetectedDefect>[];
 
   factory SectionAnalysis.fromJson(Map<String, dynamic> json) {
     return SectionAnalysis(
       description: _asString(json['description']),
       confidence: _clampConfidence(json['confidence']),
-      detectedItems: _mapList(
-        json['detectedItems'],
-        DetectedItem.fromJson,
-      ),
-      defects: _mapList(
-        json['defects'],
-        DetectedDefect.fromJson,
-      ),
+      detectedItems: _mapList(json['detectedItems'], DetectedItem.fromJson),
+      defects: _mapList(json['defects'], DetectedDefect.fromJson),
     );
   }
 
@@ -235,13 +223,13 @@ class KitchenAnalysis {
   });
 
   const KitchenAnalysis.empty()
-      : detected = false,
-        confidence = 0,
-        generalDescription = '',
-        worktopDescription = '',
-        worktopEquipment = const <KitchenEquipmentAnalysis>[],
-        upperUnits = const <KitchenUnitAnalysis>[],
-        lowerUnits = const <KitchenUnitAnalysis>[];
+    : detected = false,
+      confidence = 0,
+      generalDescription = '',
+      worktopDescription = '',
+      worktopEquipment = const <KitchenEquipmentAnalysis>[],
+      upperUnits = const <KitchenUnitAnalysis>[],
+      lowerUnits = const <KitchenUnitAnalysis>[];
 
   factory KitchenAnalysis.fromJson(Map<String, dynamic> json) {
     return KitchenAnalysis(
@@ -253,14 +241,8 @@ class KitchenAnalysis {
         json['worktopEquipment'],
         KitchenEquipmentAnalysis.fromJson,
       ),
-      upperUnits: _mapList(
-        json['upperUnits'],
-        KitchenUnitAnalysis.fromJson,
-      ),
-      lowerUnits: _mapList(
-        json['lowerUnits'],
-        KitchenUnitAnalysis.fromJson,
-      ),
+      upperUnits: _mapList(json['upperUnits'], KitchenUnitAnalysis.fromJson),
+      lowerUnits: _mapList(json['lowerUnits'], KitchenUnitAnalysis.fromJson),
     );
   }
 
@@ -368,17 +350,15 @@ List<String> _asStringList(dynamic value) {
       .toList(growable: false);
 }
 
-List<T> _mapList<T>(
-  dynamic value,
-  T Function(Map<String, dynamic>) converter,
-) {
+List<T> _mapList<T>(dynamic value, T Function(Map<String, dynamic>) converter) {
   if (value is! List) return <T>[];
 
-  return value.whereType<Map>().map((item) {
-    return converter(
-      item.map(
-        (key, value) => MapEntry(key.toString(), value),
-      ),
-    );
-  }).toList(growable: false);
+  return value
+      .whereType<Map>()
+      .map((item) {
+        return converter(
+          item.map((key, value) => MapEntry(key.toString(), value)),
+        );
+      })
+      .toList(growable: false);
 }

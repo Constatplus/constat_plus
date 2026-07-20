@@ -80,7 +80,10 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Plan cadastral', style: Theme.of(context).textTheme.headlineMedium),
+              Text(
+                'Plan cadastral',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
               const SizedBox(height: 6),
               const Text(
                 'Ajoutez le plan après la mission, puis dessinez directement sur l’image pour repérer les parcelles, limites ou zones concernées.',
@@ -100,8 +103,14 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                         children: [
                           FilledButton.icon(
                             onPressed: _pickImage,
-                            icon: const Icon(Icons.add_photo_alternate_outlined),
-                            label: Text(bytes == null ? 'Insérer une image' : 'Remplacer l’image'),
+                            icon: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                            ),
+                            label: Text(
+                              bytes == null
+                                  ? 'Insérer une image'
+                                  : 'Remplacer l’image',
+                            ),
                           ),
                           if (bytes != null)
                             OutlinedButton.icon(
@@ -127,7 +136,10 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                         const SizedBox(height: 18),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 60,
+                            horizontal: 24,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(18),
@@ -135,11 +147,24 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                           ),
                           child: const Column(
                             children: [
-                              Icon(Icons.map_outlined, size: 54, color: Color(0xFF64748B)),
+                              Icon(
+                                Icons.map_outlined,
+                                size: 54,
+                                color: Color(0xFF64748B),
+                              ),
                               SizedBox(height: 12),
-                              Text('Aucun plan cadastral inséré', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                              Text(
+                                'Aucun plan cadastral inséré',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                ),
+                              ),
                               SizedBox(height: 6),
-                              Text('Formats image pris en charge par l’appareil : JPG, PNG, WEBP…', textAlign: TextAlign.center),
+                              Text(
+                                'Formats image pris en charge par l’appareil : JPG, PNG, WEBP…',
+                                textAlign: TextAlign.center,
+                              ),
                             ],
                           ),
                         ),
@@ -148,32 +173,53 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                         _DrawingToolbar(
                           color: _color,
                           width: _width,
-                          onColorChanged: (value) => setState(() => _color = value),
-                          onWidthChanged: (value) => setState(() => _width = value),
+                          onColorChanged: (value) =>
+                              setState(() => _color = value),
+                          onWidthChanged: (value) =>
+                              setState(() => _width = value),
                         ),
                         const SizedBox(height: 14),
-                        Text(widget.mission.cadastralPlanName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        Text(
+                          widget.mission.cadastralPlanName,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 10),
                         AspectRatio(
                           aspectRatio: 16 / 10,
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              final size = Size(constraints.maxWidth, constraints.maxHeight);
+                              final size = Size(
+                                constraints.maxWidth,
+                                constraints.maxHeight,
+                              );
                               return ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
                                   onPanStart: (details) {
-                                    final points = <PlanPoint>[_normalized(details.localPosition, size)];
+                                    final points = <PlanPoint>[
+                                      _normalized(details.localPosition, size),
+                                    ];
                                     setState(() {
                                       _activePoints = points;
                                       widget.mission.cadastralPlanStrokes.add(
-                                        PlanStroke(points: points, colorValue: _color.toARGB32(), width: _width),
+                                        PlanStroke(
+                                          points: points,
+                                          colorValue: _color.toARGB32(),
+                                          width: _width,
+                                        ),
                                       );
                                     });
                                   },
                                   onPanUpdate: (details) {
-                                    setState(() => _activePoints?.add(_normalized(details.localPosition, size)));
+                                    setState(
+                                      () => _activePoints?.add(
+                                        _normalized(
+                                          details.localPosition,
+                                          size,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   onPanEnd: (_) {
                                     _activePoints = null;
@@ -185,7 +231,9 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                                       Container(color: Colors.white),
                                       Image.memory(bytes, fit: BoxFit.contain),
                                       CustomPaint(
-                                        painter: _PlanPainter(widget.mission.cadastralPlanStrokes),
+                                        painter: _PlanPainter(
+                                          widget.mission.cadastralPlanStrokes,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -195,7 +243,10 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        const Text('Astuce : utilisez le rouge pour les limites ou désordres et une épaisseur plus forte pour entourer une parcelle.', style: TextStyle(color: Color(0xFF64748B))),
+                        const Text(
+                          'Astuce : utilisez le rouge pour les limites ou désordres et une épaisseur plus forte pour entourer une parcelle.',
+                          style: TextStyle(color: Color(0xFF64748B)),
+                        ),
                       ],
                       const SizedBox(height: 18),
                       TextFormField(
@@ -204,7 +255,8 @@ class _CadastralPlanStepState extends State<CadastralPlanStep> {
                         maxLines: 6,
                         decoration: const InputDecoration(
                           labelText: 'Observations relatives au plan',
-                          hintText: 'Exemple : la parcelle concernée est entourée en rouge.',
+                          hintText:
+                              'Exemple : la parcelle concernée est entourée en rouge.',
                           alignLabelWithHint: true,
                         ),
                         onChanged: (value) {
@@ -251,7 +303,14 @@ class _DrawingToolbar extends StatelessWidget {
       runSpacing: 10,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.draw_outlined), SizedBox(width: 7), Text('Dessiner', style: TextStyle(fontWeight: FontWeight.w800))]),
+        const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.draw_outlined),
+            SizedBox(width: 7),
+            Text('Dessiner', style: TextStyle(fontWeight: FontWeight.w800)),
+          ],
+        ),
         ...colors.map(
           (item) => InkWell(
             onTap: () => onColorChanged(item),
@@ -262,9 +321,16 @@ class _DrawingToolbar extends StatelessWidget {
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color == item ? const Color(0xFF0F172A) : const Color(0xFFCBD5E1), width: color == item ? 3 : 1),
+                border: Border.all(
+                  color: color == item
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFFCBD5E1),
+                  width: color == item ? 3 : 1,
+                ),
               ),
-              child: DecoratedBox(decoration: BoxDecoration(color: item, shape: BoxShape.circle)),
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: item, shape: BoxShape.circle),
+              ),
             ),
           ),
         ),
@@ -273,7 +339,12 @@ class _DrawingToolbar extends StatelessWidget {
         DropdownButton<double>(
           value: width,
           items: const [2.0, 4.0, 6.0, 9.0]
-              .map((value) => DropdownMenuItem(value: value, child: Text('${value.toInt()} px')))
+              .map(
+                (value) => DropdownMenuItem(
+                  value: value,
+                  child: Text('${value.toInt()} px'),
+                ),
+              )
               .toList(),
           onChanged: (value) {
             if (value != null) onWidthChanged(value);

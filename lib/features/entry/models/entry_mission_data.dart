@@ -15,6 +15,7 @@ class EntryMissionData {
     'WC',
   ];
   final Map<String, String> roomNotes = <String, String>{};
-  final Map<String, RoomInspection> roomInspections = <String, RoomInspection>{};
+  final Map<String, RoomInspection> roomInspections =
+      <String, RoomInspection>{};
   String generalNotes = '';
 }

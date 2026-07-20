@@ -13,7 +13,9 @@ class CorrectionPage extends StatelessWidget {
       await AuthService.signOut();
     } on AuthException catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     }
   }
 
@@ -37,7 +39,10 @@ class CorrectionPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(28),
         children: [
-          const Text('File de contrôle', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
+          const Text(
+            'File de contrôle',
+            style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
+          ),
           const SizedBox(height: 8),
           const Text(
             'Les rapports transmis apparaissent ici. Le contrôleur peut les prendre en charge, les corriger, les valider et les retourner à leur auteur.',
@@ -60,13 +65,30 @@ class CorrectionPage extends StatelessWidget {
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
-                  const Icon(Icons.mark_email_read_outlined, size: 46, color: Color(0xFF2563EB)),
+                  const Icon(
+                    Icons.mark_email_read_outlined,
+                    size: 46,
+                    color: Color(0xFF2563EB),
+                  ),
                   const SizedBox(height: 14),
-                  const Text('Aucun rapport à contrôler', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Aucun rapport à contrôler',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 8),
-                  const Text('Les dossiers envoyés par les utilisateurs seront affichés dans cette file.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B))),
+                  const Text(
+                    'Les dossiers envoyés par les utilisateurs seront affichés dans cette file.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF64748B)),
+                  ),
                   const SizedBox(height: 14),
-                  Text('Correction dès 99 € HTVA • bien meublé : supplément de 50 %', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Correction dès 99 € HTVA • bien meublé : supplément de 50 %',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -93,12 +115,24 @@ class _Metric extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              CircleAvatar(backgroundColor: const Color(0xFFEFF6FF), child: Icon(icon, color: const Color(0xFF2563EB))),
+              CircleAvatar(
+                backgroundColor: const Color(0xFFEFF6FF),
+                child: Icon(icon, color: const Color(0xFF2563EB)),
+              ),
               const SizedBox(width: 14),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
-                Text(label, style: const TextStyle(color: Color(0xFF64748B))),
-              ]),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(label, style: const TextStyle(color: Color(0xFF64748B))),
+                ],
+              ),
             ],
           ),
         ),

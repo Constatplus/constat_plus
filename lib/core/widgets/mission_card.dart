@@ -35,7 +35,9 @@ class _MissionCardState extends State<MissionCard> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: _hovered ? widget.color.withValues(alpha: 0.45) : const Color(0xFFDDE7E9),
+            color: _hovered
+                ? widget.color.withValues(alpha: 0.45)
+                : const Color(0xFFDDE7E9),
           ),
           boxShadow: _hovered
               ? [
@@ -79,21 +81,33 @@ class _MissionCardState extends State<MissionCard> {
                   ],
                 ),
                 const Spacer(),
-                Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: 8),
-                Text(widget.subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  widget.subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Container(
                       width: 7,
                       height: 7,
-                      decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: widget.color,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Démarrer la mission',
-                      style: TextStyle(color: widget.color, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: widget.color,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),

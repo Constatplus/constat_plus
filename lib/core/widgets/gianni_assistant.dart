@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum GianniMood {
-  idle,
-  point,
-  camera,
-  tablet,
-  thinking,
-  happy,
-}
+enum GianniMood { idle, point, camera, tablet, thinking, happy }
 
 class GianniAssistant extends StatelessWidget {
   final GianniMood mood;
@@ -66,9 +59,7 @@ class GianniAssistant extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .05),
@@ -79,13 +70,7 @@ class GianniAssistant extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 170,
-            child: Image.asset(
-              image,
-              fit: BoxFit.contain,
-            ),
-          ),
+          SizedBox(width: 170, child: Image.asset(image, fit: BoxFit.contain)),
 
           const SizedBox(width: 28),
 
@@ -95,10 +80,7 @@ class GianniAssistant extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: color,
-                    ),
+                    Icon(Icons.auto_awesome, color: color),
                     const SizedBox(width: 8),
                     Text(
                       title,

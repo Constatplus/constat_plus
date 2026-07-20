@@ -58,9 +58,7 @@ class _DocumentsTabState extends State<DocumentsTab>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: item.selected
-                  ? Colors.blue
-                  : Colors.grey.shade300,
+              color: item.selected ? Colors.blue : Colors.grey.shade300,
             ),
           ),
           child: Padding(
@@ -77,13 +75,9 @@ class _DocumentsTabState extends State<DocumentsTab>
                   ),
                   title: Text(
                     item.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  subtitle: const Text(
-                    'Manuel ou document remis avec le bien',
-                  ),
+                  subtitle: const Text('Manuel ou document remis avec le bien'),
                   onChanged: (value) {
                     setState(() {
                       item.selected = value ?? false;
@@ -105,9 +99,7 @@ class _DocumentsTabState extends State<DocumentsTab>
                   ),
                   const SizedBox(height: 14),
                   PhotoPickerSection(
-                    key: ValueKey(
-                      'document-photo-${item.id}',
-                    ),
+                    key: ValueKey('document-photo-${item.id}'),
                     title: 'Photos du document',
                   ),
                 ],
@@ -128,7 +120,7 @@ class _DocumentItem {
   String observation;
 
   _DocumentItem(this.name)
-      : selected = false,
-        observation = '',
-        id = '${DateTime.now().microsecondsSinceEpoch}-$name';
+    : selected = false,
+      observation = '',
+      id = '${DateTime.now().microsecondsSinceEpoch}-$name';
 }

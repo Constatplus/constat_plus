@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../commercial/domain/models/discovery_access_state.dart';
 import 'property_composition/models/room_item.dart';
 
 class StepPropertyComposition extends StatefulWidget {
   final List<RoomItem> rooms;
   final VoidCallback onRoomsChanged;
+  final bool technicalMode;
+  final String missionId;
+  final DiscoveryAccessState? discoveryAccess;
+  final Future<bool> Function(int roomsUsed, int roomLimit)?
+  onDiscoveryLimitReached;
 
   const StepPropertyComposition({
     super.key,
     required this.rooms,
     required this.onRoomsChanged,
+    required this.missionId,
+    required this.discoveryAccess,
+    required this.onDiscoveryLimitReached,
+    this.technicalMode = false,
   });
 
   @override
@@ -20,7 +30,7 @@ class StepPropertyComposition extends StatefulWidget {
 class _StepPropertyCompositionState extends State<StepPropertyComposition> {
   final TextEditingController _customRoomController = TextEditingController();
 
-  final List<String> _roomTemplates = const [
+  static const List<String> _propertyTemplates = <String>[
     'Hall d’entrée',
     'Hall de nuit',
     'Dégagement',
@@ -47,6 +57,25 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     'Façade latérale droite',
   ];
 
+  static const List<String> _technicalTemplates = <String>[
+    'Bâtiment voisin',
+    'Façade',
+    'Pignon',
+    'Mur mitoyen',
+    'Toiture',
+    'Cave',
+    'Pièce intérieure',
+    'Jardin',
+    'Terrasse',
+    'Trottoir',
+    'Voirie',
+    'Clôture',
+    'Mur de soutènement',
+  ];
+
+  List<String> get _roomTemplates =>
+      widget.technicalMode ? _technicalTemplates : _propertyTemplates;
+
   final List<String> _levels = const [
     'Sous-sol',
     'Rez-de-chaussée',
@@ -64,14 +93,28 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     widget.onRoomsChanged();
   }
 
-  void _addRoom(String type) {
+  Future<void> _addRoom(String type) async {
+    final access = widget.discoveryAccess;
+    if (access == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Les règles du Mode Découverte sont indisponibles. Reconnectez-vous pour les synchroniser.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (!access.canAddRoom(widget.missionId, _rooms.length)) {
+      final unlocked = await widget.onDiscoveryLimitReached?.call(
+        _rooms.length,
+        access.policy.maxFullyDescribedRooms,
+      );
+      if (unlocked != true || !mounted) return;
+    }
     setState(() {
       _rooms.add(
-        RoomItem(
-          type: type,
-          name: type,
-          level: _defaultLevelFor(type),
-        ),
+        RoomItem(type: type, name: type, level: _defaultLevelFor(type)),
       );
     });
     _notifyChanged();
@@ -93,7 +136,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     return 'Rez-de-chaussée';
   }
 
-  void _addCustomRoom() {
+  Future<void> _addCustomRoom() async {
     final name = _customRoomController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +145,8 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
       return;
     }
 
-    _addRoom(name);
+    await _addRoom(name);
+    if (!mounted) return;
     _customRoomController.clear();
   }
 
@@ -200,9 +244,9 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Pièces proposées',
-          style: TextStyle(
+        Text(
+          widget.technicalMode ? 'Zones proposées' : 'Pièces proposées',
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Color(0xFF0F172A),
@@ -275,9 +319,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             labelText: 'Pièce personnalisée',
             hintText: 'Exemple : Véranda',
             prefixIcon: const Icon(Icons.edit_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
           onSubmitted: (_) => _addCustomRoom(),
         ),
@@ -295,15 +337,35 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
   }
 
   Widget _buildCompositionPanel() {
+    final access = widget.discoveryAccess;
+    final paid = access?.hasPaidAccessFor(widget.missionId) ?? false;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (access != null && !paid) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFDBA74)),
+            ),
+            child: Text(
+              'Mode Découverte : ${_rooms.length} pièces sur ${access.policy.maxFullyDescribedRooms} utilisées.',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Composition du bien',
-                style: TextStyle(
+                widget.technicalMode
+                    ? 'Composition du constat'
+                    : 'Composition du bien',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -346,10 +408,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
                     _notifyChanged();
                   },
                   itemBuilder: (context, index) {
-                    return _buildRoomCard(
-                      room: _rooms[index],
-                      index: index,
-                    );
+                    return _buildRoomCard(room: _rooms[index], index: index);
                   },
                 ),
         ),
@@ -369,11 +428,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.home_work_outlined,
-              size: 62,
-              color: Color(0xFF94A3B8),
-            ),
+            Icon(Icons.home_work_outlined, size: 62, color: Color(0xFF94A3B8)),
             SizedBox(height: 16),
             Text(
               'Aucune pièce ajoutée',
@@ -394,10 +449,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     );
   }
 
-  Widget _buildRoomCard({
-    required RoomItem room,
-    required int index,
-  }) {
+  Widget _buildRoomCard({required RoomItem room, required int index}) {
     return Card(
       key: ValueKey(room),
       elevation: 0,
@@ -456,10 +508,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
                   isDense: true,
                 ),
                 items: _levels.map((level) {
-                  return DropdownMenuItem(
-                    value: level,
-                    child: Text(level),
-                  );
+                  return DropdownMenuItem(value: level, child: Text(level));
                 }).toList(),
                 onChanged: (value) {
                   if (value == null) return;

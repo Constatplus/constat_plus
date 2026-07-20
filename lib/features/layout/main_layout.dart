@@ -6,6 +6,7 @@ class MainLayout extends StatelessWidget {
   final VoidCallback onEntry;
   final VoidCallback onExit;
   final VoidCallback onBeforeWorks;
+  final VoidCallback onAfterWorks;
   final VoidCallback onFolders;
   final VoidCallback onSettings;
   final VoidCallback? onAdmin;
@@ -16,6 +17,7 @@ class MainLayout extends StatelessWidget {
     required this.onEntry,
     required this.onExit,
     required this.onBeforeWorks,
+    required this.onAfterWorks,
     required this.onFolders,
     required this.onSettings,
     this.onAdmin,
@@ -31,6 +33,7 @@ class MainLayout extends StatelessWidget {
             onEntry: onEntry,
             onExit: onExit,
             onBeforeWorks: onBeforeWorks,
+            onAfterWorks: onAfterWorks,
             onFolders: onFolders,
             onSettings: onSettings,
             onAdmin: onAdmin,

@@ -16,13 +16,14 @@ class AppState extends ChangeNotifier {
 
   MissionData createMission(MissionKind kind) {
     final now = DateTime.now();
-    final mission = MissionData(
-      id: now.microsecondsSinceEpoch.toString(),
-      kind: kind,
-      createdAt: now,
-    )
-      ..title = kind.label
-      ..rooms.addAll(_defaultRooms(kind));
+    final mission =
+        MissionData(
+            id: now.microsecondsSinceEpoch.toString(),
+            kind: kind,
+            createdAt: now,
+          )
+          ..title = kind.label
+          ..rooms.addAll(_defaultRooms(kind));
     _missions.add(mission);
     notifyListeners();
     return mission;
@@ -72,11 +73,8 @@ class AppState extends ChangeNotifier {
 }
 
 class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({
-    required AppState state,
-    required super.child,
-    super.key,
-  }) : super(notifier: state);
+  const AppScope({required AppState state, required super.child, super.key})
+    : super(notifier: state);
 
   static AppState of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();

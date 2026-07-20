@@ -7,11 +7,7 @@ class MeterCard extends StatefulWidget {
   final MeterItem meter;
   final VoidCallback onDelete;
 
-  const MeterCard({
-    super.key,
-    required this.meter,
-    required this.onDelete,
-  });
+  const MeterCard({super.key, required this.meter, required this.onDelete});
 
   @override
   State<MeterCard> createState() => _MeterCardState();
@@ -31,9 +27,7 @@ class _MeterCardState extends State<MeterCard> {
       margin: const EdgeInsets.only(bottom: 20),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: Colors.grey.shade300,
-        ),
+        side: BorderSide(color: Colors.grey.shade300),
       ),
       child: Padding(
         padding: const EdgeInsets.all(22),
@@ -45,10 +39,7 @@ class _MeterCardState extends State<MeterCard> {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: const Color(0xFFEAF2FF),
-                  child: Icon(
-                    meter.icon,
-                    color: Colors.blue,
-                  ),
+                  child: Icon(meter.icon, color: Colors.blue),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -93,10 +84,7 @@ class _MeterCardState extends State<MeterCard> {
             if (_isElectricity) ...[
               const Text(
                 'Consommation électrique',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Row(
@@ -135,9 +123,7 @@ class _MeterCardState extends State<MeterCard> {
                 controlAffinity: ListTileControlAffinity.leading,
                 title: const Text(
                   'Installation photovoltaïque',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: const Text(
                   'Les index photovoltaïques sont liés au compteur électrique.',
@@ -152,10 +138,7 @@ class _MeterCardState extends State<MeterCard> {
                 const SizedBox(height: 10),
                 const Text(
                   'Production photovoltaïque',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Row(

@@ -5,10 +5,7 @@ abstract class NamedEntity {
   final String id;
   final String name;
 
-  const NamedEntity({
-    required this.id,
-    required this.name,
-  });
+  const NamedEntity({required this.id, required this.name});
 
   @override
   bool operator ==(Object other) {

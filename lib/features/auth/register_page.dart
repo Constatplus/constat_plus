@@ -73,7 +73,8 @@ class _RegisterPageState extends State<RegisterPage> {
       if (response.session == null) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => VerifyEmailPage(email: _emailController.text.trim()),
+            builder: (_) =>
+                VerifyEmailPage(email: _emailController.text.trim()),
           ),
         );
       } else {
@@ -113,7 +114,8 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return AuthShell(
       title: 'Créer votre compte',
-      subtitle: 'Quelques informations suffisent pour commencer à utiliser Constat+.',
+      subtitle:
+          'Quelques informations suffisent pour commencer à utiliser Constat+.',
       child: Form(
         key: _formKey,
         child: Column(
@@ -154,7 +156,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 prefixIcon: Icon(Icons.badge_outlined),
               ),
               items: _professions
-                  .map((value) => DropdownMenuItem(value: value, child: Text(value)))
+                  .map(
+                    (value) =>
+                        DropdownMenuItem(value: value, child: Text(value)),
+                  )
                   .toList(),
               onChanged: (value) {
                 if (value != null) setState(() => _profession = value);
@@ -173,7 +178,10 @@ class _RegisterPageState extends State<RegisterPage> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.newUsername, AutofillHints.email],
+              autofillHints: const [
+                AutofillHints.newUsername,
+                AutofillHints.email,
+              ],
               decoration: const InputDecoration(
                 labelText: 'Adresse e-mail',
                 prefixIcon: Icon(Icons.mail_outline_rounded),

@@ -30,9 +30,7 @@ class DashboardCard extends StatelessWidget {
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: const Color(0xFFE2E8F0),
-            ),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -46,11 +44,7 @@ class DashboardCard extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: color.withValues(alpha: 0.12),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 30,
-                ),
+                child: Icon(icon, color: color, size: 30),
               ),
               const SizedBox(width: 18),
               Expanded(

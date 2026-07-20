@@ -104,10 +104,7 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Annuler'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Créer'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Créer')),
       ],
     );
   }

@@ -8,9 +8,7 @@ class StepExitCompensation extends StatefulWidget {
 }
 
 class _StepExitCompensationState extends State<StepExitCompensation> {
-  final List<_CompensationRow> _rows = <_CompensationRow>[
-    _CompensationRow(),
-  ];
+  final List<_CompensationRow> _rows = <_CompensationRow>[_CompensationRow()];
 
   void _addRow() {
     setState(() => _rows.add(_CompensationRow()));
@@ -110,7 +108,10 @@ class _StepExitCompensationState extends State<StepExitCompensation> {
             children: [
               Text(
                 'Poste ${index + 1}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const Spacer(),
               IconButton(
@@ -130,7 +131,9 @@ class _StepExitCompensationState extends State<StepExitCompensation> {
               Expanded(
                 child: TextField(
                   controller: row.quantity,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: _input('Quantité'),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -139,7 +142,9 @@ class _StepExitCompensationState extends State<StepExitCompensation> {
               Expanded(
                 child: TextField(
                   controller: row.unitPrice,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: _input('Prix unitaire (€)'),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -148,7 +153,9 @@ class _StepExitCompensationState extends State<StepExitCompensation> {
               Expanded(
                 child: TextField(
                   controller: row.depreciation,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: _input('Part retenue (%)'),
                   onChanged: (_) => setState(() {}),
                 ),

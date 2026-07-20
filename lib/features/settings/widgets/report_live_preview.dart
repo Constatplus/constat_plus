@@ -101,7 +101,9 @@ class ReportLivePreview extends StatelessWidget {
           ),
           IconButton.outlined(
             tooltip: 'Réduire',
-            onPressed: zoom <= .5 ? null : () => onZoomChanged((zoom - .25).clamp(.5, 1.5).toDouble()),
+            onPressed: zoom <= .5
+                ? null
+                : () => onZoomChanged((zoom - .25).clamp(.5, 1.5).toDouble()),
             icon: const Icon(Icons.remove),
           ),
           SizedBox(
@@ -114,7 +116,9 @@ class ReportLivePreview extends StatelessWidget {
           ),
           IconButton.outlined(
             tooltip: 'Agrandir',
-            onPressed: zoom >= 1.5 ? null : () => onZoomChanged((zoom + .25).clamp(.5, 1.5).toDouble()),
+            onPressed: zoom >= 1.5
+                ? null
+                : () => onZoomChanged((zoom + .25).clamp(.5, 1.5).toDouble()),
             icon: const Icon(Icons.add),
           ),
           TextButton(
@@ -127,12 +131,18 @@ class ReportLivePreview extends StatelessWidget {
   }
 
   Widget _a4Page() {
-    final margin = (preferences.pageMarginMm * 2.2).clamp(22.0, 78.0).toDouble();
+    final margin = (preferences.pageMarginMm * 2.2)
+        .clamp(22.0, 78.0)
+        .toDouble();
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Color(0x33000000), blurRadius: 18, offset: Offset(0, 8)),
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: Padding(
@@ -173,7 +183,9 @@ class ReportLivePreview extends StatelessWidget {
       children: [
         Align(
           alignment: Alignment.topRight,
-          child: preferences.showLogo ? _logoPlaceholder() : const SizedBox(height: 54),
+          child: preferences.showLogo
+              ? _logoPlaceholder()
+              : const SizedBox(height: 54),
         ),
         const Spacer(),
         Text(
@@ -206,7 +218,9 @@ class ReportLivePreview extends StatelessWidget {
         _informationBox('Locataire', 'Monsieur Exemple'),
         const Spacer(flex: 2),
         Text(
-          preferences.companyName.isEmpty ? 'Votre société' : preferences.companyName,
+          preferences.companyName.isEmpty
+              ? 'Votre société'
+              : preferences.companyName,
           textAlign: TextAlign.center,
           style: _textStyle(
             size: preferences.headingFontSize,
@@ -215,7 +229,11 @@ class ReportLivePreview extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(preferences.professionalNumber, textAlign: TextAlign.center, style: _bodyStyle(size: 10)),
+        Text(
+          preferences.professionalNumber,
+          textAlign: TextAlign.center,
+          style: _bodyStyle(size: 10),
+        ),
       ],
     );
   }
@@ -259,17 +277,41 @@ class ReportLivePreview extends StatelessWidget {
         const SizedBox(height: 22),
         _sectionTitle('DESCRIPTION GÉNÉRALE'),
         const SizedBox(height: 12),
-        _descriptionRow('Sol', 'Carrelage de teinte grise, propre et en bon état général.'),
-        _descriptionRow('Plafond', 'Peinture blanche mate, uniforme et conforme aux généralités.'),
-        _descriptionRow('Mur avant', 'Peinture blanche. Deux percements millimétriques à proximité de l’angle droit.'),
-        _descriptionRow('Mur droit', 'Peinture blanche légèrement souillée en partie basse.'),
-        _descriptionRow('Mur arrière', 'Peinture blanche, sans observation particulière.'),
-        _descriptionRow('Mur gauche', 'Peinture blanche présentant une fine griffe horizontale.'),
+        _descriptionRow(
+          'Sol',
+          'Carrelage de teinte grise, propre et en bon état général.',
+        ),
+        _descriptionRow(
+          'Plafond',
+          'Peinture blanche mate, uniforme et conforme aux généralités.',
+        ),
+        _descriptionRow(
+          'Mur avant',
+          'Peinture blanche. Deux percements millimétriques à proximité de l’angle droit.',
+        ),
+        _descriptionRow(
+          'Mur droit',
+          'Peinture blanche légèrement souillée en partie basse.',
+        ),
+        _descriptionRow(
+          'Mur arrière',
+          'Peinture blanche, sans observation particulière.',
+        ),
+        _descriptionRow(
+          'Mur gauche',
+          'Peinture blanche présentant une fine griffe horizontale.',
+        ),
         const SizedBox(height: 18),
         _sectionTitle('ÉQUIPEMENTS'),
         const SizedBox(height: 12),
-        _descriptionRow('Électricité', 'Quatre prises simples, deux interrupteurs et un point lumineux fonctionnel.'),
-        _descriptionRow('Chauffage', 'Radiateur panneau peint en blanc, propre et fonctionnel.'),
+        _descriptionRow(
+          'Électricité',
+          'Quatre prises simples, deux interrupteurs et un point lumineux fonctionnel.',
+        ),
+        _descriptionRow(
+          'Chauffage',
+          'Radiateur panneau peint en blanc, propre et fonctionnel.',
+        ),
         const SizedBox(height: 18),
         Row(
           children: [
@@ -283,7 +325,9 @@ class ReportLivePreview extends StatelessWidget {
   }
 
   Widget _calculations() {
-    final border = BorderSide(color: _color(preferences.primaryColorHex).withValues(alpha: .35));
+    final border = BorderSide(
+      color: _color(preferences.primaryColorHex).withValues(alpha: .35),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -298,7 +342,11 @@ class ReportLivePreview extends StatelessWidget {
           },
           children: [
             _tableRow(['Poste', 'Base de calcul', 'TVAC'], header: true),
-            _tableRow(['Remise en peinture – séjour', '18,00 m² × 20,00 €', '381,60 €']),
+            _tableRow([
+              'Remise en peinture – séjour',
+              '18,00 m² × 20,00 €',
+              '381,60 €',
+            ]),
             _tableRow(['Nettoyage menuiseries', 'Forfait', '84,80 €']),
             _tableRow(['Remplacement cache-prise', '2 × 12,00 €', '29,04 €']),
           ],
@@ -316,7 +364,13 @@ class ReportLivePreview extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('TOTAL TVAC', style: _textStyle(size: preferences.headingFontSize, weight: FontWeight.bold)),
+                Text(
+                  'TOTAL TVAC',
+                  style: _textStyle(
+                    size: preferences.headingFontSize,
+                    weight: FontWeight.bold,
+                  ),
+                ),
                 Text(
                   '495,44 €',
                   style: _textStyle(
@@ -374,7 +428,10 @@ class ReportLivePreview extends StatelessWidget {
             const Spacer(),
             Text(
               preferences.companyName,
-              style: _bodyStyle(size: 9, color: _color(preferences.headingColorHex)),
+              style: _bodyStyle(
+                size: 9,
+                color: _color(preferences.headingColorHex),
+              ),
             ),
           ],
         ),
@@ -398,7 +455,12 @@ class ReportLivePreview extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: _color(preferences.primaryColorHex).withValues(alpha: .08),
-        border: Border(left: BorderSide(color: _color(preferences.secondaryColorHex), width: 4)),
+        border: Border(
+          left: BorderSide(
+            color: _color(preferences.secondaryColorHex),
+            width: 4,
+          ),
+        ),
       ),
       child: Text(
         title,
@@ -418,7 +480,10 @@ class ReportLivePreview extends StatelessWidget {
         text: TextSpan(
           style: _bodyStyle(height: 1.38),
           children: [
-            TextSpan(text: '$label : ', style: const TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(
+              text: '$label : ',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             TextSpan(text: text),
           ],
         ),
@@ -430,12 +495,17 @@ class ReportLivePreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        border: Border.all(color: _color(preferences.primaryColorHex).withValues(alpha: .35)),
+        border: Border.all(
+          color: _color(preferences.primaryColorHex).withValues(alpha: .35),
+        ),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         children: [
-          SizedBox(width: 135, child: Text(label, style: _bodyStyle(weight: FontWeight.bold))),
+          SizedBox(
+            width: 135,
+            child: Text(label, style: _bodyStyle(weight: FontWeight.bold)),
+          ),
           Expanded(child: Text(value, style: _bodyStyle())),
         ],
       ),
@@ -473,7 +543,11 @@ class ReportLivePreview extends StatelessWidget {
             color: const Color(0xFFF1F5F9),
             border: Border.all(color: const Color(0xFFCBD5E1)),
           ),
-          child: Icon(Icons.photo_outlined, size: 38, color: _color(preferences.primaryColorHex)),
+          child: Icon(
+            Icons.photo_outlined,
+            size: 38,
+            color: _color(preferences.primaryColorHex),
+          ),
         ),
         const SizedBox(height: 6),
         Text(caption, textAlign: TextAlign.center, style: _bodyStyle(size: 8)),
@@ -484,7 +558,9 @@ class ReportLivePreview extends StatelessWidget {
   TableRow _tableRow(List<String> values, {bool header = false}) {
     return TableRow(
       decoration: header
-          ? BoxDecoration(color: _color(preferences.primaryColorHex).withValues(alpha: .1))
+          ? BoxDecoration(
+              color: _color(preferences.primaryColorHex).withValues(alpha: .1),
+            )
           : null,
       children: values
           .map(
@@ -506,7 +582,9 @@ class ReportLivePreview extends StatelessWidget {
   Widget _footer() {
     return Column(
       children: [
-        Divider(color: _color(preferences.primaryColorHex).withValues(alpha: .35)),
+        Divider(
+          color: _color(preferences.primaryColorHex).withValues(alpha: .35),
+        ),
         Row(
           children: [
             Expanded(
@@ -534,7 +612,12 @@ class ReportLivePreview extends StatelessWidget {
     );
   }
 
-  TextStyle _bodyStyle({double? size, double? height, Color? color, FontWeight? weight}) {
+  TextStyle _bodyStyle({
+    double? size,
+    double? height,
+    Color? color,
+    FontWeight? weight,
+  }) {
     return _textStyle(
       size: size ?? preferences.bodyFontSize,
       height: height,
@@ -543,7 +626,12 @@ class ReportLivePreview extends StatelessWidget {
     );
   }
 
-  TextStyle _textStyle({double? size, double? height, Color? color, FontWeight? weight}) {
+  TextStyle _textStyle({
+    double? size,
+    double? height,
+    Color? color,
+    FontWeight? weight,
+  }) {
     return TextStyle(
       fontFamily: preferences.fontFamily,
       fontSize: size,

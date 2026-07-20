@@ -19,11 +19,7 @@ class KeyEntryData {
   int quantity;
   String observation;
 
-  KeyEntryData({
-    required this.name,
-    this.quantity = 1,
-    this.observation = '',
-  });
+  KeyEntryData({required this.name, this.quantity = 1, this.observation = ''});
 
   String get reportLine {
     final note = observation.trim();
@@ -64,11 +60,7 @@ class DocumentEntryData {
   bool selected;
   String observation;
 
-  DocumentEntryData(
-    this.name, {
-    this.selected = false,
-    this.observation = '',
-  });
+  DocumentEntryData(this.name, {this.selected = false, this.observation = ''});
 
   String get reportLine {
     final note = observation.trim();
@@ -107,15 +99,18 @@ class WizardData {
       '${missionDate.day.toString().padLeft(2, '0')}/${missionDate.month.toString().padLeft(2, '0')}/${missionDate.year}';
 
   String get propertyAddress {
-    final firstLine = [street.text.trim(), number.text.trim()]
-        .where((value) => value.isNotEmpty)
-        .join(' ');
+    final firstLine = [
+      street.text.trim(),
+      number.text.trim(),
+    ].where((value) => value.isNotEmpty).join(' ');
     final boxValue = box.text.trim();
-    final secondLine = [postalCode.text.trim(), city.text.trim()]
-        .where((value) => value.isNotEmpty)
-        .join(' ');
+    final secondLine = [
+      postalCode.text.trim(),
+      city.text.trim(),
+    ].where((value) => value.isNotEmpty).join(' ');
     return [
-      if (firstLine.isNotEmpty) '$firstLine${boxValue.isEmpty ? '' : ' bte $boxValue'}',
+      if (firstLine.isNotEmpty)
+        '$firstLine${boxValue.isEmpty ? '' : ' bte $boxValue'}',
       if (secondLine.isNotEmpty) secondLine,
     ].join(' - ');
   }

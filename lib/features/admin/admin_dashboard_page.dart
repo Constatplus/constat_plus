@@ -18,12 +18,24 @@ class AdminDashboardPage extends StatelessWidget {
         crossAxisSpacing: 16,
         childAspectRatio: 2.2,
         children: [
-          _card(Icons.fact_check_outlined, 'Rapports à relire', '0 dossier en attente'),
+          _card(
+            Icons.fact_check_outlined,
+            'Rapports à relire',
+            '0 dossier en attente',
+          ),
           _card(Icons.verified_outlined, 'Rapports validés', '0 ce mois-ci'),
           if (!controllerMode)
-            _card(Icons.people_outline, 'Utilisateurs', 'Gestion des comptes et rôles'),
+            _card(
+              Icons.people_outline,
+              'Utilisateurs',
+              'Gestion des comptes et rôles',
+            ),
           if (!controllerMode)
-            _card(Icons.credit_card_outlined, 'Abonnements', 'Solo, Pro et Occasionnel'),
+            _card(
+              Icons.credit_card_outlined,
+              'Abonnements',
+              'Solo, Pro et Occasionnel',
+            ),
         ],
       ),
     );
@@ -43,7 +55,13 @@ class AdminDashboardPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 5),
                   Text(subtitle, style: const TextStyle(color: Colors.black54)),
                 ],

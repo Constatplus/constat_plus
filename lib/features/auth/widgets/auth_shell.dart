@@ -20,8 +20,10 @@ class AuthShell extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compact = constraints.maxWidth < 920;
-            final availableHeight =
-                (constraints.maxHeight - 48).clamp(0.0, double.infinity);
+            final availableHeight = (constraints.maxHeight - 48).clamp(
+              0.0,
+              double.infinity,
+            );
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -248,8 +250,9 @@ class _FormPanel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment:
-            compact ? MainAxisAlignment.start : MainAxisAlignment.center,
+        mainAxisAlignment: compact
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
         children: [
           Text(
             title,

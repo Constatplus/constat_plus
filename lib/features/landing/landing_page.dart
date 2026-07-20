@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/access/access_service.dart';
+import '../../screens/home_page.dart';
 import '../auth/login_page.dart';
 import '../auth/register_page.dart';
-import '../home/home_page.dart';
 import '../pricing/pricing_page.dart';
 
 class LandingPage extends StatelessWidget {
@@ -10,6 +11,11 @@ class LandingPage extends StatelessWidget {
 
   void _open(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  void _openDemo(BuildContext context) {
+    AccessService.instance.startDemo(plan: AccountPlan.occasional);
+    _open(context, const HomePage());
   }
 
   @override
@@ -27,7 +33,7 @@ class LandingPage extends StatelessWidget {
               ),
               _Hero(
                 onStart: () => _open(context, const RegisterPage()),
-                onDemo: () => _open(context, const HomePage()),
+                onDemo: () => _openDemo(context),
               ),
               const _TrustStrip(),
               const _MissionSection(),
@@ -112,7 +118,7 @@ class _TopNavigation extends StatelessWidget {
             ],
           );
 
-          if (constraints.maxWidth < 720) {
+          if (constraints.maxWidth < 940) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [logo, const SizedBox(height: 16), buttons],
@@ -240,7 +246,11 @@ class _HeroCopy extends StatelessWidget {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.auto_awesome_rounded, size: 17, color: Color(0xFFBFDBFE)),
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 17,
+                color: Color(0xFFBFDBFE),
+              ),
               SizedBox(width: 8),
               Text(
                 'LE LOGICIEL D’ÉTAT DES LIEUX NOUVELLE GÉNÉRATION',
@@ -283,7 +293,10 @@ class _HeroCopy extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF1D4ED8),
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 18,
+                ),
               ),
               onPressed: onStart,
               icon: const Icon(Icons.rocket_launch_rounded),
@@ -293,11 +306,14 @@ class _HeroCopy extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: BorderSide(color: Colors.white.withValues(alpha: .45)),
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 18,
+                ),
               ),
               onPressed: onDemo,
               icon: const Icon(Icons.play_circle_outline_rounded),
-              label: const Text('Voir l’application'),
+              label: const Text('Voir la démonstration locale'),
             ),
           ],
         ),
@@ -348,7 +364,8 @@ class _HeroVisual extends StatelessWidget {
               'assets/images/gianni_tablet.png',
               fit: BoxFit.contain,
               alignment: Alignment.bottomCenter,
-              errorBuilder: (context, error, stackTrace) => const _MascotFallback(),
+              errorBuilder: (context, error, stackTrace) =>
+                  const _MascotFallback(),
             ),
           ),
           const Positioned(
@@ -393,14 +410,22 @@ class _MascotFallback extends StatelessWidget {
       child: CircleAvatar(
         radius: 92,
         backgroundColor: Color(0xFFE0EAFF),
-        child: Icon(Icons.smart_toy_outlined, size: 110, color: Color(0xFF2563EB)),
+        child: Icon(
+          Icons.smart_toy_outlined,
+          size: 110,
+          color: Color(0xFF2563EB),
+        ),
       ),
     );
   }
 }
 
 class _FloatingCard extends StatelessWidget {
-  const _FloatingCard({required this.icon, required this.title, required this.subtitle});
+  const _FloatingCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   final IconData icon;
   final String title;
@@ -436,8 +461,17 @@ class _FloatingCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
             ],
           ),
         ],
@@ -477,7 +511,13 @@ class _HeroProof extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: const Color(0xFF93C5FD)),
         const SizedBox(width: 7),
-        Text(label, style: const TextStyle(color: Color(0xFFD6E4FF), fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFD6E4FF),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     );
   }
@@ -495,9 +535,18 @@ class _TrustStrip extends StatelessWidget {
         spacing: 28,
         runSpacing: 14,
         children: const [
-          _TrustItem(Icons.engineering_outlined, 'Conçu avec un Géomètre-Expert'),
-          _TrustItem(Icons.home_work_outlined, 'Pensé pour les professionnels de l’immobilier'),
-          _TrustItem(Icons.fact_check_outlined, 'Rapports structurés et contrôlables'),
+          _TrustItem(
+            Icons.engineering_outlined,
+            'Conçu avec un Géomètre-Expert',
+          ),
+          _TrustItem(
+            Icons.home_work_outlined,
+            'Pensé pour les professionnels de l’immobilier',
+          ),
+          _TrustItem(
+            Icons.fact_check_outlined,
+            'Rapports structurés et contrôlables',
+          ),
           _TrustItem(Icons.devices_rounded, 'Windows, web, tablette et mobile'),
         ],
       ),
@@ -518,7 +567,13 @@ class _TrustItem extends StatelessWidget {
       children: [
         Icon(icon, size: 21, color: const Color(0xFF2563EB)),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF334155))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF334155),
+          ),
+        ),
       ],
     );
   }
@@ -532,7 +587,8 @@ class _MissionSection extends StatelessWidget {
     return const _SectionShell(
       eyebrow: 'UN OUTIL POUR CHAQUE MISSION',
       title: 'Trois parcours métier, une seule application',
-      subtitle: 'Chaque mission dispose de son propre déroulé pour aller vite sur le terrain sans mélanger les informations.',
+      subtitle:
+          'Chaque mission dispose de son propre déroulé pour aller vite sur le terrain sans mélanger les informations.',
       child: Wrap(
         spacing: 18,
         runSpacing: 18,
@@ -542,21 +598,24 @@ class _MissionSection extends StatelessWidget {
             icon: Icons.login_rounded,
             color: Color(0xFF2563EB),
             title: 'État des lieux d’entrée',
-            description: 'Composition du bien, description pièce par pièce, clés, compteurs, photos et signatures.',
+            description:
+                'Composition du bien, description pièce par pièce, clés, compteurs, photos et signatures.',
             badge: 'Le plus utilisé',
           ),
           _MissionCard(
             icon: Icons.logout_rounded,
             color: Color(0xFF7C3AED),
             title: 'État des lieux de sortie',
-            description: 'Comparaison, dégâts locatifs, calculs d’indemnisation et synthèse claire des manquements.',
+            description:
+                'Comparaison, dégâts locatifs, calculs d’indemnisation et synthèse claire des manquements.',
             badge: 'Calculs intégrés',
           ),
           _MissionCard(
             icon: Icons.construction_rounded,
             color: Color(0xFFEA580C),
             title: 'Constat avant travaux',
-            description: 'Façades, voiries, bâtiments voisins, plans et annexes photographiques structurées.',
+            description:
+                'Façades, voiries, bâtiments voisins, plans et annexes photographiques structurées.',
             badge: 'Preuve photographique',
           ),
         ],
@@ -612,25 +671,55 @@ class _MissionCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text(badge, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF475569))),
+                child: Text(
+                  badge,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF475569),
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 22),
-          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+            ),
+          ),
           const SizedBox(height: 10),
-          Text(description, style: const TextStyle(color: Color(0xFF64748B), height: 1.55)),
+          Text(
+            description,
+            style: const TextStyle(color: Color(0xFF64748B), height: 1.55),
+          ),
           const SizedBox(height: 22),
           const Row(
             children: [
-              Text('Découvrir le parcours', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w900)),
+              Text(
+                'Découvrir le parcours',
+                style: TextStyle(
+                  color: Color(0xFF2563EB),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               SizedBox(width: 6),
-              Icon(Icons.arrow_forward_rounded, size: 18, color: Color(0xFF2563EB)),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 18,
+                color: Color(0xFF2563EB),
+              ),
             ],
           ),
         ],
@@ -662,13 +751,16 @@ class _AiSection extends StatelessWidget {
               child: Image.asset(
                 'assets/images/gianni_point.png',
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const _MascotFallback(),
+                errorBuilder: (context, error, stackTrace) =>
+                    const _MascotFallback(),
               ),
             );
             const copy = _AiCopy();
 
             if (constraints.maxWidth < 820) {
-              return Column(children: [image, const SizedBox(height: 18), copy]);
+              return Column(
+                children: [image, const SizedBox(height: 18), copy],
+              );
             }
             return Row(
               children: [
@@ -692,11 +784,33 @@ class _AiCopy extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('L’ASSISTANT QUI VOUS FAIT GAGNER DU TEMPS', style: TextStyle(color: Color(0xFF4F46E5), fontWeight: FontWeight.w900, letterSpacing: .8)),
+        Text(
+          'L’ASSISTANT QUI VOUS FAIT GAGNER DU TEMPS',
+          style: TextStyle(
+            color: Color(0xFF4F46E5),
+            fontWeight: FontWeight.w900,
+            letterSpacing: .8,
+          ),
+        ),
         SizedBox(height: 12),
-        Text('Votre expertise reste humaine. L’IA s’occupe du travail répétitif.', style: TextStyle(fontSize: 34, height: 1.12, fontWeight: FontWeight.w900, color: Color(0xFF111827))),
+        Text(
+          'Votre expertise reste humaine. L’IA s’occupe du travail répétitif.',
+          style: TextStyle(
+            fontSize: 34,
+            height: 1.12,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF111827),
+          ),
+        ),
         SizedBox(height: 16),
-        Text('Assistant Gianni analyse les photos, suggère les postes à compléter, reformule les observations et contrôle la cohérence du rapport avant sa finalisation.', style: TextStyle(fontSize: 17, height: 1.55, color: Color(0xFF4B5563))),
+        Text(
+          'Assistant Gianni analyse les photos, suggère les postes à compléter, reformule les observations et contrôle la cohérence du rapport avant sa finalisation.',
+          style: TextStyle(
+            fontSize: 17,
+            height: 1.55,
+            color: Color(0xFF4B5563),
+          ),
+        ),
         SizedBox(height: 22),
         Wrap(
           spacing: 12,
@@ -705,7 +819,10 @@ class _AiCopy extends StatelessWidget {
             _AiChip(Icons.photo_camera_back_outlined, 'Analyse photographique'),
             _AiChip(Icons.edit_note_rounded, 'Rédaction professionnelle'),
             _AiChip(Icons.rule_folder_outlined, 'Contrôle de complétude'),
-            _AiChip(Icons.lightbulb_outline_rounded, 'Conseils pendant la visite'),
+            _AiChip(
+              Icons.lightbulb_outline_rounded,
+              'Conseils pendant la visite',
+            ),
           ],
         ),
       ],
@@ -733,7 +850,13 @@ class _AiChip extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFF4F46E5), size: 20),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF334155))),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF334155),
+            ),
+          ),
         ],
       ),
     );
@@ -748,16 +871,39 @@ class _WorkflowSection extends StatelessWidget {
     return const _SectionShell(
       eyebrow: 'DU TERRAIN AU RAPPORT',
       title: 'Un processus simple, même pour un dossier complexe',
-      subtitle: 'Vous restez concentré sur le constat. Constat+ organise le reste.',
+      subtitle:
+          'Vous restez concentré sur le constat. Constat+ organise le reste.',
       child: Wrap(
         spacing: 16,
         runSpacing: 16,
         alignment: WrapAlignment.center,
         children: [
-          _StepCard(number: '01', icon: Icons.add_home_work_outlined, title: 'Créez le dossier', text: 'Encodez les parties, l’adresse et la composition du bien.'),
-          _StepCard(number: '02', icon: Icons.photo_camera_outlined, title: 'Réalisez la visite', text: 'Décrivez, photographiez et complétez chaque poste.'),
-          _StepCard(number: '03', icon: Icons.auto_awesome_outlined, title: 'Laissez l’IA assister', text: 'Recevez des suggestions sans perdre la maîtrise de votre expertise.'),
-          _StepCard(number: '04', icon: Icons.description_outlined, title: 'Générez le rapport', text: 'Exportez un document structuré, professionnel et personnalisable.'),
+          _StepCard(
+            number: '01',
+            icon: Icons.add_home_work_outlined,
+            title: 'Créez le dossier',
+            text: 'Encodez les parties, l’adresse et la composition du bien.',
+          ),
+          _StepCard(
+            number: '02',
+            icon: Icons.photo_camera_outlined,
+            title: 'Réalisez la visite',
+            text: 'Décrivez, photographiez et complétez chaque poste.',
+          ),
+          _StepCard(
+            number: '03',
+            icon: Icons.auto_awesome_outlined,
+            title: 'Laissez l’IA assister',
+            text:
+                'Recevez des suggestions sans perdre la maîtrise de votre expertise.',
+          ),
+          _StepCard(
+            number: '04',
+            icon: Icons.description_outlined,
+            title: 'Générez le rapport',
+            text:
+                'Exportez un document structuré, professionnel et personnalisable.',
+          ),
         ],
       ),
     );
@@ -765,7 +911,12 @@ class _WorkflowSection extends StatelessWidget {
 }
 
 class _StepCard extends StatelessWidget {
-  const _StepCard({required this.number, required this.icon, required this.title, required this.text});
+  const _StepCard({
+    required this.number,
+    required this.icon,
+    required this.title,
+    required this.text,
+  });
 
   final String number;
   final IconData icon;
@@ -781,19 +932,39 @@ class _StepCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(number, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFFBFDBFE))),
+              Text(
+                number,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFBFDBFE),
+                ),
+              ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(15)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(15),
+                ),
                 child: Icon(icon, color: const Color(0xFF2563EB)),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(text, style: const TextStyle(color: Color(0xFF64748B), height: 1.5)),
+          Text(
+            text,
+            style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
+          ),
         ],
       ),
     );
@@ -801,7 +972,12 @@ class _StepCard extends StatelessWidget {
 }
 
 class _SectionShell extends StatelessWidget {
-  const _SectionShell({required this.eyebrow, required this.title, required this.subtitle, required this.child});
+  const _SectionShell({
+    required this.eyebrow,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
 
   final String eyebrow;
   final String title;
@@ -817,13 +993,38 @@ class _SectionShell extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 1180),
           child: Column(
             children: [
-              Text(eyebrow, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w900, letterSpacing: .9)),
+              Text(
+                eyebrow,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF2563EB),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: .9,
+                ),
+              ),
               const SizedBox(height: 10),
-              Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 35, height: 1.15, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 35,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
               const SizedBox(height: 12),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
-                child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, height: 1.55, color: Color(0xFF64748B))),
+                child: Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.55,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
               ),
               const SizedBox(height: 32),
               child,
@@ -858,18 +1059,34 @@ class _FinalCallToAction extends StatelessWidget {
               final text = const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Prêt à professionnaliser vos états des lieux ?', style: TextStyle(color: Colors.white, fontSize: 31, fontWeight: FontWeight.w900)),
+                  Text(
+                    'Prêt à professionnaliser vos états des lieux ?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 31,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   SizedBox(height: 8),
-                  Text('Créez votre compte et découvrez une nouvelle manière de travailler sur le terrain.', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 16)),
+                  Text(
+                    'Créez votre compte et découvrez une nouvelle manière de travailler sur le terrain.',
+                    style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 16),
+                  ),
                 ],
               );
               final buttons = Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  FilledButton(onPressed: onStart, child: const Text('Commencer maintenant')),
+                  FilledButton(
+                    onPressed: onStart,
+                    child: const Text('Commencer maintenant'),
+                  ),
                   OutlinedButton(
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white38)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white38),
+                    ),
                     onPressed: onPricing,
                     child: const Text('Voir les offres'),
                   ),
@@ -877,9 +1094,19 @@ class _FinalCallToAction extends StatelessWidget {
               );
 
               if (constraints.maxWidth < 760) {
-                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [text, const SizedBox(height: 22), buttons]);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [text, const SizedBox(height: 22), buttons],
+                );
               }
-              return Row(children: [const Expanded(child: Column()), Expanded(flex: 3, child: text), const Spacer(), buttons]);
+              return Row(
+                children: [
+                  const Expanded(child: Column()),
+                  Expanded(flex: 3, child: text),
+                  const Spacer(),
+                  buttons,
+                ],
+              );
             },
           ),
         ),
@@ -899,7 +1126,10 @@ class _Footer extends StatelessWidget {
         child: Text(
           'Constat+ • Conçu pour les professionnels de l’immobilier et de l’expertise',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

@@ -9,8 +9,7 @@ class KeysTab extends StatefulWidget {
   State<KeysTab> createState() => _KeysTabState();
 }
 
-class _KeysTabState extends State<KeysTab>
-    with AutomaticKeepAliveClientMixin {
+class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
   final List<String> keyTemplates = const [
     'Porte d’entrée',
     'Porte arrière',
@@ -65,10 +64,7 @@ class _KeysTabState extends State<KeysTab>
             children: [
               const Text(
                 'Ajouter une clé',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -120,10 +116,7 @@ class _KeysTabState extends State<KeysTab>
                     ? const Center(
                         child: Text(
                           'Aucune clé ajoutée.',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.black45,
-                          ),
+                          style: TextStyle(fontSize: 17, color: Colors.black45),
                         ),
                       )
                     : ListView.builder(
@@ -136,9 +129,7 @@ class _KeysTabState extends State<KeysTab>
                             margin: const EdgeInsets.only(bottom: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
-                              side: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
+                              side: BorderSide(color: Colors.grey.shade300),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(18),
@@ -170,17 +161,16 @@ class _KeysTabState extends State<KeysTab>
                                           decoration: const InputDecoration(
                                             labelText: 'Quantité',
                                           ),
-                                          items: List.generate(
-                                            10,
-                                            (quantityIndex) {
-                                              final value = quantityIndex + 1;
+                                          items: List.generate(10, (
+                                            quantityIndex,
+                                          ) {
+                                            final value = quantityIndex + 1;
 
-                                              return DropdownMenuItem(
-                                                value: value,
-                                                child: Text('$value'),
-                                              );
-                                            },
-                                          ),
+                                            return DropdownMenuItem(
+                                              value: value,
+                                              child: Text('$value'),
+                                            );
+                                          }),
                                           onChanged: (value) {
                                             if (value == null) return;
 
@@ -192,9 +182,7 @@ class _KeysTabState extends State<KeysTab>
                                       IconButton(
                                         tooltip: 'Supprimer',
                                         onPressed: () => _removeKey(index),
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                        ),
+                                        icon: const Icon(Icons.delete_outline),
                                       ),
                                     ],
                                   ),
@@ -211,9 +199,7 @@ class _KeysTabState extends State<KeysTab>
                                   ),
                                   const SizedBox(height: 14),
                                   PhotoPickerSection(
-                                    key: ValueKey(
-                                      'key-photo-${item.id}',
-                                    ),
+                                    key: ValueKey('key-photo-${item.id}'),
                                     title: 'Photos de la clé',
                                   ),
                                 ],
@@ -238,9 +224,6 @@ class _KeyItem {
   int quantity;
   String observation;
 
-  _KeyItem({
-    required this.id,
-    required this.name,
-    required this.quantity,
-  }) : observation = '';
+  _KeyItem({required this.id, required this.name, required this.quantity})
+    : observation = '';
 }

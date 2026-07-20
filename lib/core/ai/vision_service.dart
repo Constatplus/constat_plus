@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'inspection_knowledge.dart';
 
@@ -32,10 +32,7 @@ class RoomPhotoAnalysis {
       if (value is! Map) return <String, String>{};
 
       return value.map(
-        (key, item) => MapEntry(
-          key.toString(),
-          item?.toString() ?? '',
-        ),
+        (key, item) => MapEntry(key.toString(), item?.toString() ?? ''),
       );
     }
 
@@ -64,9 +61,7 @@ class RoomPhotoAnalysis {
     );
   }
 
-  static Map<String, String> _normalizeSections(
-    Map<String, String> sections,
-  ) {
+  static Map<String, String> _normalizeSections(Map<String, String> sections) {
     const sectionNames = <String>[
       'Plafond',
       'Mur',
@@ -82,10 +77,7 @@ class RoomPhotoAnalysis {
       'Mobilier',
     ];
 
-    const emptyAllowedSections = <String>{
-      'Électricité',
-      'Mobilier',
-    };
+    const emptyAllowedSections = <String>{'Électricité', 'Mobilier'};
 
     final result = <String, String>{};
     for (final section in sectionNames) {
@@ -110,7 +102,8 @@ class RoomPhotoAnalysis {
         .toList();
 
     final firstWall = wallValues.first;
-    final allWallsIdentical = firstWall != 'Sans remarque.' &&
+    final allWallsIdentical =
+        firstWall != 'Sans remarque.' &&
         wallValues.every((value) => value == firstWall);
 
     if (allWallsIdentical) {
@@ -127,21 +120,15 @@ class RoomPhotoAnalysis {
 }
 
 class VisionService {
-  static const String _apiKey = String.fromEnvironment(
-    'OPENAI_API_KEY',
-  );
-
-  static const String _model = String.fromEnvironment(
-    'OPENAI_VISION_MODEL',
-    defaultValue: 'gpt-4.1-mini',
-  );
-
   static const int _maximumPhotoCount = 6;
   static const int _columnCount = 2;
   static const int _cellWidth = 512;
   static const int _cellHeight = 384;
 
   Future<RoomPhotoAnalysis> analyzeRoom({
+    required String missionId,
+    required String missionType,
+    required String idempotencyKey,
     required String roomName,
     required String roomType,
     required List<XFile> photos,
@@ -162,71 +149,37 @@ class VisionService {
       },
       {
         'type': 'input_image',
-        'image_url':
-            'data:image/png;base64,${base64Encode(contactSheet)}',
+        'image_url': 'data:image/png;base64,${base64Encode(contactSheet)}',
         'detail': 'low',
       },
     ];
 
-    final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 12);
+    final response = await Supabase.instance.client.functions.invoke(
+      'analyze-room-photos',
+      body: <String, dynamic>{
+        'missionId': missionId,
+        'missionType': missionType,
+        'idempotencyKey': idempotencyKey,
+        'openAiRequest': _buildRequestBody(content),
+      },
+    );
+    final responseText = response.data is String
+        ? response.data as String
+        : jsonEncode(response.data);
+    _throwForHttpError(statusCode: response.status, responseText: responseText);
+    final outputText = _extractOutputText(responseText);
+    final decodedAnalysis = jsonDecode(outputText);
 
-    try {
-      final request = await client.postUrl(
-        Uri.parse('https://api.openai.com/v1/responses'),
+    if (decodedAnalysis is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Le résultat de l’analyse photo n’est pas valide.',
       );
-
-      request.headers.contentType = ContentType.json;
-      request.headers.set(
-        HttpHeaders.authorizationHeader,
-        'Bearer $_apiKey',
-      );
-      request.write(jsonEncode(_buildRequestBody(content)));
-
-      final response = await request.close().timeout(
-            const Duration(seconds: 35),
-          );
-      final responseText = await utf8.decoder
-          .bind(response)
-          .join()
-          .timeout(const Duration(seconds: 35));
-
-      _throwForHttpError(
-        statusCode: response.statusCode,
-        responseText: responseText,
-      );
-
-      final outputText = _extractOutputText(responseText);
-      final decodedAnalysis = jsonDecode(outputText);
-
-      if (decodedAnalysis is! Map<String, dynamic>) {
-        throw const FormatException(
-          'Le résultat de l’analyse photo n’est pas valide.',
-        );
-      }
-
-      return RoomPhotoAnalysis.fromJson(decodedAnalysis);
-    } on TimeoutException {
-      throw const HttpException(
-        'L’analyse a dépassé le délai prévu. Réessayez avec moins de photos.',
-      );
-    } finally {
-      client.close(force: true);
     }
+
+    return RoomPhotoAnalysis.fromJson(decodedAnalysis);
   }
 
   void _validateConfiguration(List<XFile> photos) {
-    if (_apiKey.isEmpty ||
-        _apiKey == 'ta_cle_api' ||
-        _apiKey == 'sk-...' ||
-        !_apiKey.startsWith('sk-')) {
-      throw const FormatException(
-        'Aucune clé API OpenAI valide n’est configurée. '
-        'Relancez Flutter avec '
-        '--dart-define=OPENAI_API_KEY=VOTRE_CLE_REELLE.',
-      );
-    }
-
     if (photos.isEmpty) {
       throw const FormatException('Aucune photo à analyser.');
     }
@@ -241,12 +194,7 @@ class VisionService {
     final canvas = ui.Canvas(recorder);
 
     canvas.drawRect(
-      ui.Rect.fromLTWH(
-        0,
-        0,
-        sheetWidth.toDouble(),
-        sheetHeight.toDouble(),
-      ),
+      ui.Rect.fromLTWH(0, 0, sheetWidth.toDouble(), sheetHeight.toDouble()),
       ui.Paint()..color = const ui.Color(0xFFF1F5F9),
     );
 
@@ -364,9 +312,7 @@ ${InspectionKnowledge.roomPhotoRules}
 ''';
   }
 
-  Map<String, dynamic> _buildRequestBody(
-    List<Map<String, dynamic>> content,
-  ) {
+  Map<String, dynamic> _buildRequestBody(List<Map<String, dynamic>> content) {
     final sectionProperties = <String, dynamic>{
       'Plafond': {'type': 'string'},
       'Mur': {'type': 'string'},
@@ -397,13 +343,9 @@ ${InspectionKnowledge.roomPhotoRules}
     };
 
     return <String, dynamic>{
-      'model': _model,
       'max_output_tokens': 1200,
       'input': [
-        {
-          'role': 'user',
-          'content': content,
-        },
+        {'role': 'user', 'content': content},
       ],
       'text': {
         'format': {
@@ -429,14 +371,8 @@ ${InspectionKnowledge.roomPhotoRules}
                 'properties': worktopProperties,
                 'required': worktopProperties.keys.toList(),
               },
-              'upperUnits': {
-                'type': 'array',
-                'items': _unitSchema,
-              },
-              'lowerUnits': {
-                'type': 'array',
-                'items': _unitSchema,
-              },
+              'upperUnits': {'type': 'array', 'items': _unitSchema},
+              'lowerUnits': {'type': 'array', 'items': _unitSchema},
             },
             'required': [
               'sections',
@@ -454,22 +390,32 @@ ${InspectionKnowledge.roomPhotoRules}
   }
 
   Map<String, dynamic> get _unitSchema => <String, dynamic>{
-        'type': 'object',
-        'additionalProperties': false,
-        'properties': {
-          'type': {'type': 'string'},
-          'comment': {'type': 'string'},
-        },
-        'required': ['type', 'comment'],
-      };
+    'type': 'object',
+    'additionalProperties': false,
+    'properties': {
+      'type': {'type': 'string'},
+      'comment': {'type': 'string'},
+    },
+    'required': ['type', 'comment'],
+  };
 
   void _throwForHttpError({
     required int statusCode,
     required String responseText,
   }) {
+    if (statusCode == 402) {
+      final decoded = jsonDecode(responseText);
+      final reason = decoded is Map ? decoded['reason']?.toString() : null;
+      throw FormatException(
+        reason == 'ai_quota_reached'
+            ? 'Votre quota d’analyses IA est épuisé.'
+            : 'Une offre active avec des analyses IA est nécessaire.',
+      );
+    }
+
     if (statusCode == 401) {
       throw const FormatException(
-        'La clé API OpenAI est absente, invalide ou révoquée.',
+        'Connectez-vous pour utiliser l’analyse automatique.',
       );
     }
 
@@ -481,9 +427,7 @@ ${InspectionKnowledge.roomPhotoRules}
     }
 
     if (statusCode < 200 || statusCode >= 300) {
-      throw HttpException(
-        'Analyse impossible ($statusCode) : $responseText',
-      );
+      throw HttpException('Analyse impossible ($statusCode) : $responseText');
     }
   }
 

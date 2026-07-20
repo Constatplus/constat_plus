@@ -5,14 +5,10 @@ class ElectricalPanel extends StatelessWidget {
   final Map<String, int> Function(String wall) quantitiesForWall;
   final int Function(String wall) blockQuantityForWall;
   final Set<String> Function(String wall) blockComponentsForWall;
-  final void Function(String wall, String item, int quantity)
-      onQuantityChanged;
+  final void Function(String wall, String item, int quantity) onQuantityChanged;
   final void Function(String wall, int quantity) onBlockQuantityChanged;
-  final void Function(
-    String wall,
-    String component,
-    bool selected,
-  ) onBlockComponentChanged;
+  final void Function(String wall, String component, bool selected)
+  onBlockComponentChanged;
 
   const ElectricalPanel({
     super.key,
@@ -60,7 +56,8 @@ class ElectricalPanel extends StatelessWidget {
         final quantities = quantitiesForWall(wall);
         final blockQuantity = blockQuantityForWall(wall);
         final blockComponents = blockComponentsForWall(wall);
-        final totalEquipment = quantities.values.fold<int>(
+        final totalEquipment =
+            quantities.values.fold<int>(
               0,
               (total, quantity) => total + quantity,
             ) +
@@ -167,10 +164,7 @@ class _QuantitySelector extends StatelessWidget {
   final int quantity;
   final ValueChanged<int> onChanged;
 
-  const _QuantitySelector({
-    required this.quantity,
-    required this.onChanged,
-  });
+  const _QuantitySelector({required this.quantity, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {

@@ -52,16 +52,13 @@ class _HomeMascotState extends State<HomeMascot> {
   void initState() {
     super.initState();
 
-    _timer = Timer.periodic(
-      const Duration(seconds: 8),
-      (_) {
-        if (!mounted || _showActions) return;
+    _timer = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (!mounted || _showActions) return;
 
-        setState(() {
-          _currentIndex = (_currentIndex + 1) % _messages.length;
-        });
-      },
-    );
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % _messages.length;
+      });
+    });
   }
 
   @override
@@ -87,9 +84,7 @@ class _HomeMascotState extends State<HomeMascot> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -133,10 +128,7 @@ class _HomeMascotState extends State<HomeMascot> {
               children: [
                 const Row(
                   children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Color(0xFF1264F6),
-                    ),
+                    Icon(Icons.auto_awesome_rounded, color: Color(0xFF1264F6)),
                     SizedBox(width: 10),
                     Text(
                       'Assistant Gianni',
@@ -169,9 +161,7 @@ class _HomeMascotState extends State<HomeMascot> {
                         ? Icons.close_rounded
                         : Icons.help_outline_rounded,
                   ),
-                  label: Text(
-                    _showActions ? 'Fermer' : 'Besoin d’aide ?',
-                  ),
+                  label: Text(_showActions ? 'Fermer' : 'Besoin d’aide ?'),
                 ),
                 if (_showActions) ...[
                   const SizedBox(height: 16),
@@ -205,8 +195,5 @@ class _MascotMessage {
   final String image;
   final String text;
 
-  const _MascotMessage({
-    required this.image,
-    required this.text,
-  });
+  const _MascotMessage({required this.image, required this.text});
 }

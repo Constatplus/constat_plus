@@ -1,7 +1,4 @@
-enum SubscriptionPlan {
-  solo,
-  pro,
-}
+enum SubscriptionPlan { solo, pro }
 
 extension SubscriptionPlanLabel on SubscriptionPlan {
   String get label {

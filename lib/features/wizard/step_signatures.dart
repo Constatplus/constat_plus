@@ -47,15 +47,11 @@ class StepSignatureController {
   SignatureResult get expert => _expert;
 
   bool get hasAnySignature {
-    return _firstParty.signed ||
-        _secondParty.signed ||
-        _expert.signed;
+    return _firstParty.signed || _secondParty.signed || _expert.signed;
   }
 
   bool get isPostponed {
-    return _firstParty.postponed ||
-        _secondParty.postponed ||
-        _expert.postponed;
+    return _firstParty.postponed || _secondParty.postponed || _expert.postponed;
   }
 
   void update({
@@ -110,9 +106,7 @@ class _StepSignatureState extends State<StepSignature> {
   void _continue() {
     _saveToController();
 
-    if (!_firstParty.signed &&
-        !_secondParty.signed &&
-        !_expert.signed) {
+    if (!_firstParty.signed && !_secondParty.signed && !_expert.signed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -129,17 +123,11 @@ class _StepSignatureState extends State<StepSignature> {
 
   void _postpone() {
     setState(() {
-      _firstParty = _firstParty.copyWith(
-        postponed: !_firstParty.signed,
-      );
+      _firstParty = _firstParty.copyWith(postponed: !_firstParty.signed);
 
-      _secondParty = _secondParty.copyWith(
-        postponed: !_secondParty.signed,
-      );
+      _secondParty = _secondParty.copyWith(postponed: !_secondParty.signed);
 
-      _expert = _expert.copyWith(
-        postponed: !_expert.signed,
-      );
+      _expert = _expert.copyWith(postponed: !_expert.signed);
     });
 
     _saveToController();
@@ -202,8 +190,7 @@ class _StepSignatureState extends State<StepSignature> {
                       children: [
                         _SignatureCard(
                           title: 'Première partie',
-                          subtitle:
-                              'Propriétaire, bailleur ou représentant',
+                          subtitle: 'Propriétaire, bailleur ou représentant',
                           initialName: _firstParty.signerName,
                           initialPoints: _firstParty.points,
                           postponed: _firstParty.postponed,
@@ -212,8 +199,7 @@ class _StepSignatureState extends State<StepSignature> {
                         const SizedBox(height: 18),
                         _SignatureCard(
                           title: 'Deuxième partie',
-                          subtitle:
-                              'Locataire, occupant ou représentant',
+                          subtitle: 'Locataire, occupant ou représentant',
                           initialName: _secondParty.signerName,
                           initialPoints: _secondParty.points,
                           postponed: _secondParty.postponed,
@@ -236,8 +222,7 @@ class _StepSignatureState extends State<StepSignature> {
                         Expanded(
                           child: _SignatureCard(
                             title: 'Première partie',
-                            subtitle:
-                                'Propriétaire, bailleur ou représentant',
+                            subtitle: 'Propriétaire, bailleur ou représentant',
                             initialName: _firstParty.signerName,
                             initialPoints: _firstParty.points,
                             postponed: _firstParty.postponed,
@@ -248,8 +233,7 @@ class _StepSignatureState extends State<StepSignature> {
                         Expanded(
                           child: _SignatureCard(
                             title: 'Deuxième partie',
-                            subtitle:
-                                'Locataire, occupant ou représentant',
+                            subtitle: 'Locataire, occupant ou représentant',
                             initialName: _secondParty.signerName,
                             initialPoints: _secondParty.points,
                             postponed: _secondParty.postponed,
@@ -260,8 +244,7 @@ class _StepSignatureState extends State<StepSignature> {
                         Expanded(
                           child: _SignatureCard(
                             title: 'Expert',
-                            subtitle:
-                                'Géomètre-expert ou rédacteur',
+                            subtitle: 'Géomètre-expert ou rédacteur',
                             initialName: _expert.signerName,
                             initialPoints: _expert.points,
                             postponed: _expert.postponed,
@@ -278,24 +261,17 @@ class _StepSignatureState extends State<StepSignature> {
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: const Color(0xFFE2E8F0),
-                ),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: Color(0xFF1264F6),
-                  ),
+                  const Icon(Icons.info_outline, color: Color(0xFF1264F6)),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'Le bouton « Remettre à plus tard » conserve le dossier '
                       'et permet de passer directement à la génération du rapport.',
-                      style: TextStyle(
-                        color: Color(0xFF475569),
-                      ),
+                      style: TextStyle(color: Color(0xFF475569)),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -354,9 +330,7 @@ class _SignatureCardState extends State<_SignatureCard> {
   void initState() {
     super.initState();
 
-    _nameController = TextEditingController(
-      text: widget.initialName,
-    );
+    _nameController = TextEditingController(text: widget.initialName);
 
     _points = List<Offset?>.from(widget.initialPoints);
     _postponed = widget.postponed;
@@ -422,14 +396,14 @@ class _SignatureCardState extends State<_SignatureCard> {
     final statusText = _postponed
         ? 'À signer plus tard'
         : _hasSignature
-            ? 'Signature enregistrée'
-            : 'En attente de signature';
+        ? 'Signature enregistrée'
+        : 'En attente de signature';
 
     final statusColor = _postponed
         ? const Color(0xFFD97706)
         : _hasSignature
-            ? const Color(0xFF16A34A)
-            : const Color(0xFF64748B);
+        ? const Color(0xFF16A34A)
+        : const Color(0xFF64748B);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -463,10 +437,7 @@ class _SignatureCardState extends State<_SignatureCard> {
           const SizedBox(height: 4),
           Text(
             widget.subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF64748B),
-            ),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 14),
           TextField(
@@ -539,9 +510,7 @@ class _SignatureCardState extends State<_SignatureCard> {
                           },
                           onPanEnd: (_) => _endStroke(),
                           child: CustomPaint(
-                            painter: _SignaturePainter(
-                              points: _points,
-                            ),
+                            painter: _SignaturePainter(points: _points),
                             child: _points.isEmpty
                                 ? const Center(
                                     child: Text(
@@ -565,8 +534,8 @@ class _SignatureCardState extends State<_SignatureCard> {
                 _postponed
                     ? Icons.schedule_outlined
                     : _hasSignature
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
+                    ? Icons.check_circle
+                    : Icons.radio_button_unchecked,
                 size: 18,
                 color: statusColor,
               ),
@@ -605,9 +574,7 @@ class _SignatureCardState extends State<_SignatureCard> {
 class _SignaturePainter extends CustomPainter {
   final List<Offset?> points;
 
-  const _SignaturePainter({
-    required this.points,
-  });
+  const _SignaturePainter({required this.points});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -646,7 +613,7 @@ class SignaturesData {
   final StepSignatureController controller;
 
   SignaturesData({StepSignatureController? controller})
-      : controller = controller ?? StepSignatureController();
+    : controller = controller ?? StepSignatureController();
 }
 
 /// Embedded compatibility widget for the exit workflow screens.

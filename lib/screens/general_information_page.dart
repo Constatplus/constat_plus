@@ -4,17 +4,12 @@ import 'presence_page.dart';
 class GeneralInformationPage extends StatelessWidget {
   final String propertyType;
 
-  const GeneralInformationPage({
-    super.key,
-    required this.propertyType,
-  });
+  const GeneralInformationPage({super.key, required this.propertyType});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Informations générales'),
-      ),
+      appBar: AppBar(title: const Text('Informations générales')),
       body: ListView(
         padding: const EdgeInsets.all(28),
         children: [
@@ -61,15 +56,10 @@ class GeneralInformationPage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const PresencePage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const PresencePage()),
                 );
               },
-              child: const Text(
-                'Continuer',
-                style: TextStyle(fontSize: 18),
-              ),
+              child: const Text('Continuer', style: TextStyle(fontSize: 18)),
             ),
           ),
         ],

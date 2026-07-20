@@ -26,9 +26,6 @@ class SupabaseConfig {
       );
     }
 
-    await Supabase.initialize(
-      url: url,
-      publishableKey: publishableKey,
-    );
+    await Supabase.initialize(url: url, publishableKey: publishableKey);
   }
 }

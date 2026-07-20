@@ -1,81 +1,244 @@
 import 'package:flutter/material.dart';
 
+import 'before_works/models/before_works_data.dart';
+
 class StepBeforeWorksInfo extends StatefulWidget {
-  const StepBeforeWorksInfo({super.key});
+  const StepBeforeWorksInfo({
+    super.key,
+    required this.data,
+    required this.onChanged,
+  });
+
+  final BeforeWorksData data;
+  final VoidCallback onChanged;
 
   @override
   State<StepBeforeWorksInfo> createState() => _StepBeforeWorksInfoState();
 }
 
 class _StepBeforeWorksInfoState extends State<StepBeforeWorksInfo> {
-  DateTime selectedDate = DateTime.now();
-
-  String get formattedDate => '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
-
-  Future<void> _pickDate() async {
-    final value = await showDatePicker(context: context, initialDate: selectedDate, firstDate: DateTime(2020), lastDate: DateTime(2100));
-    if (value != null) setState(() => selectedDate = value);
+  Future<void> _pickDate({required bool worksStart}) async {
+    final initial = worksStart
+        ? widget.data.plannedWorksStartDate ?? DateTime.now()
+        : widget.data.missionDate;
+    final value = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (value == null) return;
+    setState(() {
+      if (worksStart) {
+        widget.data.plannedWorksStartDate = value;
+      } else {
+        widget.data.missionDate = value;
+      }
+    });
+    widget.onChanged();
   }
+
+  String _date(DateTime? value) => value == null
+      ? 'À définir'
+      : '${value.day.toString().padLeft(2, '0')}/'
+            '${value.month.toString().padLeft(2, '0')}/${value.year}';
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Informations du constat avant travaux', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+    final data = widget.data;
+    return ListView(
+      children: <Widget>[
+        const Text(
+          'Ordre de mission avant travaux',
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Constituez le rapport de référence technique avant le commencement du chantier.',
+          style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+        ),
+        const SizedBox(height: 22),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: <Widget>[
+            _dateField('Date de la mission', data.missionDate, false),
+            _dateField(
+              'Début prévu des travaux',
+              data.plannedWorksStartDate,
+              true,
+            ),
+            _field(
+              'Adresse du bien ou du chantier',
+              data.address,
+              (value) => data.address = value,
+              520,
+            ),
+            _field(
+              'Mandant',
+              data.principal,
+              (value) => data.principal = value,
+              340,
+            ),
+            _field(
+              'Propriétaire ou occupant',
+              data.ownerOrOccupant,
+              (value) => data.ownerOrOccupant = value,
+              340,
+            ),
+            _field(
+              'Maître d’ouvrage',
+              data.projectOwner,
+              (value) => data.projectOwner = value,
+              340,
+            ),
+            _field(
+              'Entrepreneur',
+              data.contractor,
+              (value) => data.contractor = value,
+              340,
+            ),
+            _field(
+              'Architecte',
+              data.architect,
+              (value) => data.architect = value,
+              340,
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _longField(
+          'Nature des travaux',
+          data.worksNature,
+          (value) => data.worksNature = value,
+        ),
+        const SizedBox(height: 12),
+        _longField(
+          'Observations générales',
+          data.generalObservations,
+          (value) => data.generalObservations = value,
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Parties présentes',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 12),
+        for (
+          var index = 0;
+          index < data.presentParties.length;
+          index++
+        ) ...<Widget>[
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _partyField(
+                      'Nom',
+                      data.presentParties[index].name,
+                      (value) => data.presentParties[index].name = value,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _partyField(
+                      'Qualité',
+                      data.presentParties[index].quality,
+                      (value) => data.presentParties[index].quality = value,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _partyField(
+                      'Partie représentée',
+                      data.presentParties[index].represents,
+                      (value) => data.presentParties[index].represents = value,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: data.presentParties.length == 1
+                        ? null
+                        : () {
+                            setState(() => data.presentParties.removeAt(index));
+                            widget.onChanged();
+                          },
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
-          const Text('Identifiez le lieu, le donneur d’ordre, les intervenants et la nature des travaux.', style: TextStyle(fontSize: 17, color: Colors.black54)),
-          const SizedBox(height: 28),
-          const _Title(Icons.location_on_outlined, 'Lieu du constat'),
-          const SizedBox(height: 12),
-          const Row(children: [Expanded(flex: 4, child: _Field('Rue')), SizedBox(width: 12), Expanded(child: _Field('N°')), SizedBox(width: 12), Expanded(child: _Field('Boîte'))]),
-          const SizedBox(height: 12),
-          const Row(children: [Expanded(child: _Field('Code postal')), SizedBox(width: 12), Expanded(flex: 3, child: _Field('Ville'))]),
-          const SizedBox(height: 26),
-          const _Title(Icons.assignment_ind_outlined, 'Donneur d’ordre'),
-          const SizedBox(height: 12),
-          const Row(children: [Expanded(flex: 2, child: _Field('Nom / société')), SizedBox(width: 12), Expanded(child: _Field('Téléphone')), SizedBox(width: 12), Expanded(child: _Field('E-mail'))]),
-          const SizedBox(height: 26),
-          const _Title(Icons.construction_outlined, 'Projet et intervenants'),
-          const SizedBox(height: 12),
-          const Row(children: [Expanded(child: _Field('Maître d’ouvrage')), SizedBox(width: 12), Expanded(child: _Field('Entreprise de travaux'))]),
-          const SizedBox(height: 12),
-          const Row(children: [Expanded(child: _Field('Architecte / bureau d’études')), SizedBox(width: 12), Expanded(child: _Field('Occupant éventuel'))]),
-          const SizedBox(height: 12),
-          const _Field('Nature des travaux', maxLines: 2),
-          const SizedBox(height: 12),
-          const _Field('Objet et étendue de la mission', maxLines: 3),
-          const SizedBox(height: 26),
-          const _Title(Icons.calendar_today_outlined, 'Date et présence'),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: InkWell(onTap: _pickDate, borderRadius: BorderRadius.circular(16), child: InputDecorator(decoration: _decoration('Date de la mission'), child: Text(formattedDate)))),
-            const SizedBox(width: 12),
-            const Expanded(child: _Field('Heure')),
-          ]),
-          const SizedBox(height: 12),
-          const _Field('Personnes présentes et qualité', maxLines: 3),
         ],
-      ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              setState(() => data.presentParties.add(PresentParty()));
+              widget.onChanged();
+            },
+            icon: const Icon(Icons.person_add_alt_1),
+            label: const Text('Ajouter une partie présente'),
+          ),
+        ),
+      ],
     );
   }
-}
 
-InputDecoration _decoration(String label) => InputDecoration(labelText: label, filled: true, fillColor: const Color(0xFFF4F8FA), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none));
+  Widget _dateField(String label, DateTime? date, bool worksStart) => SizedBox(
+    width: 260,
+    child: InkWell(
+      onTap: () => _pickDate(worksStart: worksStart),
+      child: InputDecorator(
+        decoration: _decoration(label),
+        child: Text(_date(date)),
+      ),
+    ),
+  );
 
-class _Field extends StatelessWidget {
-  final String label;
-  final int maxLines;
-  const _Field(this.label, {this.maxLines = 1});
-  @override
-  Widget build(BuildContext context) => TextFormField(maxLines: maxLines, decoration: _decoration(label));
-}
+  Widget _field(
+    String label,
+    String value,
+    ValueChanged<String> setter,
+    double width,
+  ) => SizedBox(
+    width: width,
+    child: TextFormField(
+      initialValue: value,
+      decoration: _decoration(label),
+      onChanged: (text) {
+        setter(text);
+        widget.onChanged();
+      },
+    ),
+  );
 
-class _Title extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  const _Title(this.icon, this.title);
-  @override
-  Widget build(BuildContext context) => Row(children: [Icon(icon, size: 22), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800))]);
+  Widget _partyField(String label, String value, ValueChanged<String> setter) =>
+      TextFormField(
+        initialValue: value,
+        decoration: _decoration(label),
+        onChanged: (text) {
+          setter(text);
+          widget.onChanged();
+        },
+      );
+
+  Widget _longField(String label, String value, ValueChanged<String> setter) =>
+      TextFormField(
+        initialValue: value,
+        minLines: 3,
+        maxLines: 7,
+        decoration: _decoration(label),
+        onChanged: (text) {
+          setter(text);
+          widget.onChanged();
+        },
+      );
+
+  InputDecoration _decoration(String label) => InputDecoration(
+    labelText: label,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+  );
 }

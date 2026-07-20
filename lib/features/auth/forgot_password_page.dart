@@ -41,7 +41,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: const Color(0xFFB42318)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFB42318),
+      ),
     );
   }
 
@@ -63,11 +66,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   child: const Column(
                     children: [
-                      Icon(Icons.mark_email_read_outlined, size: 44, color: Color(0xFF067647)),
+                      Icon(
+                        Icons.mark_email_read_outlined,
+                        size: 44,
+                        color: Color(0xFF067647),
+                      ),
                       SizedBox(height: 12),
                       Text(
                         'E-mail envoyé',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       SizedBox(height: 8),
                       Text(
@@ -98,15 +108,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     validator: (value) {
                       final email = value?.trim() ?? '';
-                      if (email.isEmpty) return 'Saisissez votre adresse e-mail.';
-                      if (!email.contains('@')) return 'Adresse e-mail invalide.';
+                      if (email.isEmpty) {
+                        return 'Saisissez votre adresse e-mail.';
+                      }
+                      if (!email.contains('@')) {
+                        return 'Adresse e-mail invalide.';
+                      }
                       return null;
                     },
                   ),
                   const SizedBox(height: 22),
                   FilledButton(
                     onPressed: _loading ? null : _submit,
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(54)),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(54),
+                    ),
                     child: _loading
                         ? const SizedBox(
                             width: 22,
@@ -117,7 +133,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed: _loading ? null : () => Navigator.of(context).pop(),
+                    onPressed: _loading
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Retour à la connexion'),
                   ),
                 ],

@@ -119,15 +119,47 @@ class ReportPreferences {
       showLogo: true,
       showPageNumbers: true,
       sections: [
-        ReportSectionPreference(id: 'cover', label: 'Page de garde', enabled: true),
-        ReportSectionPreference(id: 'toc', label: 'Table des matières', enabled: true),
-        ReportSectionPreference(id: 'notes', label: 'Notes liminaires', enabled: true),
-        ReportSectionPreference(id: 'parties', label: 'Identification des parties', enabled: true),
-        ReportSectionPreference(id: 'keys', label: 'Clés, entretiens et documents', enabled: true),
-        ReportSectionPreference(id: 'generalities', label: 'Généralités', enabled: true),
+        ReportSectionPreference(
+          id: 'cover',
+          label: 'Page de garde',
+          enabled: true,
+        ),
+        ReportSectionPreference(
+          id: 'toc',
+          label: 'Table des matières',
+          enabled: true,
+        ),
+        ReportSectionPreference(
+          id: 'notes',
+          label: 'Notes liminaires',
+          enabled: true,
+        ),
+        ReportSectionPreference(
+          id: 'parties',
+          label: 'Identification des parties',
+          enabled: true,
+        ),
+        ReportSectionPreference(
+          id: 'keys',
+          label: 'Clés, entretiens et documents',
+          enabled: true,
+        ),
+        ReportSectionPreference(
+          id: 'generalities',
+          label: 'Généralités',
+          enabled: true,
+        ),
         ReportSectionPreference(id: 'rooms', label: 'Pièces', enabled: true),
-        ReportSectionPreference(id: 'conclusion', label: 'Conclusion', enabled: true),
-        ReportSectionPreference(id: 'signatures', label: 'Signatures', enabled: true),
+        ReportSectionPreference(
+          id: 'conclusion',
+          label: 'Conclusion',
+          enabled: true,
+        ),
+        ReportSectionPreference(
+          id: 'signatures',
+          label: 'Signatures',
+          enabled: true,
+        ),
       ],
     );
   }
@@ -172,9 +204,11 @@ class ReportPreferences {
       professionalNumber: professionalNumber ?? this.professionalNumber,
       vatNumber: vatNumber ?? this.vatNumber,
       footerText: footerText ?? this.footerText,
-      entryPreliminaryNotes: entryPreliminaryNotes ?? this.entryPreliminaryNotes,
+      entryPreliminaryNotes:
+          entryPreliminaryNotes ?? this.entryPreliminaryNotes,
       exitPreliminaryNotes: exitPreliminaryNotes ?? this.exitPreliminaryNotes,
-      beforeWorksPreliminaryNotes: beforeWorksPreliminaryNotes ?? this.beforeWorksPreliminaryNotes,
+      beforeWorksPreliminaryNotes:
+          beforeWorksPreliminaryNotes ?? this.beforeWorksPreliminaryNotes,
       sections: sections ?? this.sections,
       primaryColorHex: primaryColorHex ?? this.primaryColorHex,
       secondaryColorHex: secondaryColorHex ?? this.secondaryColorHex,

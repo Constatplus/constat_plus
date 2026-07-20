@@ -13,15 +13,10 @@ class Covering {
   final String id;
   final String name;
 
-  const Covering({
-    required this.id,
-    required this.name,
-  });
+  const Covering({required this.id, required this.name});
 
   @override
-  bool operator ==(Object other) =>
-      other is Covering &&
-      other.id == id;
+  bool operator ==(Object other) => other is Covering && other.id == id;
 
   @override
   int get hashCode => id.hashCode;

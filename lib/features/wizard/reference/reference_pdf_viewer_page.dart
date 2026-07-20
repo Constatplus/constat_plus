@@ -3,15 +3,19 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pdfrx/pdfrx.dart';
 
-class EntryPdfViewerPage extends StatelessWidget {
-  const EntryPdfViewerPage({
+class ReferencePdfViewerPage extends StatelessWidget {
+  const ReferencePdfViewerPage({
     super.key,
-    required this.pdfBytes,
-    required this.fileName,
-  });
+    required this.title,
+    required this.backLabel,
+    this.pdfBytes,
+    this.pdfPath,
+  }) : assert(pdfBytes != null || pdfPath != null);
 
-  final Uint8List pdfBytes;
-  final String fileName;
+  final String title;
+  final String backLabel;
+  final Uint8List? pdfBytes;
+  final String? pdfPath;
 
   @override
   Widget build(BuildContext context) {
@@ -19,19 +23,23 @@ class EntryPdfViewerPage extends StatelessWidget {
       backgroundColor: const Color(0xFF334155),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: <Widget>[
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: FilledButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Retour au rapport de sortie'),
+              label: Text(backLabel),
             ),
           ),
         ],
       ),
-      body: SafeArea(child: PdfViewer.data(pdfBytes, sourceName: fileName)),
+      body: SafeArea(
+        child: pdfBytes != null
+            ? PdfViewer.data(pdfBytes!, sourceName: title)
+            : PdfViewer.file(pdfPath!),
+      ),
     );
   }
 }

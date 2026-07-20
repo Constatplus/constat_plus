@@ -46,9 +46,7 @@ class _CPCardState extends State<CPCard> {
       decoration: BoxDecoration(
         color: widget.backgroundColor ?? CPColors.surface,
         borderRadius: CPRadius.radiusLg,
-        border: widget.outlined
-            ? Border.all(color: CPColors.border)
-            : null,
+        border: widget.outlined ? Border.all(color: CPColors.border) : null,
         boxShadow: _hover ? CPShadows.lg : CPShadows.md,
       ),
       child: widget.child,

@@ -23,15 +23,11 @@ class InspectionElement {
 
   final String name;
 
-  const InspectionElement({
-    required this.id,
-    required this.name,
-  });
+  const InspectionElement({required this.id, required this.name});
 
   @override
   bool operator ==(Object other) =>
-      other is InspectionElement &&
-      other.id == id;
+      other is InspectionElement && other.id == id;
 
   @override
   int get hashCode => id.hashCode;

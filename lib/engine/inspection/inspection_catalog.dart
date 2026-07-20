@@ -28,10 +28,5 @@ abstract final class ConditionCatalog {
     name: 'Mauvais état',
   );
 
-  static const all = <Condition>[
-    perfect,
-    good,
-    fair,
-    poor,
-  ];
+  static const all = <Condition>[perfect, good, fair, poor];
 }

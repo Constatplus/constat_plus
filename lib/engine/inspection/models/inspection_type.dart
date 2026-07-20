@@ -31,8 +31,7 @@ class InspectionType {
 
   @override
   bool operator ==(Object other) {
-    return other is InspectionType &&
-        other.id == id;
+    return other is InspectionType && other.id == id;
   }
 
   @override

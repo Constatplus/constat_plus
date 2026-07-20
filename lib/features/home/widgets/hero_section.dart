@@ -4,11 +4,7 @@ class HeroSection extends StatelessWidget {
   final VoidCallback onEntry;
   final VoidCallback onExit;
 
-  const HeroSection({
-    super.key,
-    required this.onEntry,
-    required this.onExit,
-  });
+  const HeroSection({super.key, required this.onEntry, required this.onExit});
 
   Widget _feature(IconData icon, String title, String subtitle) {
     return Expanded(
@@ -21,11 +17,7 @@ class HeroSection extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: const Color(0xFF1264F6),
-              size: 34,
-            ),
+            Icon(icon, color: const Color(0xFF1264F6), size: 34),
             const SizedBox(height: 10),
             Text(
               title,
@@ -142,10 +134,7 @@ class HeroSection extends StatelessWidget {
                     const SizedBox(height: 22),
                     const Text(
                       "Conçu par",
-                      style: TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                     ),
                     const Text(
                       "Di Pasquale Gianni",
@@ -156,10 +145,7 @@ class HeroSection extends StatelessWidget {
                     ),
                     const Text(
                       "Géomètre-Expert (GEO20/1523)",
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     ),
                   ],
                 ),

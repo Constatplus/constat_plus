@@ -11,14 +11,46 @@ class _StepPropertyTypeState extends State<StepPropertyType> {
   String? selectedType;
 
   final List<_PropertyType> types = const [
-    _PropertyType('Maison', 'Bien complet avec façades et extérieurs', Icons.home_rounded),
-    _PropertyType('Appartement', 'Lot privatif dans un immeuble', Icons.apartment_rounded),
-    _PropertyType('Studio', 'Petite unité avec espace unique', Icons.king_bed_rounded),
-    _PropertyType('Commerce', 'Surface commerciale ou magasin', Icons.storefront_rounded),
-    _PropertyType('Bureau', 'Local professionnel ou administratif', Icons.business_center_rounded),
-    _PropertyType('Garage', 'Garage, box ou emplacement fermé', Icons.garage_rounded),
-    _PropertyType('Immeuble', 'Plusieurs niveaux ou plusieurs lots', Icons.location_city_rounded),
-    _PropertyType('Autre', 'Bien spécifique ou personnalisé', Icons.add_circle_outline_rounded),
+    _PropertyType(
+      'Maison',
+      'Bien complet avec façades et extérieurs',
+      Icons.home_rounded,
+    ),
+    _PropertyType(
+      'Appartement',
+      'Lot privatif dans un immeuble',
+      Icons.apartment_rounded,
+    ),
+    _PropertyType(
+      'Studio',
+      'Petite unité avec espace unique',
+      Icons.king_bed_rounded,
+    ),
+    _PropertyType(
+      'Commerce',
+      'Surface commerciale ou magasin',
+      Icons.storefront_rounded,
+    ),
+    _PropertyType(
+      'Bureau',
+      'Local professionnel ou administratif',
+      Icons.business_center_rounded,
+    ),
+    _PropertyType(
+      'Garage',
+      'Garage, box ou emplacement fermé',
+      Icons.garage_rounded,
+    ),
+    _PropertyType(
+      'Immeuble',
+      'Plusieurs niveaux ou plusieurs lots',
+      Icons.location_city_rounded,
+    ),
+    _PropertyType(
+      'Autre',
+      'Bien spécifique ou personnalisé',
+      Icons.add_circle_outline_rounded,
+    ),
   ];
 
   @override
@@ -28,18 +60,12 @@ class _StepPropertyTypeState extends State<StepPropertyType> {
       children: [
         const Text(
           'Type de bien',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         const Text(
           'Choisissez le type de bien à visiter.',
-          style: TextStyle(
-            fontSize: 17,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: 17, color: Colors.black54),
         ),
         const SizedBox(height: 28),
         Expanded(

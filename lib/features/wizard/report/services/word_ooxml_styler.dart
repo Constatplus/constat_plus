@@ -65,41 +65,23 @@ class WordOoxmlStyler {
 
       final normalized = _normalize(text);
       if (normalizedRoomTitles.contains(normalized)) {
-        _styleParagraph(
-          paragraph,
-          color: '000000',
-          sizeHalfPoints: 32,
-        );
+        _styleParagraph(paragraph, color: '000000', sizeHalfPoints: 32);
       } else if (_descriptiveTitles.contains(normalized)) {
-        _styleParagraph(
-          paragraph,
-          color: '1E5AA8',
-          sizeHalfPoints: 26,
-        );
+        _styleParagraph(paragraph, color: '1E5AA8', sizeHalfPoints: 26);
       } else if (_technicalTitles.contains(normalized)) {
-        _styleParagraph(
-          paragraph,
-          color: '238636',
-          sizeHalfPoints: 26,
-        );
+        _styleParagraph(paragraph, color: '238636', sizeHalfPoints: 26);
       } else {
         _applyBodyFont(paragraph);
       }
     }
 
-    final updatedXml = Uint8List.fromList(
-      document.toXmlString().codeUnits,
-    );
+    final updatedXml = Uint8List.fromList(document.toXmlString().codeUnits);
 
     // ArchiveFile est immuable dans archive 4.x : il faut remplacer
     // l'entree au lieu de modifier sa propriete content.
     archive.removeFile(documentFile);
     archive.addFile(
-      ArchiveFile(
-        'word/document.xml',
-        updatedXml.length,
-        updatedXml,
-      ),
+      ArchiveFile('word/document.xml', updatedXml.length, updatedXml),
     );
 
     final encoded = ZipEncoder().encode(archive);
@@ -183,12 +165,9 @@ class WordOoxmlStyler {
       (node) => node is XmlElement && node.name.local == localName,
     );
     parent.children.add(
-      XmlElement(
-        XmlName(localName, 'w'),
-        <XmlAttribute>[
-          XmlAttribute(XmlName('val', 'w'), value),
-        ],
-      ),
+      XmlElement(XmlName(localName, 'w'), <XmlAttribute>[
+        XmlAttribute(XmlName('val', 'w'), value),
+      ]),
     );
   }
 
@@ -197,15 +176,12 @@ class WordOoxmlStyler {
       (node) => node is XmlElement && node.name.local == 'rFonts',
     );
     runProperties.children.add(
-      XmlElement(
-        XmlName('rFonts', 'w'),
-        <XmlAttribute>[
-          XmlAttribute(XmlName('ascii', 'w'), 'Aptos'),
-          XmlAttribute(XmlName('hAnsi', 'w'), 'Aptos'),
-          XmlAttribute(XmlName('eastAsia', 'w'), 'Aptos'),
-          XmlAttribute(XmlName('cs', 'w'), 'Aptos'),
-        ],
-      ),
+      XmlElement(XmlName('rFonts', 'w'), <XmlAttribute>[
+        XmlAttribute(XmlName('ascii', 'w'), 'Aptos'),
+        XmlAttribute(XmlName('hAnsi', 'w'), 'Aptos'),
+        XmlAttribute(XmlName('eastAsia', 'w'), 'Aptos'),
+        XmlAttribute(XmlName('cs', 'w'), 'Aptos'),
+      ]),
     );
   }
 }

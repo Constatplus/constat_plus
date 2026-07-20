@@ -40,8 +40,8 @@ class PhotoGallery extends StatelessWidget {
         final count = constraints.maxWidth >= 900
             ? 4
             : constraints.maxWidth >= 620
-                ? 3
-                : 2;
+            ? 3
+            : 2;
         final width = (constraints.maxWidth - ((count - 1) * 12)) / count;
 
         return Wrap(

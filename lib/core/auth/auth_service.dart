@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'auth_profile.dart';
 import 'supabase_config.dart';
 
 class AuthService {
@@ -9,7 +10,8 @@ class AuthService {
 
   static User? get currentUser => client.auth.currentUser;
 
-  static Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
+  static Stream<AuthState> get authStateChanges =>
+      client.auth.onAuthStateChange;
 
   static Future<AuthResponse> signIn({
     required String email,
@@ -57,6 +59,24 @@ class AuthService {
       email: email.trim(),
       emailRedirectTo: SupabaseConfig.authRedirectUrl,
     );
+  }
+
+  static Future<UserResponse> updatePassword(String password) {
+    return client.auth.updateUser(UserAttributes(password: password));
+  }
+
+  static Future<AuthProfile> loadCurrentProfile() async {
+    final user = currentUser;
+    if (user == null) {
+      throw const AuthException('Aucune session active.');
+    }
+
+    final data = await client
+        .from('profiles')
+        .select('id, email, role, account_status')
+        .eq('id', user.id)
+        .single();
+    return AuthProfile.fromMap(data);
   }
 
   static Future<void> signOut() => client.auth.signOut();

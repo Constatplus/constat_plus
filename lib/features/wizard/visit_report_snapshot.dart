@@ -1,9 +1,7 @@
 class VisitReportSnapshot {
   final List<VisitRoomReport> rooms;
 
-  const VisitReportSnapshot({
-    required this.rooms,
-  });
+  const VisitReportSnapshot({required this.rooms});
 
   bool get isEmpty => rooms.isEmpty;
 }
@@ -57,10 +55,7 @@ class KitchenUnitReport {
   final String type;
   final String comment;
 
-  const KitchenUnitReport({
-    required this.type,
-    required this.comment,
-  });
+  const KitchenUnitReport({required this.type, required this.comment});
 }
 
 class StepVisitController {

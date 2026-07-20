@@ -16,10 +16,7 @@ void testSentence() {
     material: MaterialCatalog.block,
     covering: CoveringCatalog.paint,
     condition: ConditionCatalog.good,
-    defects: const [
-      DefectCatalog.scratch,
-      DefectCatalog.hole,
-    ],
+    defects: const [DefectCatalog.scratch, DefectCatalog.hole],
   );
 
   debugPrint(generator.generate(observation));

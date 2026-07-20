@@ -14,9 +14,7 @@ class PresencePage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personnes présentes'),
-      ),
+      appBar: AppBar(title: const Text('Personnes présentes')),
       body: ListView(
         padding: const EdgeInsets.all(28),
         children: [

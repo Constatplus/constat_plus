@@ -112,9 +112,9 @@ class DashboardContent extends StatelessWidget {
                   Text(
                     'Créer une nouvelle mission',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
@@ -127,9 +127,11 @@ class DashboardContent extends StatelessWidget {
                       final columns = constraints.maxWidth >= 1050
                           ? 3
                           : constraints.maxWidth >= 660
-                              ? 2
-                              : 1;
-                      final width = (constraints.maxWidth - ((columns - 1) * 16)) / columns;
+                          ? 2
+                          : 1;
+                      final width =
+                          (constraints.maxWidth - ((columns - 1) * 16)) /
+                          columns;
 
                       return Wrap(
                         spacing: 16,
@@ -140,7 +142,8 @@ class DashboardContent extends StatelessWidget {
                             kind: MissionKind.entry,
                             icon: Icons.login_rounded,
                             accent: const Color(0xFF1264F6),
-                            description: 'Composition du bien, visite, clés, compteurs et signatures.',
+                            description:
+                                'Composition du bien, visite, clés, compteurs et signatures.',
                             onTap: () => _create(context, MissionKind.entry),
                           ),
                           _MissionChoice(
@@ -148,7 +151,8 @@ class DashboardContent extends StatelessWidget {
                             kind: MissionKind.exit,
                             icon: Icons.logout_rounded,
                             accent: const Color(0xFFF59E0B),
-                            description: 'Comparaison, dégâts locatifs, calculs et clôture du dossier.',
+                            description:
+                                'Comparaison, dégâts locatifs, calculs et clôture du dossier.',
                             onTap: () => _create(context, MissionKind.exit),
                           ),
                           _MissionChoice(
@@ -156,8 +160,10 @@ class DashboardContent extends StatelessWidget {
                             kind: MissionKind.beforeWorks,
                             icon: Icons.construction_rounded,
                             accent: const Color(0xFF8B5CF6),
-                            description: 'Voirie, façades, abords, zones sensibles et annexe photo.',
-                            onTap: () => _create(context, MissionKind.beforeWorks),
+                            description:
+                                'Voirie, façades, abords, zones sensibles et annexe photo.',
+                            onTap: () =>
+                                _create(context, MissionKind.beforeWorks),
                           ),
                         ],
                       );
@@ -174,7 +180,8 @@ class DashboardContent extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Dossiers récents',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF0F172A),
                               ),
@@ -189,7 +196,9 @@ class DashboardContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   if (recent.isEmpty)
-                    _EmptyRecent(onCreate: () => _create(context, MissionKind.entry))
+                    _EmptyRecent(
+                      onCreate: () => _create(context, MissionKind.entry),
+                    )
                   else
                     LayoutBuilder(
                       builder: (context, constraints) {
@@ -245,9 +254,9 @@ class _DashboardTopBar extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               'Bonjour Gianni, prêt pour une nouvelle expertise ?',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF64748B),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF64748B)),
             ),
           ],
         );
@@ -269,7 +278,10 @@ class _DashboardTopBar extends StatelessWidget {
             const CircleAvatar(
               radius: 22,
               backgroundColor: Color(0xFFEAF2FF),
-              child: Icon(Icons.person_outline_rounded, color: Color(0xFF1264F6)),
+              child: Icon(
+                Icons.person_outline_rounded,
+                color: Color(0xFF1264F6),
+              ),
             ),
           ],
         );
@@ -280,7 +292,12 @@ class _DashboardTopBar extends StatelessWidget {
             children: [title, const SizedBox(height: 18), actions],
           );
         }
-        return Row(children: [Expanded(child: title), actions]);
+        return Row(
+          children: [
+            Expanded(child: title),
+            actions,
+          ],
+        );
       },
     );
   }
@@ -321,7 +338,10 @@ class _HeroPanel extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(999),
@@ -367,7 +387,10 @@ class _HeroPanel extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white54),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 17,
+                        ),
                       ),
                       onPressed: onOpenFolders,
                       icon: const Icon(Icons.folder_open_outlined),
@@ -462,10 +485,7 @@ class _MissionChoice extends StatelessWidget {
                   description,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    height: 1.4,
-                  ),
+                  style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
                 ),
                 const Spacer(),
                 Text(
@@ -532,7 +552,10 @@ class _RecentMissionTile extends StatelessWidget {
                     ),
                     Text(
                       '${mission.progress}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -585,7 +608,11 @@ class _EmptyRecent extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.folder_copy_outlined, size: 42, color: Color(0xFF94A3B8)),
+          const Icon(
+            Icons.folder_copy_outlined,
+            size: 42,
+            color: Color(0xFF94A3B8),
+          ),
           const SizedBox(height: 12),
           const Text(
             'Aucun dossier récent',

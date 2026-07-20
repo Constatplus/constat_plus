@@ -13,15 +13,10 @@ class Defect {
   final String id;
   final String name;
 
-  const Defect({
-    required this.id,
-    required this.name,
-  });
+  const Defect({required this.id, required this.name});
 
   @override
-  bool operator ==(Object other) =>
-      other is Defect &&
-      other.id == id;
+  bool operator ==(Object other) => other is Defect && other.id == id;
 
   @override
   int get hashCode => id.hashCode;

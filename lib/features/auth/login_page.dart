@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/access/access_service.dart';
+import '../../core/auth/auth_service.dart';
 import '../../screens/home_page.dart';
+import 'forgot_password_page.dart';
+import 'register_page.dart';
+import 'widgets/auth_shell.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,11 +22,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _loading = false;
   String? _error;
 
-  static const _adminEmail = 'info@gaudiumimmo.be';
-  static const _adminPassword = 'Constat2026!';
-  static const _controllerEmail = 'controleur@constatplus.be';
-  static const _controllerPassword = 'Controle2026!';
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -32,9 +32,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _login() async {
     final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text;
-
     if (email.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Complétez votre adresse e-mail et votre mot de passe.');
+      setState(() {
+        _error = 'Complétez votre adresse e-mail et votre mot de passe.';
+      });
       return;
     }
 
@@ -43,277 +44,122 @@ class _LoginPageState extends State<LoginPage> {
       _error = null;
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    AccountPlan? plan;
-    if (email == _adminEmail && password == _adminPassword) {
-      plan = AccountPlan.admin;
-    } else if (email == _controllerEmail && password == _controllerPassword) {
-      plan = AccountPlan.controller;
-    } else if (password == 'Demo2026!') {
-      if (email.startsWith('solo@')) {
-        plan = AccountPlan.solo;
-      } else if (email.startsWith('pro@')) {
-        plan = AccountPlan.pro;
-      } else if (email.startsWith('occasionnel@')) {
-        plan = AccountPlan.occasional;
-      }
-    }
-
-    if (!mounted) return;
-
-    if (plan == null) {
+    try {
+      await AuthService.signIn(email: email, password: password);
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on AuthException catch (error) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Identifiants incorrects. Utilisez un compte de démonstration.';
+        _error = _translateAuthError(error.message);
       });
-      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Connexion impossible pour le moment.';
+      });
     }
+  }
 
-    AccessService.instance.signIn(email: email, plan: plan);
+  String _translateAuthError(String message) {
+    final normalized = message.toLowerCase();
+    if (normalized.contains('invalid login credentials')) {
+      return 'Adresse e-mail ou mot de passe incorrect.';
+    }
+    if (normalized.contains('email not confirmed')) {
+      return 'Confirmez votre adresse e-mail avant de vous connecter.';
+    }
+    return message;
+  }
+
+  void _startDemo(AccountPlan plan) {
+    AccessService.instance.startDemo(plan: plan);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );
   }
 
-  void _fillDemo(String email) {
-    _emailController.text = email;
-    _passwordController.text = 'Demo2026!';
-    setState(() => _error = null);
+  void _openForgotPassword() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const ForgotPasswordPage()));
+  }
+
+  void _openRegister() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const RegisterPage()));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FB),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
-              child: Card(
-                clipBehavior: Clip.antiAlias,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 820;
-                    final presentation = _PresentationPanel(compact: compact);
-                    final form = _LoginForm(
-                      emailController: _emailController,
-                      passwordController: _passwordController,
-                      obscurePassword: _obscurePassword,
-                      loading: _loading,
-                      error: _error,
-                      onTogglePassword: () => setState(
-                        () => _obscurePassword = !_obscurePassword,
-                      ),
-                      onLogin: _login,
-                      onDemo: _fillDemo,
-                    );
-
-                    return compact
-                        ? Column(mainAxisSize: MainAxisSize.min, children: [presentation, form])
-                        : IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(child: presentation),
-                                Expanded(child: form),
-                              ],
-                            ),
-                          );
-                  },
-                ),
+    return AuthShell(
+      title: 'Connexion',
+      subtitle: 'Accédez à vos dossiers et à votre abonnement.',
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _emailController,
+              enabled: !_loading,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.username],
+              decoration: const InputDecoration(
+                labelText: 'Adresse e-mail',
+                prefixIcon: Icon(Icons.mail_outline),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PresentationPanel extends StatelessWidget {
-  final bool compact;
-
-  const _PresentationPanel({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(minHeight: compact ? 320 : 650),
-      padding: const EdgeInsets.all(42),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1D4ED8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Constat',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w900,
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              enabled: !_loading,
+              obscureText: _obscurePassword,
+              autofillHints: const [AutofillHints.password],
+              onSubmitted: (_) => _login(),
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  onPressed: _loading
+                      ? null
+                      : () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                   ),
                 ),
-                TextSpan(
-                  text: '+',
-                  style: TextStyle(
-                    color: Color(0xFF93C5FD),
-                    fontSize: 38,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 34),
-          const Text(
-            'Laissez le logiciel écrire.\nConcentrez-vous sur ce que vous voyez.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 34,
-              height: 1.12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 22),
-          const Text(
-            'Visite guidée, analyse photo, rapport Word et contrôle humain dans un même espace professionnel.',
-            style: TextStyle(
-              color: Color(0xFFCBD5E1),
-              fontSize: 16,
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 34),
-          const _FeatureLine(icon: Icons.auto_awesome, label: 'Assistant IA de terrain'),
-          const _FeatureLine(icon: Icons.description_outlined, label: 'Rapports Word personnalisables'),
-          const _FeatureLine(icon: Icons.verified_user_outlined, label: 'Compte administrateur vérifié'),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureLine extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _FeatureLine({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFBFDBFE)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LoginForm extends StatelessWidget {
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final bool obscurePassword;
-  final bool loading;
-  final String? error;
-  final VoidCallback onTogglePassword;
-  final VoidCallback onLogin;
-  final ValueChanged<String> onDemo;
-
-  const _LoginForm({
-    required this.emailController,
-    required this.passwordController,
-    required this.obscurePassword,
-    required this.loading,
-    required this.error,
-    required this.onTogglePassword,
-    required this.onLogin,
-    required this.onDemo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(42),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Connexion',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Accédez à vos dossiers et à votre abonnement.',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
-          ),
-          const SizedBox(height: 30),
-          TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'Adresse e-mail',
-              prefixIcon: Icon(Icons.mail_outline),
-              border: OutlineInputBorder(),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _loading ? null : _openForgotPassword,
+                child: const Text('Mot de passe oublié ?'),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: passwordController,
-            obscureText: obscurePassword,
-            onSubmitted: (_) => onLogin(),
-            decoration: InputDecoration(
-              labelText: 'Mot de passe',
-              prefixIcon: const Icon(Icons.lock_outline),
-              suffixIcon: IconButton(
-                onPressed: onTogglePassword,
-                icon: Icon(
-                  obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            if (_error != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Color(0xFFB91C1C)),
                 ),
               ),
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          if (error != null) ...[
-            const SizedBox(height: 14),
-            Text(error!, style: const TextStyle(color: Color(0xFFB91C1C))),
-          ],
-          const SizedBox(height: 22),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: loading ? null : onLogin,
-              icon: loading
+              const SizedBox(height: 14),
+            ],
+            FilledButton.icon(
+              onPressed: _loading ? null : _login,
+              icon: _loading
                   ? const SizedBox(
                       width: 18,
                       height: 18,
@@ -321,48 +167,67 @@ class _LoginForm extends StatelessWidget {
                     )
                   : const Icon(Icons.login_rounded),
               label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 14),
+                padding: EdgeInsets.symmetric(vertical: 15),
                 child: Text('Se connecter'),
               ),
             ),
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Comptes de vérification',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ActionChip(
-                label: const Text('Contrôleur'),
-                onPressed: () {
-                  emailController.text = 'controleur@constatplus.be';
-                  passwordController.text = 'Controle2026!';
-                },
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: _loading ? null : _openRegister,
+              child: const Text('Créer un compte professionnel'),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFED7AA)),
               ),
-              ActionChip(
-                label: const Text('Occasionnel'),
-                onPressed: () => onDemo('occasionnel@demo.constatplus.be'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Mode démonstration local',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Aucune authentification ni aucun paiement réel.',
+                    style: TextStyle(color: Color(0xFF9A3412), fontSize: 12.5),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(
+                        label: const Text('Occasionnel'),
+                        onPressed: () => _startDemo(AccountPlan.occasional),
+                      ),
+                      ActionChip(
+                        label: const Text('Solo'),
+                        onPressed: () => _startDemo(AccountPlan.solo),
+                      ),
+                      ActionChip(
+                        label: const Text('Pro'),
+                        onPressed: () => _startDemo(AccountPlan.pro),
+                      ),
+                      ActionChip(
+                        label: const Text('Contrôleur'),
+                        onPressed: () => _startDemo(AccountPlan.controller),
+                      ),
+                      ActionChip(
+                        label: const Text('Administration'),
+                        onPressed: () => _startDemo(AccountPlan.admin),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              ActionChip(
-                label: const Text('Solo'),
-                onPressed: () => onDemo('solo@demo.constatplus.be'),
-              ),
-              ActionChip(
-                label: const Text('Pro'),
-                onPressed: () => onDemo('pro@demo.constatplus.be'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Démo : Demo2026! • Contrôleur : Controle2026!',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

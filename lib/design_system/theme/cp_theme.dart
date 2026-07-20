@@ -17,25 +17,19 @@ abstract final class CPTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: CPColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: CPRadius.radiusLg,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: CPRadius.radiusLg),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
           minimumSize: const Size(0, 48),
-          shape: RoundedRectangleBorder(
-            borderRadius: CPRadius.radiusMd,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: CPRadius.radiusMd),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: CPColors.surface,
-        border: OutlineInputBorder(
-          borderRadius: CPRadius.radiusMd,
-        ),
+        border: OutlineInputBorder(borderRadius: CPRadius.radiusMd),
         enabledBorder: OutlineInputBorder(
           borderRadius: CPRadius.radiusMd,
           borderSide: const BorderSide(color: CPColors.border),

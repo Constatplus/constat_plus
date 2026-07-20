@@ -133,17 +133,12 @@ class WordReportService {
 
     if (settings.includeExpertSignature &&
         settings.expertName.trim().isNotEmpty) {
-      document.addParagraph(
-        text: 'Expert : ${settings.expertName.trim()}',
-      );
+      document.addParagraph(text: 'Expert : ${settings.expertName.trim()}');
     }
     document.addPageBreak();
   }
 
-  void _buildKeysMaintenanceManuals(
-    dynamic document,
-    ReportSettings settings,
-  ) {
+  void _buildKeysMaintenanceManuals(dynamic document, ReportSettings settings) {
     _addMainTitle(document, 'CLÉS - ENTRETIENS - MANUELS - DOCUMENTS');
     _addListSection(document, 'CLÉS', settings.keys);
     _addListSection(document, 'ENTRETIENS', settings.maintenance);
@@ -330,9 +325,7 @@ class WordReportService {
     for (var index = 0; index < paths.length; index++) {
       try {
         document.addPicture(paths[index], width: docx.Inches(3));
-        document.addParagraph(
-          text: '${room.name} - Photo ${index + 1}',
-        );
+        document.addParagraph(text: '${room.name} - Photo ${index + 1}');
       } catch (_) {
         document.addParagraph(
           text: 'Photo ${index + 1} non insérée : fichier illisible.',

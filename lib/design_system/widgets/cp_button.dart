@@ -3,12 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/cp_colors.dart';
 import '../theme/cp_radius.dart';
 
-enum CPButtonVariant {
-  primary,
-  secondary,
-  success,
-  danger,
-}
+enum CPButtonVariant { primary, secondary, success, danger }
 
 class CPButton extends StatelessWidget {
   final String label;
@@ -65,9 +60,7 @@ class CPButton extends StatelessWidget {
           elevation: 0,
           backgroundColor: _background,
           foregroundColor: _foreground,
-          shape: RoundedRectangleBorder(
-            borderRadius: CPRadius.radiusMd,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: CPRadius.radiusMd),
         ),
         child: loading
             ? SizedBox(
@@ -87,9 +80,7 @@ class CPButton extends StatelessWidget {
                   ],
                   Text(
                     label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

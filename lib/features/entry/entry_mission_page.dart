@@ -33,7 +33,8 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
   }
 
   void _next() {
-    if (_currentStep == 0 && !(_missionFormKey.currentState?.validate() ?? false)) {
+    if (_currentStep == 0 &&
+        !(_missionFormKey.currentState?.validate() ?? false)) {
       return;
     }
     if (_currentStep >= _stepTitles.length - 1) {
@@ -141,9 +142,7 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('État des lieux d’entrée'),
-      ),
+      appBar: AppBar(title: const Text('État des lieux d’entrée')),
       body: Column(
         children: [
           _buildProgressHeader(),
@@ -187,7 +186,9 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
                         child: Text(
                           '${index + 1}',
                           style: TextStyle(
-                            color: active ? Colors.white : const Color(0xFF667085),
+                            color: active
+                                ? Colors.white
+                                : const Color(0xFF667085),
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -259,7 +260,10 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
                   prefixIcon: Icon(Icons.home_work_outlined),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'Appartement', child: Text('Appartement')),
+                  DropdownMenuItem(
+                    value: 'Appartement',
+                    child: Text('Appartement'),
+                  ),
                   DropdownMenuItem(value: 'Maison', child: Text('Maison')),
                   DropdownMenuItem(value: 'Studio', child: Text('Studio')),
                   DropdownMenuItem(value: 'Commerce', child: Text('Commerce')),
@@ -295,7 +299,8 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
     return _pageShell(
       EntryStepCard(
         title: 'Parties présentes',
-        subtitle: 'Ajoutez le bailleur et le locataire concernés par la mission.',
+        subtitle:
+            'Ajoutez le bailleur et le locataire concernés par la mission.',
         child: Column(
           children: [
             TextField(
@@ -332,7 +337,8 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
     return _pageShell(
       EntryStepCard(
         title: 'Composition du bien',
-        subtitle: 'Ajoutez les pièces puis ouvrez chacune d’elles pour réaliser la visite complète.',
+        subtitle:
+            'Ajoutez les pièces puis ouvrez chacune d’elles pour réaliser la visite complète.',
         child: Column(
           children: [
             for (final room in _data.rooms)
@@ -395,14 +401,18 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
             for (final room in _data.rooms) ...[
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(room, style: Theme.of(context).textTheme.titleLarge),
+                child: Text(
+                  room,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
                 minLines: 3,
                 maxLines: 6,
                 decoration: const InputDecoration(
-                  hintText: 'Sol, murs, plafond, menuiseries, électricité, équipements…',
+                  hintText:
+                      'Sol, murs, plafond, menuiseries, électricité, équipements…',
                   alignLabelWithHint: true,
                 ),
                 onChanged: (value) => _data.roomNotes[room] = value,
@@ -422,10 +432,21 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
         subtitle: 'Contrôlez les informations avant l’enregistrement.',
         child: Column(
           children: [
-            _summaryRow('Adresse', _data.propertyAddress.isEmpty ? 'Non renseignée' : _data.propertyAddress),
+            _summaryRow(
+              'Adresse',
+              _data.propertyAddress.isEmpty
+                  ? 'Non renseignée'
+                  : _data.propertyAddress,
+            ),
             _summaryRow('Type de bien', _data.propertyType),
-            _summaryRow('Bailleur', _data.landlordName.isEmpty ? 'Non renseigné' : _data.landlordName),
-            _summaryRow('Locataire', _data.tenantName.isEmpty ? 'Non renseigné' : _data.tenantName),
+            _summaryRow(
+              'Bailleur',
+              _data.landlordName.isEmpty ? 'Non renseigné' : _data.landlordName,
+            ),
+            _summaryRow(
+              'Locataire',
+              _data.tenantName.isEmpty ? 'Non renseigné' : _data.tenantName,
+            ),
             _summaryRow('Nombre de pièces', '${_data.rooms.length}'),
             const SizedBox(height: 20),
             TextField(
@@ -451,7 +472,10 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
         children: [
           SizedBox(
             width: 160,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
           Expanded(child: Text(value)),
         ],
@@ -484,7 +508,9 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
                       : Icons.arrow_forward_rounded,
                 ),
                 label: Text(
-                  _currentStep == _stepTitles.length - 1 ? 'Enregistrer' : 'Suivant',
+                  _currentStep == _stepTitles.length - 1
+                      ? 'Enregistrer'
+                      : 'Suivant',
                 ),
               ),
             ],

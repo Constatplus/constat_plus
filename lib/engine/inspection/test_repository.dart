@@ -6,12 +6,8 @@ import 'repository/inspection_repository.dart';
 void testRepository() {
   const repository = InspectionRepository();
 
-  final wall = repository.getDefinition(
-    ElementCatalog.wall,
-  );
+  final wall = repository.getDefinition(ElementCatalog.wall);
 
   debugPrint(wall?.element.name);
-  debugPrint(
-    wall?.materials.length.toString(),
-  );
+  debugPrint(wall?.materials.length.toString());
 }

@@ -10,13 +10,10 @@ class KnowledgePage extends StatelessWidget {
   Widget build(BuildContext context) {
     const repository = InspectionRepository();
 
-    final List<ElementDefinition> definitions =
-        repository.getAllDefinitions();
+    final List<ElementDefinition> definitions = repository.getAllDefinitions();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Knowledge Engine'),
-      ),
+      appBar: AppBar(title: const Text('Knowledge Engine')),
       body: ListView.builder(
         padding: const EdgeInsets.all(20),
         itemCount: definitions.length,
@@ -28,8 +25,7 @@ class KnowledgePage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     definition.element.name,
@@ -43,9 +39,7 @@ class KnowledgePage extends StatelessWidget {
 
                   const Text(
                     "Matériaux",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
 
                   ...definition.materials.map(
@@ -60,9 +54,7 @@ class KnowledgePage extends StatelessWidget {
 
                   const Text(
                     "Revêtements",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
 
                   ...definition.coverings.map(
@@ -77,9 +69,7 @@ class KnowledgePage extends StatelessWidget {
 
                   const Text(
                     "Défauts",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
 
                   ...definition.defects.map(

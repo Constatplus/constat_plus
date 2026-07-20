@@ -18,16 +18,6 @@ enum PropertyType {
   other,
 }
 
-enum MissionStatus {
-  draft,
-  inProgress,
-  completed,
-  archived,
-}
+enum MissionStatus { draft, inProgress, completed, archived }
 
-enum ObservationSeverity {
-  info,
-  minor,
-  medium,
-  major,
-}
+enum ObservationSeverity { info, minor, medium, major }

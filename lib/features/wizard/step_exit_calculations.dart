@@ -6,10 +6,7 @@ import 'step_signatures.dart';
 enum _DamageOriginType { room, general }
 
 class StepExitCalculations extends StatefulWidget {
-  const StepExitCalculations({
-    super.key,
-    required this.rooms,
-  });
+  const StepExitCalculations({super.key, required this.rooms});
 
   final List<RoomItem> rooms;
 
@@ -59,15 +56,13 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
         _n(line.quantity.text) * _n(line.unitPrice.text) + _n(line.labor.text);
     final afterAge =
         gross * (1 - (_n(line.depreciation.text) / 100).clamp(0, 1));
-    final tenant =
-        afterAge * (_n(line.tenantShare.text) / 100).clamp(0, 1);
+    final tenant = afterAge * (_n(line.tenantShare.text) / 100).clamp(0, 1);
     return tenant * (1 + (_n(line.vat.text) / 100).clamp(0, 1));
   }
 
-  double get _total => _lines.fold<double>(
-        0.0,
-        (sum, line) => sum + _lineTotal(line),
-      ) + _n(_rentalLoss.text);
+  double get _total =>
+      _lines.fold<double>(0.0, (sum, line) => sum + _lineTotal(line)) +
+      _n(_rentalLoss.text);
 
   void _addLine() => setState(() => _lines.add(_DamageLine()));
 
@@ -176,9 +171,8 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
                                 ),
                               )
                               .toList(),
-                          onChanged: (value) => setState(
-                            () => _lines[i].room = value,
-                          ),
+                          onChanged: (value) =>
+                              setState(() => _lines[i].room = value),
                         ),
                       ),
                       SizedBox(
@@ -194,9 +188,8 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
                                 ),
                               )
                               .toList(),
-                          onChanged: (value) => setState(
-                            () => _lines[i].post = value,
-                          ),
+                          onChanged: (value) =>
+                              setState(() => _lines[i].post = value),
                         ),
                       ),
                     ],
@@ -215,9 +208,8 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
                             ),
                           )
                           .toList(),
-                      onChanged: (value) => setState(
-                        () => _lines[i].generalCategory = value,
-                      ),
+                      onChanged: (value) =>
+                          setState(() => _lines[i].generalCategory = value),
                     ),
                   ),
                 const SizedBox(height: 12),
@@ -310,32 +302,26 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
           ),
         ),
         const SizedBox(height: 26),
-        StepSignatures(
-          data: _signatures,
-          includeExpert: true,
-          embedded: true,
-        ),
+        StepSignatures(data: _signatures, includeExpert: true, embedded: true),
       ],
     );
   }
 
   Widget _number(TextEditingController controller, String label) => SizedBox(
-        width: 210,
-        child: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: _input(label),
-        ),
-      );
+    width: 210,
+    child: TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: _input(label),
+    ),
+  );
 
   InputDecoration _input(String label) => InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      );
+    labelText: label,
+    filled: true,
+    fillColor: Colors.white,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+  );
 }
 
 class _DamageLine {

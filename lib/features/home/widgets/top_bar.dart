@@ -5,12 +5,14 @@ import '../../../core/access/access_service.dart';
 class HomeTopBar extends StatelessWidget {
   final VoidCallback onPricing;
   final VoidCallback onDemo;
+  final VoidCallback onProfile;
   final VoidCallback onLogin;
 
   const HomeTopBar({
     super.key,
     required this.onPricing,
     required this.onDemo,
+    required this.onProfile,
     required this.onLogin,
   });
 
@@ -38,6 +40,12 @@ class HomeTopBar extends StatelessWidget {
           icon: Icons.play_circle_outline_rounded,
           title: "Démo",
           onTap: onDemo,
+        ),
+        const SizedBox(width: 10),
+        _TopButton(
+          icon: Icons.badge_outlined,
+          title: 'Profil',
+          onTap: onProfile,
         ),
         const SizedBox(width: 12),
         AnimatedBuilder(
@@ -92,15 +100,9 @@ class _TopButton extends StatelessWidget {
     return TextButton.icon(
       onPressed: onTap,
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 18,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       ),
-      icon: Icon(
-        icon,
-        color: const Color(0xFF1264F6),
-      ),
+      icon: Icon(icon, color: const Color(0xFF1264F6)),
       label: Text(
         title,
         style: const TextStyle(

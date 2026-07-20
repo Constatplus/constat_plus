@@ -30,17 +30,17 @@ class CPSection extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: CPColors.textPrimary,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: CPColors.textPrimary,
+                    ),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: CPSpacing.sm),
                     Text(
                       subtitle!,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: CPColors.textSecondary,
-                          ),
+                        color: CPColors.textSecondary,
+                      ),
                     ),
                   ],
                 ],

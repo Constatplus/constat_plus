@@ -17,18 +17,12 @@ class StepKeysMeters extends StatelessWidget {
         children: [
           const Text(
             'Clés • Compteurs • Documents',
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Text(
             "Complétez les informations remises avec le bien.",
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.black54),
           ),
           const SizedBox(height: 24),
           Container(
@@ -40,22 +34,10 @@ class StepKeysMeters extends StatelessWidget {
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               tabs: [
-                Tab(
-                  icon: Icon(Icons.key),
-                  text: "Clés",
-                ),
-                Tab(
-                  icon: Icon(Icons.electric_meter),
-                  text: "Compteurs",
-                ),
-                Tab(
-                  icon: Icon(Icons.menu_book),
-                  text: "Documents",
-                ),
-                Tab(
-                  icon: Icon(Icons.build),
-                  text: "Entretiens",
-                ),
+                Tab(icon: Icon(Icons.key), text: "Clés"),
+                Tab(icon: Icon(Icons.electric_meter), text: "Compteurs"),
+                Tab(icon: Icon(Icons.menu_book), text: "Documents"),
+                Tab(icon: Icon(Icons.build), text: "Entretiens"),
               ],
             ),
           ),
