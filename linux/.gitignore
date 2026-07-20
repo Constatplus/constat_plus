@@ -1,1 +1,11 @@
-flutter/ephemeral
+# Rapports professionnels confidentiels
+docs/reference_reports/
+*.pdf
+
+# Fichiers temporaires
+*.tmp
+*.log
+
+# Flutter
+.dart_tool/
+build/
