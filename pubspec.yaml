@@ -43,3 +43,4 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/knowledge/report_writing_knowledge.json

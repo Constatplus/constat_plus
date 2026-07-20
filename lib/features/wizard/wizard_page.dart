@@ -6,6 +6,7 @@ import '../../core/utils/mission_identifier.dart';
 import '../commercial/domain/models/discovery_access_state.dart';
 import '../commercial/infrastructure/repositories/supabase_discovery_access_repository.dart';
 import '../commercial/presentation/pages/discovery_paywall_page.dart';
+import 'before_works/models/before_works_data.dart';
 import 'before_works/step_before_works_photos.dart';
 import 'before_works/step_before_works_visit.dart';
 import 'comparison/step_comparative_remarks.dart';
@@ -294,12 +295,13 @@ class _WizardPageState extends State<WizardPage> {
       case 2:
         return StepBeforeWorksVisit(
           rooms: selectedRooms,
-          findings: _missionData.beforeWorks.findings,
+          data: _missionData.beforeWorks,
           onChanged: () => setState(() {}),
         );
       case 3:
         return StepBeforeWorksPhotos(
           findings: _missionData.beforeWorks.findings,
+          areas: _missionData.beforeWorks.areas,
         );
       case 4:
         return StepSignature(
@@ -328,7 +330,9 @@ class _WizardPageState extends State<WizardPage> {
       case 1:
         return StepReferenceReport(
           selected: _missionData.referenceReport,
+          mode: _missionData.recollectionReferenceMode,
           onSelected: _selectReference,
+          onNoReference: _selectNoReference,
         );
       case 2:
         return StepPropertyComposition(
@@ -369,6 +373,21 @@ class _WizardPageState extends State<WizardPage> {
   void _selectReference(ReferenceReport report) {
     setState(() {
       _missionData.referenceReport = report;
+      _missionData.recollectionReferenceMode = report.external
+          ? RecollectionReferenceMode.externalPdf
+          : RecollectionReferenceMode.constatPlus;
+      _missionData.recollectionAreas
+        ..clear()
+        ..addAll(
+          report.areas.map(
+            (area) => BeforeWorksArea(
+              id: area.id,
+              name: area.name,
+              type: area.type,
+              parentId: area.parentId,
+            ),
+          ),
+        );
       if (report.zones.isNotEmpty) {
         selectedRooms
           ..clear()
@@ -378,7 +397,29 @@ class _WizardPageState extends State<WizardPage> {
                   RoomItem(type: room.type, name: room.name, level: room.level),
             ),
           );
+      } else if (report.areas.isNotEmpty) {
+        selectedRooms
+          ..clear()
+          ..addAll(
+            report.areas
+                .where((area) => !area.type.isContainer)
+                .map(
+                  (area) => RoomItem(
+                    type: area.type.label,
+                    name: area.name,
+                    level: '',
+                  ),
+                ),
+          );
       }
+    });
+  }
+
+  void _selectNoReference() {
+    setState(() {
+      _missionData.referenceReport = null;
+      _missionData.recollectionReferenceMode = RecollectionReferenceMode.none;
+      _missionData.recollectionAreas.clear();
     });
   }
 

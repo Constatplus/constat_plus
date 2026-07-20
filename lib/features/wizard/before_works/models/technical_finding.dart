@@ -95,6 +95,7 @@ class TechnicalFinding {
   TechnicalFinding({required this.id});
 
   final String id;
+  String areaId = '';
   String zone = '';
   String post = '';
   FindingClassification classification = FindingClassification.normal;
@@ -105,6 +106,7 @@ class TechnicalFinding {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
+    'areaId': areaId,
     'zone': zone,
     'post': post,
     'classification': classification.name,
@@ -116,6 +118,7 @@ class TechnicalFinding {
 
   factory TechnicalFinding.fromJson(Map<String, dynamic> json) {
     final finding = TechnicalFinding(id: json['id'] as String? ?? '');
+    finding.areaId = json['areaId'] as String? ?? '';
     finding.zone = json['zone'] as String? ?? '';
     finding.post = json['post'] as String? ?? '';
     finding.classification = FindingClassification.values.firstWhere(

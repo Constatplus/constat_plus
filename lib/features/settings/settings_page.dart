@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ai/inspection_ai_service.dart';
 import '../../core/state/app_state.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,7 +12,25 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final _signatureController = TextEditingController();
+  final _aiPreferences = InspectionAiPreferences();
+  InspectionAiMode _aiMode = InspectionAiMode.automatic;
   bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAiMode();
+  }
+
+  Future<void> _loadAiMode() async {
+    final mode = await _aiPreferences.loadMode();
+    if (mounted) setState(() => _aiMode = mode);
+  }
+
+  Future<void> _saveAiMode(InspectionAiMode mode) async {
+    setState(() => _aiMode = mode);
+    await _aiPreferences.saveMode(mode);
+  }
 
   @override
   void dispose() {
@@ -51,6 +70,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: const Text('Assistant IA'),
                         subtitle: const Text(
                           'Afficher les conseils pendant la visite.',
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        title: const Text('Mode IA'),
+                        subtitle: const Text(
+                          'Le mode hors ligne ne transmet aucune photo ni aucun texte.',
+                        ),
+                        trailing: DropdownButton<InspectionAiMode>(
+                          value: _aiMode,
+                          onChanged: (mode) {
+                            if (mode != null) _saveAiMode(mode);
+                          },
+                          items: InspectionAiMode.values
+                              .map(
+                                (mode) => DropdownMenuItem<InspectionAiMode>(
+                                  value: mode,
+                                  child: Text(mode.label),
+                                ),
+                              )
+                              .toList(growable: false),
                         ),
                       ),
                       const Divider(height: 1),

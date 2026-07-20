@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/ai/vision_service.dart';
 import '../../core/access/access_service.dart';
+import '../../core/ai/inspection_ai_service.dart';
+import '../../core/ai/offline_inspection_ai_service.dart';
+import '../../core/ai/online_inspection_ai_service.dart';
 import '../commercial/infrastructure/repositories/supabase_discovery_access_repository.dart';
 import '../commercial/presentation/pages/discovery_paywall_page.dart';
 import 'property_composition/models/room_item.dart';
 import 'visit/widgets/electrical_panel.dart';
+import 'visit/widgets/vocabulary_help_dialog.dart';
+import 'visit/services/wall_content_swap.dart';
 import 'report/models/visit_report_snapshot.dart';
 
 class _KitchenUnit {
@@ -43,7 +47,12 @@ class StepVisit extends StatefulWidget {
 
 class _StepVisitState extends State<StepVisit> {
   final ImagePicker _imagePicker = ImagePicker();
-  final VisionService _visionService = VisionService();
+  final InspectionAiPreferences _aiPreferences = InspectionAiPreferences();
+  late final InspectionAiServiceSelector _aiSelector =
+      InspectionAiServiceSelector(
+        online: OnlineInspectionAiService(),
+        offline: OfflineInspectionAiService(),
+      );
   bool _isAnalyzingRoom = false;
 
   final List<String> _sections = [
@@ -176,36 +185,55 @@ class _StepVisitState extends State<StepVisit> {
   RoomItem get _currentRoom => widget.rooms[_selectedRoomIndex];
   String get _currentSection => _sections[_selectedSectionIndex];
 
-  Future<void> _reorderWalls() async {
-    final workingOrder = List<String>.from(_walls);
-    final accepted = await showDialog<bool>(
+  Future<void> _swapWalls() async {
+    var firstWall = _walls.first;
+    var secondWall = _walls[1];
+    final selection = await showDialog<({String first, String second})>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Ordre des murs'),
+          title: const Text('Intervertir deux murs'),
           content: SizedBox(
             width: 430,
-            height: 340,
-            child: ReorderableListView.builder(
-              itemCount: workingOrder.length,
-              onReorderItem: (oldIndex, newIndex) {
-                setDialogState(() {
-                  final wall = workingOrder.removeAt(oldIndex);
-                  workingOrder.insert(newIndex, wall);
-                });
-              },
-              itemBuilder: (context, index) {
-                final wall = workingOrder[index];
-                return Card(
-                  key: ValueKey(wall),
-                  elevation: 0,
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text(wall),
-                    trailing: const Icon(Icons.drag_handle_rounded),
-                  ),
-                );
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Choisissez les deux murs dont les descriptions, photos et données électriques doivent être échangées.',
+                ),
+                const SizedBox(height: 18),
+                DropdownButtonFormField<String>(
+                  initialValue: firstWall,
+                  decoration: const InputDecoration(labelText: 'Premier mur'),
+                  items: _walls
+                      .map(
+                        (wall) =>
+                            DropdownMenuItem(value: wall, child: Text(wall)),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => firstWall = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: secondWall,
+                  decoration: const InputDecoration(labelText: 'Second mur'),
+                  items: _walls
+                      .map(
+                        (wall) =>
+                            DropdownMenuItem(value: wall, child: Text(wall)),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => secondWall = value);
+                    }
+                  },
+                ),
+              ],
             ),
           ),
           actions: [
@@ -214,34 +242,66 @@ class _StepVisitState extends State<StepVisit> {
               child: const Text('Annuler'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Appliquer'),
+              onPressed: firstWall == secondWall
+                  ? null
+                  : () => Navigator.pop(dialogContext, (
+                      first: firstWall,
+                      second: secondWall,
+                    )),
+              child: const Text('Continuer'),
             ),
           ],
         ),
       ),
     );
 
-    if (accepted != true || !mounted) return;
+    if (selection == null || !mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmer l’interversion'),
+        content: Text(
+          'Toutes les données de « ${selection.first} » et « ${selection.second} » seront échangées dans ${_currentRoom.name}.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Intervertir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final firstSectionKey = _sectionKey(_selectedRoomIndex, selection.first);
+    final secondSectionKey = _sectionKey(_selectedRoomIndex, selection.second);
+    final firstElectricalKey = _wallKey(_selectedRoomIndex, selection.first);
+    final secondElectricalKey = _wallKey(_selectedRoomIndex, selection.second);
     setState(() {
-      final selectedSection = _currentSection;
-      _walls
-        ..clear()
-        ..addAll(workingOrder);
-      _sections.removeWhere(_wallsSetContains);
-      final insertAt = _sections.indexOf('Mur') + 1;
-      _sections.insertAll(insertAt, _walls);
-      _selectedSectionIndex = _sections.indexOf(selectedSection);
-      if (_selectedSectionIndex < 0) _selectedSectionIndex = 0;
+      swapMapEntries(_controllers, firstSectionKey, secondSectionKey);
+      swapMapEntries(_photos, firstSectionKey, secondSectionKey);
+      swapMapEntries(_conformToGeneralities, firstSectionKey, secondSectionKey);
+      swapMapEntries(
+        _electricalQuantities,
+        firstElectricalKey,
+        secondElectricalKey,
+      );
+      swapMapEntries(
+        _electricalBlockQuantities,
+        firstElectricalKey,
+        secondElectricalKey,
+      );
+      swapMapEntries(
+        _electricalBlockComponents,
+        firstElectricalKey,
+        secondElectricalKey,
+      );
     });
   }
-
-  bool _wallsSetContains(String value) => const {
-    'Mur avant',
-    'Mur droit',
-    'Mur arrière',
-    'Mur gauche',
-  }.contains(value);
 
   String _roomKey(int roomIndex) {
     final room = widget.rooms[roomIndex];
@@ -500,6 +560,25 @@ class _StepVisitState extends State<StepVisit> {
     });
   }
 
+  Future<void> _openVocabularyHelp() async {
+    final controller = _controllerFor(_selectedRoomIndex, _currentSection);
+    final suggestion = await VocabularyHelpDialog.show(
+      context,
+      missionType: widget.missionType,
+      element: _currentSection,
+      initialQuery: controller.text.trim(),
+    );
+    if (!mounted || suggestion == null || suggestion.trim().isEmpty) return;
+
+    final current = controller.text.trim();
+    setState(() {
+      controller.text = current.isEmpty ? suggestion : '$current\n$suggestion';
+      controller.selection = TextSelection.collapsed(
+        offset: controller.text.length,
+      );
+    });
+  }
+
   void _setElectricalQuantity(String wall, String item, int quantity) {
     final quantities = _electricalItemsFor(_selectedRoomIndex, wall);
 
@@ -661,6 +740,159 @@ class _StepVisitState extends State<StepVisit> {
     return 'Autre';
   }
 
+  Future<bool> _confirmFirstOnlineUse() async {
+    if (await _aiPreferences.hasOnlineConsent()) return true;
+    if (!mounted) return false;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Analyse IA en ligne'),
+        content: const Text(
+          'Les photos sélectionnées seront envoyées au service sécurisé '
+          'uniquement pour produire la description. Aucun nom, adresse, email '
+          'ou téléphone n’est ajouté à la demande. Vous pourrez choisir le '
+          'mode hors ligne dans les réglages.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Autoriser'),
+          ),
+        ],
+      ),
+    );
+    if (accepted == true) await _aiPreferences.grantOnlineConsent();
+    return accepted == true;
+  }
+
+  bool _analysisWouldReplaceText(int roomIndex, InspectionAnalysis analysis) {
+    for (final entry in analysis.sections.entries) {
+      if (!_sections.contains(entry.key) || entry.value.trim().isEmpty) {
+        continue;
+      }
+      final current = _controllerFor(roomIndex, entry.key).text.trim();
+      if (current.isNotEmpty && current != entry.value.trim()) return true;
+    }
+    if (!analysis.hasKitchen) return false;
+    final general = _kitchenControllerFor(roomIndex, 'general').text.trim();
+    final worktop = _kitchenControllerFor(roomIndex, 'worktop').text.trim();
+    return (general.isNotEmpty && general != analysis.kitchenGeneral.trim()) ||
+        (worktop.isNotEmpty && worktop != analysis.worktop.trim()) ||
+        _upperUnitsFor(roomIndex).isNotEmpty ||
+        _lowerUnitsFor(roomIndex).isNotEmpty;
+  }
+
+  Future<bool> _confirmTextReplacement() async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remplacer les textes existants ?'),
+        content: const Text(
+          'Certaines rubriques contiennent déjà une description. '
+          'Souhaitez-vous les remplacer par les propositions IA ? '
+          'En choisissant « Conserver », seules les rubriques vides seront complétées.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Conserver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remplacer'),
+          ),
+        ],
+      ),
+    );
+    return accepted == true;
+  }
+
+  void _applyInspectionAnalysis(
+    int roomIndex,
+    InspectionAnalysis analysis, {
+    required bool replaceExisting,
+  }) {
+    setState(() {
+      for (final entry in analysis.sections.entries) {
+        if (entry.value.trim().isEmpty || !_sections.contains(entry.key)) {
+          continue;
+        }
+        final controller = _controllerFor(roomIndex, entry.key);
+        if (replaceExisting || controller.text.trim().isEmpty) {
+          controller.text = entry.value.trim();
+        }
+      }
+      if (!analysis.hasKitchen) return;
+      _furnitureItemsFor(roomIndex).add('Cuisine équipée');
+      final general = _kitchenControllerFor(roomIndex, 'general');
+      final worktop = _kitchenControllerFor(roomIndex, 'worktop');
+      if (replaceExisting || general.text.trim().isEmpty) {
+        general.text = analysis.kitchenGeneral;
+      }
+      if (replaceExisting || worktop.text.trim().isEmpty) {
+        worktop.text = analysis.worktop;
+      }
+      final selectedEquipment = _worktopEquipmentFor(roomIndex);
+      for (final entry in analysis.worktopEquipment.entries) {
+        if (entry.value.trim().isEmpty) continue;
+        final known = _kitchenWorktopEquipment.firstWhere(
+          (item) => item.toLowerCase() == entry.key.toLowerCase(),
+          orElse: () => 'Autre équipement',
+        );
+        final controller = _kitchenControllerFor(
+          roomIndex,
+          'worktop-equipment::$known',
+        );
+        if (replaceExisting || controller.text.trim().isEmpty) {
+          selectedEquipment.add(known);
+          controller.text = entry.value;
+        }
+      }
+      final upperUnits = _upperUnitsFor(roomIndex);
+      if (replaceExisting || upperUnits.isEmpty) {
+        for (final unit in upperUnits) {
+          unit.dispose();
+        }
+        upperUnits
+          ..clear()
+          ..addAll(
+            analysis.upperUnits.map(
+              (unit) => _KitchenUnit(
+                type: _closestKitchenUnitType(
+                  unit['type'] ?? '',
+                  _kitchenUpperUnitTypes,
+                ),
+                comment: unit['comment'] ?? '',
+              ),
+            ),
+          );
+      }
+      final lowerUnits = _lowerUnitsFor(roomIndex);
+      if (replaceExisting || lowerUnits.isEmpty) {
+        for (final unit in lowerUnits) {
+          unit.dispose();
+        }
+        lowerUnits
+          ..clear()
+          ..addAll(
+            analysis.lowerUnits.map(
+              (unit) => _KitchenUnit(
+                type: _closestKitchenUnitType(
+                  unit['type'] ?? '',
+                  _kitchenLowerUnitTypes,
+                ),
+                comment: unit['comment'] ?? '',
+              ),
+            ),
+          );
+      }
+    });
+  }
+
   Future<void> _analyzeAndPrefillCurrentRoom() async {
     if (AccessService.instance.isDemo) {
       await showDialog<void>(
@@ -686,9 +918,16 @@ class _StepVisitState extends State<StepVisit> {
     if (photos.isEmpty) return;
     final idempotencyKey =
         'ai:${widget.missionId}:${DateTime.now().microsecondsSinceEpoch}';
-    setState(() => _isAnalyzingRoom = true);
     try {
-      final analysis = await _visionService.analyzeRoom(
+      final mode = await _aiPreferences.loadMode();
+      final service = await _aiSelector.select(mode);
+      if (service.engine == InspectionAiEngine.online &&
+          !await _confirmFirstOnlineUse()) {
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _isAnalyzingRoom = true);
+      final analysis = await service.analyzePhotos(
         missionId: widget.missionId,
         missionType: widget.missionType,
         idempotencyKey: idempotencyKey,
@@ -697,66 +936,30 @@ class _StepVisitState extends State<StepVisit> {
         photos: photos,
       );
       if (!mounted) return;
-      setState(() {
-        for (final entry in analysis.sections.entries) {
-          if (entry.value.trim().isNotEmpty && _sections.contains(entry.key)) {
-            _controllerFor(roomIndex, entry.key).text = entry.value.trim();
-          }
-        }
-        if (analysis.hasKitchen) {
-          _furnitureItemsFor(roomIndex).add('Cuisine équipée');
-          _kitchenControllerFor(roomIndex, 'general').text =
-              analysis.kitchenGeneral;
-          _kitchenControllerFor(roomIndex, 'worktop').text = analysis.worktop;
-          final selectedEquipment = _worktopEquipmentFor(roomIndex);
-          for (final entry in analysis.worktopEquipment.entries) {
-            if (entry.value.trim().isEmpty) continue;
-            final known = _kitchenWorktopEquipment.firstWhere(
-              (item) => item.toLowerCase() == entry.key.toLowerCase(),
-              orElse: () => 'Autre équipement',
-            );
-            selectedEquipment.add(known);
-            _kitchenControllerFor(roomIndex, 'worktop-equipment::$known').text =
-                entry.value;
-          }
-          for (final unit in _upperUnitsFor(roomIndex)) {
-            unit.dispose();
-          }
-          _upperUnitsFor(roomIndex)
-            ..clear()
-            ..addAll(
-              analysis.upperUnits.map(
-                (unit) => _KitchenUnit(
-                  type: _closestKitchenUnitType(
-                    unit['type'] ?? '',
-                    _kitchenUpperUnitTypes,
-                  ),
-                  comment: unit['comment'] ?? '',
-                ),
-              ),
-            );
-          for (final unit in _lowerUnitsFor(roomIndex)) {
-            unit.dispose();
-          }
-          _lowerUnitsFor(roomIndex)
-            ..clear()
-            ..addAll(
-              analysis.lowerUnits.map(
-                (unit) => _KitchenUnit(
-                  type: _closestKitchenUnitType(
-                    unit['type'] ?? '',
-                    _kitchenLowerUnitTypes,
-                  ),
-                  comment: unit['comment'] ?? '',
-                ),
-              ),
-            );
-        }
-      });
+      if (analysis.confidence == InspectionConfidence.low) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${analysis.engine.label} : confiance faible. Aucune description n’a été insérée.',
+            ),
+          ),
+        );
+        return;
+      }
+      final wouldReplace = _analysisWouldReplaceText(roomIndex, analysis);
+      final replaceExisting = wouldReplace
+          ? await _confirmTextReplacement()
+          : false;
+      if (!mounted) return;
+      _applyInspectionAnalysis(
+        roomIndex,
+        analysis,
+        replaceExisting: replaceExisting,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Analyse terminée. Vérifiez et corrigez les propositions avant validation.',
+            '${analysis.engine.label} : analyse terminée. Vérifiez et corrigez les propositions.',
           ),
         ),
       );
@@ -1422,9 +1625,9 @@ class _StepVisitState extends State<StepVisit> {
               ),
             ),
             TextButton.icon(
-              onPressed: _reorderWalls,
-              icon: const Icon(Icons.swap_vert_rounded),
-              label: const Text('Ordre des murs'),
+              onPressed: _swapWalls,
+              icon: const Icon(Icons.swap_horiz_rounded),
+              label: const Text('Intervertir des murs'),
             ),
           ],
         ),
@@ -2080,6 +2283,14 @@ class _StepVisitState extends State<StepVisit> {
                     ),
                   ),
                 ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _openVocabularyHelp,
+                    icon: const Icon(Icons.menu_book_outlined),
+                    label: const Text('Aide au vocabulaire'),
+                  ),
+                ),
                 const SizedBox(height: 14),
                 Row(
                   children: [

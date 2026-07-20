@@ -12,11 +12,15 @@ class StepReferenceReport extends StatefulWidget {
   const StepReferenceReport({
     super.key,
     required this.selected,
+    required this.mode,
     required this.onSelected,
+    required this.onNoReference,
   });
 
   final ReferenceReport? selected;
+  final RecollectionReferenceMode mode;
   final ValueChanged<ReferenceReport> onSelected;
+  final VoidCallback onNoReference;
 
   @override
   State<StepReferenceReport> createState() => _StepReferenceReportState();
@@ -58,7 +62,7 @@ class _StepReferenceReportState extends State<StepReferenceReport> {
         snapshot: const VisitReportSnapshot(rooms: <VisitRoomReport>[]),
         findings: <TechnicalFinding>[],
         pdfBytes: bytes,
-        external: true,
+        source: ReferenceReportSource.externalPdf,
       );
       widget.onSelected(report);
     } finally {
@@ -90,10 +94,36 @@ class _StepReferenceReportState extends State<StepReferenceReport> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Sélectionnez un rapport créé dans Constat+ ou importez un PDF externe.',
+          'Choisissez un rapport Constat+, un PDF externe ou poursuivez sans rapport initial.',
           style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
         ),
         const SizedBox(height: 22),
+        Card(
+          color: widget.mode == RecollectionReferenceMode.none
+              ? const Color(0xFFEFF6FF)
+              : null,
+          child: ListTile(
+            onTap: widget.onNoReference,
+            leading: Icon(
+              widget.mode == RecollectionReferenceMode.none
+                  ? Icons.check_circle
+                  : Icons.circle_outlined,
+              color: widget.mode == RecollectionReferenceMode.none
+                  ? const Color(0xFF1D4ED8)
+                  : null,
+            ),
+            title: const Text('Aucun rapport initial disponible'),
+            subtitle: const Text(
+              'La structure et les observations seront encodées manuellement.',
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Rapports Constat+',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
         if (_loading)
           const Center(child: CircularProgressIndicator())
         else if (reports.isEmpty)
@@ -129,6 +159,11 @@ class _StepReferenceReportState extends State<StepReferenceReport> {
             );
           }),
         const SizedBox(height: 16),
+        const Text(
+          'Rapport externe',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
           child: OutlinedButton.icon(
@@ -139,6 +174,24 @@ class _StepReferenceReportState extends State<StepReferenceReport> {
             ),
           ),
         ),
+        if (widget.selected?.external == true) ...<Widget>[
+          const SizedBox(height: 12),
+          Card(
+            color: const Color(0xFFEFF6FF),
+            child: ListTile(
+              leading: const Icon(Icons.check_circle, color: Color(0xFF1D4ED8)),
+              title: Text(widget.selected!.title),
+              subtitle: const Text(
+                'PDF externe — structure à encoder manuellement',
+              ),
+              trailing: IconButton(
+                tooltip: 'Consulter',
+                onPressed: () => _open(widget.selected!),
+                icon: const Icon(Icons.visibility_outlined),
+              ),
+            ),
+          ),
+        ],
         if (widget.selected != null) ...<Widget>[
           const SizedBox(height: 24),
           FilledButton.icon(

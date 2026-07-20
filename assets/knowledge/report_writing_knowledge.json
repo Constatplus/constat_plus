@@ -1,0 +1,1499 @@
+{
+  "schemaVersion": 1,
+  "language": "fr-BE",
+  "corpus": {
+    "documentCount": 10,
+    "entryReportCount": 9,
+    "beforeWorksReportCount": 1,
+    "pageCount": 758,
+    "extractedCharacterCount": 512079,
+    "containsSourceText": false,
+    "containsPersonalData": false
+  },
+  "categories": [
+    "fissuration",
+    "peinture et enduits",
+    "maçonnerie",
+    "pierres naturelles",
+    "carrelage",
+    "parquet",
+    "menuiseries",
+    "vitrages",
+    "quincaillerie",
+    "toiture",
+    "étanchéité",
+    "humidité",
+    "sanitaires",
+    "électricité",
+    "chauffage",
+    "mobilier",
+    "voirie",
+    "trottoirs",
+    "bordures",
+    "égouttage",
+    "clôtures",
+    "murs de soutènement",
+    "propreté",
+    "usure",
+    "défauts de finition"
+  ],
+  "writingStructure": [
+    "nature",
+    "matériau ou support",
+    "finition",
+    "teinte",
+    "état général",
+    "défaut visible",
+    "localisation",
+    "dimension approximative si renseignée",
+    "limite d’observation"
+  ],
+  "writingRules": [
+    "Rester factuel, professionnel, prudent et non accusatoire.",
+    "Décrire uniquement les parties visibles et accessibles.",
+    "Ne jamais inventer un matériau, une dimension, un défaut ou un fonctionnement.",
+    "Ne jamais attribuer une responsabilité ou affirmer une cause structurelle sur photographie.",
+    "Conserver les observations encodées par l’utilisateur.",
+    "Employer une approximation uniquement lorsque l’utilisateur a fourni une mesure."
+  ],
+  "cautiousPhrases": [
+    "pouvant correspondre à",
+    "semblant résulter de",
+    "d’origine non déterminée lors du constat",
+    "visible sur les parties accessibles",
+    "sans préjuger de l’origine du désordre",
+    "L’élément n’a pas pu être observé dans son intégralité.",
+    "L’observation complète est rendue difficile par la présence de mobilier."
+  ],
+  "missionGuidance": {
+    "entry": [
+      "Décrire la propreté, l’entretien, les matériaux, les finitions et l’état locatif.",
+      "Qualifier le fonctionnement comme apparent uniquement lorsqu’un essai est renseigné."
+    ],
+    "before_works": [
+      "Privilégier l’état constructif visible des façades, maçonneries, voiries et abords.",
+      "Localiser la géométrie des fissures et leurs dimensions seulement si elles sont renseignées.",
+      "Éviter les observations purement locatives sans intérêt pour le constat avant travaux."
+    ],
+    "after_works": [
+      "Comparer l’état initial et l’état observé sans déduire automatiquement une causalité.",
+      "Distinguer absence de modification, aggravation, nouveau désordre, réparation et comparaison impossible."
+    ]
+  },
+  "observedStyleMarkers": {
+    "presence_de": {
+      "label": "présence de",
+      "occurrences": 270
+    },
+    "est_realise": {
+      "label": "est réalisé",
+      "occurrences": 21
+    },
+    "est_constitue": {
+      "label": "est constitué",
+      "occurrences": 7
+    },
+    "sous_peinture": {
+      "label": "sous peinture",
+      "occurrences": 142
+    },
+    "en_partie_basse": {
+      "label": "en partie basse",
+      "occurrences": 46
+    },
+    "au_droit_de": {
+      "label": "au droit de",
+      "occurrences": 7
+    },
+    "localise": {
+      "label": "localisé",
+      "occurrences": 52
+    },
+    "sans_remarque": {
+      "label": "sans remarque",
+      "occurrences": 0
+    },
+    "etat_usage": {
+      "label": "état d'usage",
+      "occurrences": 0
+    },
+    "bon_etat": {
+      "label": "bon état",
+      "occurrences": 39
+    }
+  },
+  "terms": [
+    {
+      "id": "fissure-verticale",
+      "label": "Fissure verticale",
+      "definition": "Ouverture visible suivant une direction principalement verticale.",
+      "category": "fissuration",
+      "synonyms": [
+        "fente verticale"
+      ],
+      "elements": [
+        "mur",
+        "façade",
+        "maçonnerie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissure verticale » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissure verticale » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 9,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissure-horizontale",
+      "label": "Fissure horizontale",
+      "definition": "Ouverture visible suivant une direction principalement horizontale.",
+      "category": "fissuration",
+      "synonyms": [
+        "fente horizontale"
+      ],
+      "elements": [
+        "mur",
+        "façade",
+        "maçonnerie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissure horizontale » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissure horizontale » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissure-oblique",
+      "label": "Fissure oblique",
+      "definition": "Ouverture visible suivant une direction inclinée.",
+      "category": "fissuration",
+      "synonyms": [
+        "fente en biais"
+      ],
+      "elements": [
+        "mur",
+        "façade",
+        "maçonnerie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissure oblique » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissure oblique » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissure-escalier",
+      "label": "Fissure en escalier",
+      "definition": "Fissure suivant successivement les joints horizontaux et verticaux d’une maçonnerie.",
+      "category": "fissuration",
+      "synonyms": [
+        "fissure en marches"
+      ],
+      "elements": [
+        "brique",
+        "bloc",
+        "façade"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissure en escalier » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissure en escalier » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissure-traversante",
+      "label": "Fissure traversante",
+      "definition": "Fissure visible sur toute l’épaisseur observable ou sur deux faces correspondantes.",
+      "category": "fissuration",
+      "synonyms": [
+        "fissure de part en part"
+      ],
+      "elements": [
+        "mur",
+        "dalle"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissure traversante » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissure traversante » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "microfissure",
+      "label": "Microfissure",
+      "definition": "Fissure très fine dont l’ouverture paraît faible à l’observation.",
+      "category": "fissuration",
+      "synonyms": [
+        "cheveu",
+        "fissure fine"
+      ],
+      "elements": [
+        "enduit",
+        "peinture",
+        "mur"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « microfissure » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « microfissure » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fendille",
+      "label": "Fendille",
+      "definition": "Petite fente superficielle et localisée.",
+      "category": "fissuration",
+      "synonyms": [
+        "petite fente"
+      ],
+      "elements": [
+        "bois",
+        "enduit",
+        "maçonnerie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fendille » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fendille » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "faiencage",
+      "label": "Faïençage",
+      "definition": "Réseau de fines fissures formant un maillage en surface.",
+      "category": "fissuration",
+      "synonyms": [
+        "fissures en toile",
+        "craquelures"
+      ],
+      "elements": [
+        "enduit",
+        "peinture",
+        "enrobé"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « faïençage » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « faïençage » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 3,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "ouverture-joint",
+      "label": "Ouverture de joint",
+      "definition": "Séparation visible au niveau d’un joint entre deux éléments.",
+      "category": "fissuration",
+      "synonyms": [
+        "joint ouvert"
+      ],
+      "elements": [
+        "maçonnerie",
+        "carrelage",
+        "menuiserie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « ouverture de joint » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « ouverture de joint » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissure-baie",
+      "label": "Fissure au droit d’une baie",
+      "definition": "Fissure localisée à proximité d’une porte, d’une fenêtre ou de son appui.",
+      "category": "fissuration",
+      "synonyms": [
+        "fissure près de la fenêtre"
+      ],
+      "elements": [
+        "façade",
+        "mur",
+        "linteau"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissure au droit d’une baie » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissure au droit d’une baie » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "impact",
+      "label": "Impact",
+      "definition": "Marque ponctuelle résultant visiblement d’un contact ou d’un choc, sans en attribuer la cause.",
+      "category": "usure",
+      "synonyms": [
+        "coup",
+        "marque de choc"
+      ],
+      "elements": [
+        "mur",
+        "porte",
+        "mobilier"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « impact » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « impact » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 93,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "epaufrure",
+      "label": "Épaufrure",
+      "definition": "Éclat avec perte de matière sur l’arête d’un matériau dur.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "coin cassé",
+        "arête cassée",
+        "éclat"
+      ],
+      "elements": [
+        "béton",
+        "pierre",
+        "carrelage",
+        "appui"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « épaufrure » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « épaufrure » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "percement",
+      "label": "Percement",
+      "definition": "Ouverture ou trou réalisé dans un support.",
+      "category": "défauts de finition",
+      "synonyms": [
+        "trou",
+        "trou de vis"
+      ],
+      "elements": [
+        "mur",
+        "plafond",
+        "menuiserie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « percement » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « percement » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 6,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "trou-fixation",
+      "label": "Trou de fixation",
+      "definition": "Petit percement subsistant après la pose ou la dépose d’une fixation.",
+      "category": "défauts de finition",
+      "synonyms": [
+        "trou de vis",
+        "ancienne fixation"
+      ],
+      "elements": [
+        "mur",
+        "plafond",
+        "menuiserie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « trou de fixation » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « trou de fixation » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "arrachement",
+      "label": "Arrachement",
+      "definition": "Zone où une partie du matériau ou du revêtement a été retirée avec perte de matière.",
+      "category": "défauts de finition",
+      "synonyms": [
+        "matière arrachée"
+      ],
+      "elements": [
+        "enduit",
+        "peinture",
+        "sol"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « arrachement » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « arrachement » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "rayure",
+      "label": "Rayure",
+      "definition": "Marque linéaire superficielle affectant une finition.",
+      "category": "usure",
+      "synonyms": [
+        "griffe",
+        "griffure"
+      ],
+      "elements": [
+        "vitrage",
+        "parquet",
+        "menuiserie",
+        "mobilier"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « rayure » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « rayure » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "enfoncement",
+      "label": "Enfoncement",
+      "definition": "Déformation ponctuelle vers l’intérieur d’une surface.",
+      "category": "usure",
+      "synonyms": [
+        "creux",
+        "coup enfoncé"
+      ],
+      "elements": [
+        "porte",
+        "tôle",
+        "parquet"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « enfoncement » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « enfoncement » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "desaffleurement",
+      "label": "Désaffleurement",
+      "definition": "Différence de niveau entre deux surfaces normalement voisines.",
+      "category": "défauts de finition",
+      "synonyms": [
+        "décalage de niveau",
+        "marche"
+      ],
+      "elements": [
+        "carrelage",
+        "pavé",
+        "bordure",
+        "joint"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « désaffleurement » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « désaffleurement » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 1,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "decollement",
+      "label": "Décollement",
+      "definition": "Séparation partielle d’un revêtement par rapport à son support.",
+      "category": "peinture et enduits",
+      "synonyms": [
+        "revêtement décollé"
+      ],
+      "elements": [
+        "peinture",
+        "enduit",
+        "carrelage"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « décollement » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « décollement » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 23,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "cloquage",
+      "label": "Cloquage",
+      "definition": "Formation de boursouflures ou de petites poches sous un revêtement.",
+      "category": "peinture et enduits",
+      "synonyms": [
+        "bulles",
+        "peinture gonflée"
+      ],
+      "elements": [
+        "peinture",
+        "enduit"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « cloquage » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « cloquage » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "ecaillage",
+      "label": "Écaillage",
+      "definition": "Départ du revêtement sous forme de petites plaques ou écailles.",
+      "category": "peinture et enduits",
+      "synonyms": [
+        "peinture qui pèle"
+      ],
+      "elements": [
+        "peinture",
+        "vernis"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « écaillage » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « écaillage » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 5,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "souillure",
+      "label": "Souillure",
+      "definition": "Salissure localisée visible sur une surface.",
+      "category": "propreté",
+      "synonyms": [
+        "saleté",
+        "trace sale"
+      ],
+      "elements": [
+        "mur",
+        "sol",
+        "plafond",
+        "équipement"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « souillure » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « souillure » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "after_works"
+      ],
+      "corpusOccurrences": 154,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "aureole",
+      "label": "Auréole",
+      "definition": "Trace diffuse présentant un contour plus ou moins circulaire.",
+      "category": "humidité",
+      "synonyms": [
+        "cerne",
+        "tache ronde"
+      ],
+      "elements": [
+        "plafond",
+        "mur",
+        "enduit"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « auréole » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « auréole » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 4,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "coulure",
+      "label": "Coulure",
+      "definition": "Trace allongée suivant le cheminement apparent d’un liquide.",
+      "category": "humidité",
+      "synonyms": [
+        "trace qui coule"
+      ],
+      "elements": [
+        "mur",
+        "façade",
+        "menuiserie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « coulure » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « coulure » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 11,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "joint-evide",
+      "label": "Joint évidé",
+      "definition": "Joint de maçonnerie dont la matière est en retrait ou partiellement manquante.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "joint creusé"
+      ],
+      "elements": [
+        "brique",
+        "pierre",
+        "bloc"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « joint évidé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « joint évidé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "brique-fissuree",
+      "label": "Brique fissurée",
+      "definition": "Brique présentant une fissure visible dans sa matière.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "brique fendue"
+      ],
+      "elements": [
+        "façade",
+        "mur"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « brique fissurée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « brique fissurée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "brique-descel",
+      "label": "Brique descellée",
+      "definition": "Brique ne paraissant plus correctement liée à la maçonnerie environnante.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "brique mobile"
+      ],
+      "elements": [
+        "façade",
+        "mur"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « brique descellée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « brique descellée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "defaut-aplomb",
+      "label": "Défaut d’aplomb",
+      "definition": "Écart apparent par rapport à la verticale.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "mur penché",
+        "pas droit"
+      ],
+      "elements": [
+        "mur",
+        "clôture",
+        "poteau"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « défaut d’aplomb » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « défaut d’aplomb » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "bombement",
+      "label": "Bombement",
+      "definition": "Déformation d’une surface formant une saillie arrondie.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "mur gonflé",
+        "surface bombée"
+      ],
+      "elements": [
+        "mur",
+        "façade",
+        "revêtement"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « bombement » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « bombement » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "reprise-maconnerie",
+      "label": "Reprise de maçonnerie",
+      "definition": "Zone réparée ou reconstruite se distinguant de la maçonnerie voisine.",
+      "category": "maçonnerie",
+      "synonyms": [
+        "réparation de briques"
+      ],
+      "elements": [
+        "mur",
+        "façade"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « reprise de maçonnerie » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « reprise de maçonnerie » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "eclat-pierre",
+      "label": "Éclat de pierre",
+      "definition": "Perte ponctuelle de matière sur un élément en pierre.",
+      "category": "pierres naturelles",
+      "synonyms": [
+        "pierre cassée"
+      ],
+      "elements": [
+        "seuil",
+        "appui",
+        "façade"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « éclat de pierre » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « éclat de pierre » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "carreau-descel",
+      "label": "Carreau descellé",
+      "definition": "Carreau dont l’adhérence au support paraît insuffisante.",
+      "category": "carrelage",
+      "synonyms": [
+        "carrelage qui sonne creux",
+        "carreau mobile"
+      ],
+      "elements": [
+        "sol",
+        "mur"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « carreau descellé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « carreau descellé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "parquet-use",
+      "label": "Parquet usé",
+      "definition": "Parquet présentant une altération visible liée à l’usage.",
+      "category": "parquet",
+      "synonyms": [
+        "parquet marqué",
+        "vernis usé"
+      ],
+      "elements": [
+        "sol"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « parquet usé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « parquet usé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "menuiserie-deformee",
+      "label": "Menuiserie déformée",
+      "definition": "Élément de menuiserie présentant une modification visible de sa forme.",
+      "category": "menuiseries",
+      "synonyms": [
+        "porte voilée",
+        "châssis déformé"
+      ],
+      "elements": [
+        "porte",
+        "châssis"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « menuiserie déformée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « menuiserie déformée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "vitrage-raye",
+      "label": "Vitrage rayé",
+      "definition": "Vitrage présentant une ou plusieurs rayures visibles selon l’éclairage.",
+      "category": "vitrages",
+      "synonyms": [
+        "vitre griffée"
+      ],
+      "elements": [
+        "fenêtre",
+        "porte vitrée"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « vitrage rayé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « vitrage rayé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "quincaillerie-jeu",
+      "label": "Jeu dans la quincaillerie",
+      "definition": "Mouvement apparent anormalement important dans une pièce de manœuvre.",
+      "category": "quincaillerie",
+      "synonyms": [
+        "poignée qui bouge",
+        "charnière lâche"
+      ],
+      "elements": [
+        "poignée",
+        "charnière",
+        "serrure"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « jeu dans la quincaillerie » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « jeu dans la quincaillerie » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "tuile-deplacee",
+      "label": "Élément de couverture déplacé",
+      "definition": "Tuile ou ardoise dont la position diffère visiblement des éléments voisins.",
+      "category": "toiture",
+      "synonyms": [
+        "tuile bougée",
+        "ardoise déplacée"
+      ],
+      "elements": [
+        "toiture"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « élément de couverture déplacé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « élément de couverture déplacé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "joint-etancheite-degrade",
+      "label": "Joint d’étanchéité dégradé",
+      "definition": "Joint souple présentant une rupture, un retrait ou une adhérence altérée.",
+      "category": "étanchéité",
+      "synonyms": [
+        "silicone abîmé",
+        "joint fendu"
+      ],
+      "elements": [
+        "sanitaire",
+        "menuiserie",
+        "façade"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « joint d’étanchéité dégradé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « joint d’étanchéité dégradé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "trace-humidite",
+      "label": "Trace d’humidité",
+      "definition": "Modification visible de teinte ou d’aspect pouvant correspondre à une présence passée ou actuelle d’humidité.",
+      "category": "humidité",
+      "synonyms": [
+        "tache humide",
+        "mur humide"
+      ],
+      "elements": [
+        "mur",
+        "plafond",
+        "sol"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « trace d’humidité » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « trace d’humidité » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "sanitaire-eclat",
+      "label": "Éclat sur appareil sanitaire",
+      "definition": "Perte ponctuelle de matière ou d’émail sur un appareil sanitaire.",
+      "category": "sanitaires",
+      "synonyms": [
+        "lavabo ébréché"
+      ],
+      "elements": [
+        "lavabo",
+        "baignoire",
+        "WC"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « éclat sur appareil sanitaire » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « éclat sur appareil sanitaire » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "prise-descelee",
+      "label": "Prise descellée",
+      "definition": "Prise électrique dont la fixation au support paraît insuffisante.",
+      "category": "électricité",
+      "synonyms": [
+        "prise qui bouge"
+      ],
+      "elements": [
+        "prise",
+        "mur"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « prise descellée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « prise descellée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "radiateur-peinture-usee",
+      "label": "Peinture de radiateur usée",
+      "definition": "Finition peinte du radiateur présentant des marques d’usage ou des pertes ponctuelles.",
+      "category": "chauffage",
+      "synonyms": [
+        "radiateur écaillé"
+      ],
+      "elements": [
+        "radiateur"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « peinture de radiateur usée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « peinture de radiateur usée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "mobilier-rayure",
+      "label": "Mobilier rayé",
+      "definition": "Élément de mobilier présentant une marque linéaire superficielle.",
+      "category": "mobilier",
+      "synonyms": [
+        "meuble griffé"
+      ],
+      "elements": [
+        "meuble",
+        "plan de travail"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « mobilier rayé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « mobilier rayé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissuration-longitudinale",
+      "label": "Fissuration longitudinale",
+      "definition": "Fissuration orientée dans le sens principal de la voirie.",
+      "category": "voirie",
+      "synonyms": [
+        "fissure dans le sens de la route"
+      ],
+      "elements": [
+        "chaussée",
+        "enrobé"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissuration longitudinale » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissuration longitudinale » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "fissuration-transversale",
+      "label": "Fissuration transversale",
+      "definition": "Fissuration orientée en travers du sens principal de la voirie.",
+      "category": "voirie",
+      "synonyms": [
+        "fissure en travers de la route"
+      ],
+      "elements": [
+        "chaussée",
+        "enrobé"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « fissuration transversale » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « fissuration transversale » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "ornierage",
+      "label": "Orniérage",
+      "definition": "Déformation longitudinale en creux dans les zones de passage des roues.",
+      "category": "voirie",
+      "synonyms": [
+        "traces de roues creusées"
+      ],
+      "elements": [
+        "chaussée",
+        "enrobé"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « orniérage » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « orniérage » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "nid-poule",
+      "label": "Nid-de-poule",
+      "definition": "Cavité localisée dans le revêtement d’une chaussée.",
+      "category": "voirie",
+      "synonyms": [
+        "trou dans la route"
+      ],
+      "elements": [
+        "chaussée",
+        "enrobé"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « nid-de-poule » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « nid-de-poule » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "pave-affaisse",
+      "label": "Pavé affaissé",
+      "definition": "Pavé situé en contrebas du niveau apparent des pavés voisins.",
+      "category": "trottoirs",
+      "synonyms": [
+        "pavé enfoncé"
+      ],
+      "elements": [
+        "trottoir",
+        "accotement"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « pavé affaissé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « pavé affaissé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "bordure-descelee",
+      "label": "Bordure descellée",
+      "definition": "Bordure dont la fixation ou la liaison avec les éléments voisins paraît altérée.",
+      "category": "bordures",
+      "synonyms": [
+        "bordure qui bouge"
+      ],
+      "elements": [
+        "bordure",
+        "trottoir"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « bordure descellée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « bordure descellée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "avaloir-encrasse",
+      "label": "Avaloir encrassé",
+      "definition": "Avaloir présentant une accumulation visible de dépôts ou de déchets.",
+      "category": "égouttage",
+      "synonyms": [
+        "grille bouchée"
+      ],
+      "elements": [
+        "avaloir",
+        "voirie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « avaloir encrassé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « avaloir encrassé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "tampon-descel",
+      "label": "Tampon descellé",
+      "definition": "Tampon ou couvercle dont l’assise paraît instable ou désolidarisée.",
+      "category": "égouttage",
+      "synonyms": [
+        "plaque d’égout qui bouge"
+      ],
+      "elements": [
+        "chambre de visite",
+        "regard"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « tampon descellé » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « tampon descellé » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "cloture-deformee",
+      "label": "Clôture déformée",
+      "definition": "Clôture présentant une déformation ou un défaut d’alignement visible.",
+      "category": "clôtures",
+      "synonyms": [
+        "grillage plié"
+      ],
+      "elements": [
+        "clôture",
+        "portillon"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « clôture déformée » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « clôture déformée » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "soutenement-fissure",
+      "label": "Mur de soutènement fissuré",
+      "definition": "Mur retenant des terres et présentant une fissure visible, sans préjuger de sa cause.",
+      "category": "murs de soutènement",
+      "synonyms": [
+        "mur de retenue fissuré"
+      ],
+      "elements": [
+        "mur de soutènement"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « mur de soutènement fissuré » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « mur de soutènement fissuré » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "aspect-irregulier",
+      "label": "Aspect irrégulier",
+      "definition": "Finition présentant des différences visibles de texture, de planéité ou d’application.",
+      "category": "défauts de finition",
+      "synonyms": [
+        "finition pas uniforme"
+      ],
+      "elements": [
+        "peinture",
+        "enduit",
+        "joint"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « aspect irrégulier » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « aspect irrégulier » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 4,
+      "sourceTrace": "corpus_interne_anonymisé"
+    },
+    {
+      "id": "difference-teinte",
+      "label": "Différence de teinte",
+      "definition": "Variation ponctuelle de couleur par rapport à la surface voisine.",
+      "category": "peinture et enduits",
+      "synonyms": [
+        "couleur différente",
+        "retouche visible"
+      ],
+      "elements": [
+        "peinture",
+        "enduit",
+        "maçonnerie"
+      ],
+      "sentenceTemplates": [
+        "Observation de type « différence de teinte » localisée sur {élément}, {localisation}.",
+        "Sur {élément}, un désordre pouvant être décrit comme « différence de teinte » est visible sur les parties accessibles."
+      ],
+      "missionTypes": [
+        "entry",
+        "before_works",
+        "after_works"
+      ],
+      "corpusOccurrences": 0,
+      "sourceTrace": "corpus_interne_anonymisé"
+    }
+  ]
+}

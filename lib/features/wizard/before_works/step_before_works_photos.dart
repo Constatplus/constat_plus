@@ -2,12 +2,18 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'models/before_works_data.dart';
 import 'models/technical_finding.dart';
 
 class StepBeforeWorksPhotos extends StatelessWidget {
-  const StepBeforeWorksPhotos({super.key, required this.findings});
+  const StepBeforeWorksPhotos({
+    super.key,
+    required this.findings,
+    required this.areas,
+  });
 
   final List<TechnicalFinding> findings;
+  final List<BeforeWorksArea> areas;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +48,7 @@ class StepBeforeWorksPhotos extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '${finding.zone} • ${finding.post}',
+                      '${_areaPath(finding)} • ${finding.post}',
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -70,5 +76,13 @@ class StepBeforeWorksPhotos extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  String _areaPath(TechnicalFinding finding) {
+    final matches = areas.where((area) => area.id == finding.areaId);
+    if (matches.isEmpty) return finding.zone;
+    final area = matches.first;
+    final parents = areas.where((parent) => parent.id == area.parentId);
+    return parents.isEmpty ? area.name : '${parents.first.name} › ${area.name}';
   }
 }

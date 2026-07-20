@@ -109,25 +109,65 @@ class PdfReportService {
       pw.Text('Observations : ${data.generalObservations}'),
       pw.SizedBox(height: 18),
       pw.Text('Composition du constat', style: _heading()),
-      ...rooms.map((room) => pw.Text('• ${room.name} — ${room.level}')),
+      if (data.areas.isEmpty)
+        ...rooms.map((room) => pw.Text('• ${room.name} — ${room.level}'))
+      else
+        for (final root in data.areas.where(
+          (area) => area.parentId == null,
+        )) ...<pw.Widget>[
+          pw.Text(
+            root.name,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          for (final child in data.areas.where(
+            (area) => area.parentId == root.id,
+          ))
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(left: 12),
+              child: pw.Text('• ${child.type.label} : ${child.name}'),
+            ),
+        ],
       pw.SizedBox(height: 18),
       pw.Text('Constats techniques', style: _heading()),
-      for (final finding in data.findings) ...<pw.Widget>[
+      if (data.areas.isNotEmpty)
+        for (final area in data.areas)
+          if (data.findings.any(
+            (finding) => finding.areaId == area.id,
+          )) ...<pw.Widget>[
+            pw.Text(
+              data.areaPath(area),
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            for (final finding in data.findings.where(
+              (item) => item.areaId == area.id,
+            ))
+              ..._beforeWorksFinding(finding),
+          ],
+      for (final finding in data.findings.where(
+        (item) =>
+            item.areaId.isEmpty ||
+            !data.areas.any((area) => area.id == item.areaId),
+      ))
+        ..._beforeWorksFinding(finding),
+    ];
+  }
+
+  List<pw.Widget> _beforeWorksFinding(TechnicalFinding finding) {
+    return <pw.Widget>[
+      pw.Text(
+        finding.post.isEmpty ? finding.zone : finding.post,
+        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      ),
+      pw.Text(
+        '${finding.classification.label} — ${finding.disorderType.label}',
+      ),
+      if (finding.description.isNotEmpty) pw.Text(finding.description),
+      if (finding.disorderType.isCrack)
         pw.Text(
-          '${finding.zone} • ${finding.post}',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          'Fissure : ${finding.crack.location}, ${finding.crack.orientation}, longueur ${finding.crack.length}, ouverture ${finding.crack.openingMillimeters} mm.',
         ),
-        pw.Text(
-          '${finding.classification.label} — ${finding.disorderType.label}',
-        ),
-        pw.Text(finding.description),
-        if (finding.disorderType.isCrack)
-          pw.Text(
-            'Fissure : ${finding.crack.location}, ${finding.crack.orientation}, longueur ${finding.crack.length}, ouverture ${finding.crack.openingMillimeters} mm.',
-          ),
-        if (finding.photoPaths.isNotEmpty) _photos(finding.photoPaths),
-        pw.SizedBox(height: 12),
-      ],
+      if (finding.photoPaths.isNotEmpty) _photos(finding.photoPaths),
+      pw.SizedBox(height: 12),
     ];
   }
 

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/storage/local_json_store.dart';
+import '../before_works/models/before_works_data.dart';
 import '../before_works/models/technical_finding.dart';
 import '../property_composition/models/room_item.dart';
 import '../report/models/visit_report_snapshot.dart';
@@ -53,7 +54,9 @@ class ReferenceReportRepository {
       zones: report.zones,
       snapshot: report.snapshot,
       findings: report.findings,
+      areas: report.areas,
       pdfPath: path,
+      source: report.source,
     );
     _reports.removeWhere((item) => item.id == stored.id);
     _reports.add(stored);
@@ -69,6 +72,7 @@ class ReferenceReportRepository {
     'title': report.title,
     'createdAt': report.createdAt.toIso8601String(),
     'pdfPath': report.pdfPath,
+    'source': report.source.name,
     'zones': report.zones
         .map(
           (room) => <String, String>{
@@ -81,6 +85,7 @@ class ReferenceReportRepository {
     'findings': report.findings
         .map((finding) => finding.toJson())
         .toList(growable: false),
+    'areas': report.areas.map((area) => area.toJson()).toList(growable: false),
   };
 
   ReferenceReport? _fromJson(Map<String, dynamic> json) {
@@ -110,7 +115,18 @@ class ReferenceReportRepository {
                 TechnicalFinding.fromJson(Map<String, dynamic>.from(value)),
           )
           .toList(),
+      areas: (json['areas'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map>()
+          .map(
+            (value) =>
+                BeforeWorksArea.fromJson(Map<String, dynamic>.from(value)),
+          )
+          .toList(),
       pdfPath: path,
+      source: ReferenceReportSource.values.firstWhere(
+        (value) => value.name == json['source'],
+        orElse: () => ReferenceReportSource.constatPlus,
+      ),
     );
   }
 }

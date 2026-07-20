@@ -221,6 +221,17 @@ class _StepReportState extends State<StepReport> {
                 .toList(),
             snapshot: widget.snapshot,
             findings: widget.beforeWorksData!.findings,
+            areas: widget.beforeWorksData!.areas
+                .map(
+                  (area) => BeforeWorksArea(
+                    id: area.id,
+                    name: area.name,
+                    type: area.type,
+                    parentId: area.parentId,
+                  ),
+                )
+                .toList(growable: false),
+            source: ReferenceReportSource.constatPlus,
           ),
           bytes,
         );

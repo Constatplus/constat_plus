@@ -5,6 +5,7 @@ import '../../core/models/mission.dart';
 import '../../core/state/app_state.dart';
 import 'cadastral_plan_step.dart';
 import 'report_preview_page.dart';
+import 'services/damage_item_sync.dart';
 
 class MissionWizardPage extends StatefulWidget {
   const MissionWizardPage({required this.mission, super.key});
@@ -23,6 +24,14 @@ class _MissionWizardPageState extends State<MissionWizardPage> {
   void _changed() {
     AppScope.of(context).touch(mission);
     setState(() {});
+  }
+
+  void _openStep(int nextStep) {
+    if (mission.kind == MissionKind.exit && nextStep == 6) {
+      final result = DamageItemSync.synchronize(mission);
+      if (result.changed) AppScope.of(context).touch(mission);
+    }
+    setState(() => _step = nextStep);
   }
 
   @override
@@ -99,7 +108,7 @@ class _MissionWizardPageState extends State<MissionWizardPage> {
                           child: Text('${index + 1}'),
                         ),
                         title: Text(labels[index]),
-                        onTap: () => setState(() => _step = index),
+                        onTap: () => _openStep(index),
                       ),
                     ),
                   ),
@@ -115,7 +124,7 @@ class _MissionWizardPageState extends State<MissionWizardPage> {
             onBack: _step == 0 ? null : () => setState(() => _step--),
             onNext: () {
               if (_step < labels.length - 1) {
-                setState(() => _step++);
+                _openStep(_step + 1);
               } else {
                 AppScope.of(context).complete(mission);
                 Navigator.of(context).pop();
@@ -781,6 +790,25 @@ class _VisitStepState extends State<_VisitStep> {
                     (value) => room.observations = value,
                     lines: 4,
                   ),
+                  if (widget.mission.kind == MissionKind.exit)
+                    CheckboxListTile(
+                      value: room.observationsSelectedForDamage,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Reprendre dans le calcul des dégâts'),
+                      subtitle: const Text(
+                        'L’observation sera liée à une ligne de calcul sans montant prédéfini.',
+                      ),
+                      onChanged: room.observations.trim().isEmpty
+                          ? null
+                          : (value) {
+                              setState(() {
+                                room.observationsSelectedForDamage =
+                                    value ?? false;
+                              });
+                              widget.onChanged();
+                            },
+                    ),
                 ],
               ),
             ),
@@ -1059,6 +1087,25 @@ class _DamagesStep extends StatelessWidget {
     subtitle: 'Encodez les manquements et estimez leur coût.',
     child: Column(
       children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.tonalIcon(
+            onPressed: () {
+              final result = DamageItemSync.synchronize(mission);
+              onChanged();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '${result.added} ligne(s) ajoutée(s), ${result.updated} actualisée(s).',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.sync),
+            label: const Text('Actualiser depuis la visite'),
+          ),
+        ),
+        const SizedBox(height: 12),
         ...mission.damages.asMap().entries.map(
           (e) => Card(
             child: Padding(
@@ -1097,7 +1144,20 @@ class _DamagesStep extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
+                  if (e.value.sourceRemarkId.isNotEmpty) ...[
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Chip(
+                        avatar: Icon(Icons.link, size: 18),
+                        label: Text('Liée à une observation de visite'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   TextFormField(
+                    key: ValueKey(
+                      'damage-description-${e.value.sourceRemarkId}-${e.value.sourceDescription}',
+                    ),
                     initialValue: e.value.description,
                     decoration: const InputDecoration(
                       labelText: 'Manquement constaté',
@@ -1150,6 +1210,29 @@ class _DamagesStep extends StatelessWidget {
                           ],
                           onChanged: (v) {
                             e.value.vatRate = v ?? .21;
+                            onChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: (e.value.depreciation * 100)
+                              .toStringAsFixed(0),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Part après vétusté',
+                            suffixText: '%',
+                          ),
+                          onChanged: (v) {
+                            final percentage =
+                                double.tryParse(v.replaceAll(',', '.')) ?? 100;
+                            e.value.depreciation = (percentage / 100).clamp(
+                              0,
+                              1,
+                            );
                             onChanged();
                           },
                         ),

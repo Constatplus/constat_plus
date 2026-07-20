@@ -4,18 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../property_composition/models/room_item.dart';
+import 'models/before_works_data.dart';
 import 'models/technical_finding.dart';
 
 class StepBeforeWorksVisit extends StatefulWidget {
   const StepBeforeWorksVisit({
     super.key,
     required this.rooms,
-    required this.findings,
+    required this.data,
     required this.onChanged,
   });
 
   final List<RoomItem> rooms;
-  final List<TechnicalFinding> findings;
+  final BeforeWorksData data;
   final VoidCallback onChanged;
 
   @override
@@ -38,11 +39,147 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
 
   final ImagePicker _picker = ImagePicker();
 
+  List<TechnicalFinding> get _findings => widget.data.findings;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.data.ensureInitialStructure(widget.rooms.map((room) => room.name));
+  }
+
   void _addFinding() {
+    final areas = widget.data.areas;
     setState(() {
-      widget.findings.add(
-        TechnicalFinding(id: DateTime.now().microsecondsSinceEpoch.toString()),
+      final finding = TechnicalFinding(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
       );
+      if (areas.isNotEmpty) {
+        final preferred = areas.firstWhere(
+          (area) => !area.type.isContainer,
+          orElse: () => areas.first,
+        );
+        finding
+          ..areaId = preferred.id
+          ..zone = widget.data.areaPath(preferred);
+      }
+      _findings.add(finding);
+    });
+    widget.onChanged();
+  }
+
+  Future<void> _addArea(
+    BeforeWorksAreaType type, {
+    String? parentId,
+    String? suggestedName,
+  }) async {
+    final controller = TextEditingController(text: suggestedName ?? '');
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Ajouter : ${type.label}'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nom'),
+          onSubmitted: (value) => Navigator.pop(context, value.trim()),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Ajouter'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || name == null || name.isEmpty) return;
+    setState(() {
+      widget.data.areas.add(
+        BeforeWorksArea(
+          id: '${type.name}-${DateTime.now().microsecondsSinceEpoch}',
+          name: name,
+          type: type,
+          parentId: parentId,
+        ),
+      );
+    });
+    widget.onChanged();
+  }
+
+  Future<void> _renameArea(BeforeWorksArea area) async {
+    final controller = TextEditingController(text: area.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Modifier ${area.type.label.toLowerCase()}'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || name == null || name.isEmpty) return;
+    setState(() {
+      area.name = name;
+      for (final finding in _findings) {
+        final matches = widget.data.areas.where(
+          (item) => item.id == finding.areaId,
+        );
+        if (matches.isNotEmpty) {
+          finding.zone = widget.data.areaPath(matches.first);
+        }
+      }
+    });
+    widget.onChanged();
+  }
+
+  Future<void> _deleteArea(BeforeWorksArea area) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Supprimer « ${area.name} » ?'),
+        content: const Text(
+          'Ses sous-éléments et les constats qui y sont rattachés seront également supprimés.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+    final ids = <String>{area.id};
+    var added = true;
+    while (added) {
+      final before = ids.length;
+      ids.addAll(
+        widget.data.areas
+            .where((item) => ids.contains(item.parentId))
+            .map((item) => item.id),
+      );
+      added = ids.length != before;
+    }
+    setState(() {
+      widget.data.areas.removeWhere((item) => ids.contains(item.id));
+      _findings.removeWhere((item) => ids.contains(item.areaId));
     });
     widget.onChanged();
   }
@@ -56,7 +193,7 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
 
   @override
   Widget build(BuildContext context) {
-    final zones = widget.rooms.map((room) => room.name).toList();
+    final areas = widget.data.areas;
     return ListView(
       children: <Widget>[
         const Text(
@@ -69,24 +206,16 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
           style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
         ),
         const SizedBox(height: 22),
-        if (zones.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(18),
-              child: Text(
-                'Ajoutez d’abord une zone dans la composition du constat.',
-              ),
-            ),
-          ),
-        for (
-          var index = 0;
-          index < widget.findings.length;
-          index++
-        ) ...<Widget>[_findingCard(index, zones), const SizedBox(height: 14)],
+        _compositionCard(),
+        const SizedBox(height: 22),
+        for (var index = 0; index < _findings.length; index++) ...<Widget>[
+          _findingCard(index, areas),
+          const SizedBox(height: 14),
+        ],
         Align(
           alignment: Alignment.centerLeft,
           child: FilledButton.icon(
-            onPressed: zones.isEmpty ? null : _addFinding,
+            onPressed: areas.isEmpty ? null : _addFinding,
             icon: const Icon(Icons.add),
             label: const Text('Ajouter un constat'),
           ),
@@ -95,8 +224,167 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
     );
   }
 
-  Widget _findingCard(int index, List<String> zones) {
-    final finding = widget.findings[index];
+  Widget _compositionCard() {
+    final roots = widget.data.areas
+        .where((area) => area.parentId == null)
+        .toList(growable: false);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Structure du constat',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 12),
+            for (final root in roots) _areaTile(root),
+            Wrap(
+              spacing: 10,
+              children: <Widget>[
+                OutlinedButton.icon(
+                  onPressed: () => _addArea(
+                    BeforeWorksAreaType.building,
+                    suggestedName:
+                        'Maison ou bâtiment n° ${roots.where((item) => item.type == BeforeWorksAreaType.building).length + 1}',
+                  ),
+                  icon: const Icon(Icons.apartment),
+                  label: const Text('Ajouter un bâtiment'),
+                ),
+                OutlinedButton.icon(
+                  onPressed:
+                      roots.any((item) => item.type == BeforeWorksAreaType.road)
+                      ? null
+                      : () => _addArea(
+                          BeforeWorksAreaType.road,
+                          suggestedName: 'Voirie',
+                        ),
+                  icon: const Icon(Icons.add_road),
+                  label: const Text('Ajouter la voirie'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _areaTile(BeforeWorksArea area) {
+    final children = widget.data.areas
+        .where((item) => item.parentId == area.id)
+        .toList(growable: false);
+    return ExpansionTile(
+      initiallyExpanded: true,
+      leading: Icon(
+        area.type == BeforeWorksAreaType.building
+            ? Icons.apartment
+            : Icons.add_road,
+      ),
+      title: Text(area.name),
+      subtitle: Text(area.type.label),
+      trailing: Wrap(
+        children: <Widget>[
+          IconButton(
+            tooltip: 'Modifier',
+            onPressed: () => _renameArea(area),
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: 'Supprimer',
+            onPressed: () => _deleteArea(area),
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
+      children: <Widget>[
+        for (final child in children)
+          ListTile(
+            contentPadding: const EdgeInsets.only(left: 40, right: 8),
+            title: Text(child.name),
+            subtitle: Text(child.type.label),
+            trailing: Wrap(
+              children: <Widget>[
+                IconButton(
+                  tooltip: 'Modifier',
+                  onPressed: () => _renameArea(child),
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Supprimer',
+                  onPressed: () => _deleteArea(child),
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(40, 4, 8, 12),
+          child: Wrap(
+            spacing: 8,
+            children: area.type == BeforeWorksAreaType.building
+                ? <Widget>[
+                    _addChildButton(area, BeforeWorksAreaType.facade),
+                    _addChildButton(area, BeforeWorksAreaType.room),
+                    _addChildButton(area, BeforeWorksAreaType.surroundings),
+                  ]
+                : <Widget>[_roadZoneButton(area)],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _addChildButton(
+    BeforeWorksArea parent,
+    BeforeWorksAreaType type, {
+    String? suggestedName,
+  }) {
+    return TextButton.icon(
+      onPressed: () =>
+          _addArea(type, parentId: parent.id, suggestedName: suggestedName),
+      icon: const Icon(Icons.add, size: 18),
+      label: Text(type.label),
+    );
+  }
+
+  Widget _roadZoneButton(BeforeWorksArea road) {
+    const standardZones = <String>[
+      'Chaussée',
+      'Trottoir',
+      'Bordures',
+      'Accotements',
+      'Avaloirs',
+      'Chambres de visite',
+      'Murs de soutènement',
+      'Zone personnalisée',
+    ];
+    return PopupMenuButton<String>(
+      onSelected: (name) => _addArea(
+        BeforeWorksAreaType.roadZone,
+        parentId: road.id,
+        suggestedName: name == 'Zone personnalisée' ? '' : name,
+      ),
+      itemBuilder: (context) => standardZones
+          .map((name) => PopupMenuItem(value: name, child: Text(name)))
+          .toList(),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.add, size: 18),
+            SizedBox(width: 8),
+            Text('Zone de voirie'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _findingCard(int index, List<BeforeWorksArea> areas) {
+    final finding = _findings[index];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -115,7 +403,7 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
                 const Spacer(),
                 IconButton(
                   onPressed: () {
-                    setState(() => widget.findings.removeAt(index));
+                    setState(() => _findings.removeAt(index));
                     widget.onChanged();
                   },
                   icon: const Icon(Icons.delete_outline),
@@ -126,12 +414,7 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
               spacing: 12,
               runSpacing: 12,
               children: <Widget>[
-                _stringDropdown(
-                  'Zone',
-                  finding.zone,
-                  zones,
-                  (value) => finding.zone = value,
-                ),
+                _areaDropdown(finding, areas),
                 _stringDropdown(
                   'Poste',
                   finding.post,
@@ -320,6 +603,36 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
       },
     ),
   );
+
+  Widget _areaDropdown(TechnicalFinding finding, List<BeforeWorksArea> areas) =>
+      SizedBox(
+        width: 340,
+        child: DropdownButtonFormField<String>(
+          initialValue: areas.any((area) => area.id == finding.areaId)
+              ? finding.areaId
+              : null,
+          decoration: _input('Élément du constat'),
+          items: areas
+              .map(
+                (area) => DropdownMenuItem<String>(
+                  value: area.id,
+                  child: Text(
+                    widget.data.areaPath(area),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            final selected = areas.where((area) => area.id == value);
+            if (selected.isEmpty) return;
+            finding
+              ..areaId = selected.first.id
+              ..zone = widget.data.areaPath(selected.first);
+            widget.onChanged();
+          },
+        ),
+      );
 
   Widget _crackField(
     String label,

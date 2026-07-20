@@ -77,6 +77,8 @@ class DamageItem {
     this.amountExVat = 0,
     this.vatRate = 0.21,
     this.depreciation = 1,
+    this.sourceRemarkId = '',
+    this.sourceDescription = '',
   });
 
   String room;
@@ -85,6 +87,8 @@ class DamageItem {
   double amountExVat;
   double vatRate;
   double depreciation;
+  String sourceRemarkId;
+  String sourceDescription;
 
   double get totalExVat => amountExVat * depreciation;
   double get totalIncVat => totalExVat * (1 + vatRate);
@@ -99,8 +103,10 @@ class RoomPhoto {
 }
 
 class RoomData {
-  RoomData({required this.name, this.isRoad = false});
+  RoomData({required this.name, this.isRoad = false, String? id})
+    : id = id ?? 'room-${DateTime.now().microsecondsSinceEpoch}';
 
+  final String id;
   String name;
   bool isRoad;
   String floor = '';
@@ -112,6 +118,7 @@ class RoomData {
   String furniture = '';
   String sanitary = '';
   String observations = '';
+  bool observationsSelectedForDamage = false;
   final List<RoomPhoto> photos = [];
 
   int get completion {
