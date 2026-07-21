@@ -11,9 +11,12 @@ import 'before_works/step_before_works_photos.dart';
 import 'before_works/step_before_works_visit.dart';
 import 'comparison/step_comparative_remarks.dart';
 import 'models/wizard_mission_data.dart';
+import 'property_composition/models/property_element.dart';
 import 'property_composition/models/room_item.dart';
+import 'property_composition/widgets/building_workflow_shell.dart';
 import 'reference/models/reference_report.dart';
 import 'reference/reference_pdf_viewer_page.dart';
+import 'reference/reference_report_repository.dart';
 import 'reference/step_reference_report.dart';
 import 'report/models/report_settings.dart';
 import 'report/models/visit_report_snapshot.dart';
@@ -73,6 +76,7 @@ class _WizardPageState extends State<WizardPage> {
       case MissionType.exit:
         return const <String>[
           'Ordre de mission et parties présentes',
+          'Éléments principaux de la mission',
           "Composition issue de l'état des lieux d'entrée",
           'Remarques comparatives de sortie',
           'Calcul des indemnités',
@@ -82,6 +86,7 @@ class _WizardPageState extends State<WizardPage> {
       case MissionType.beforeWorks:
         return const <String>[
           'Ordre de mission',
+          'Éléments principaux de la mission',
           'Composition du constat',
           'Visite avant travaux',
           'Photos',
@@ -92,6 +97,7 @@ class _WizardPageState extends State<WizardPage> {
         return const <String>[
           'Ordre de mission et parties présentes',
           'Rapport avant travaux de référence',
+          'Éléments principaux de la mission',
           'Composition reprise du rapport avant travaux',
           'Remarques comparatives de récolement',
           'Rapport de récolement',
@@ -110,23 +116,28 @@ class _WizardPageState extends State<WizardPage> {
       ? InspectionReportType.afterWorks
       : InspectionReportType.entry;
   int get _visitStepIndex => _isExit
+      ? 3
+      : _isBeforeWorks
+      ? 3
+      : _isAfterWorks
+      ? 4
+      : 4;
+  int get _compositionStepIndex => _isExit
       ? 2
       : _isBeforeWorks
       ? 2
       : _isAfterWorks
       ? 3
-      : 4;
-  int get _compositionStepIndex => _isExit
-      ? 1
-      : _isBeforeWorks
+      : 3;
+  int get _propertyStructureStepIndex => _isExit || _isBeforeWorks
       ? 1
       : _isAfterWorks
       ? 2
-      : 3;
+      : 0;
   int get _signatureStepIndex => _isExit
-      ? 4
+      ? 5
       : _isBeforeWorks
-      ? 4
+      ? 5
       : _isAfterWorks
       ? -1
       : 5;
@@ -134,6 +145,95 @@ class _WizardPageState extends State<WizardPage> {
 
   bool get _isSignatureStep => currentStep == _signatureStepIndex;
   bool get _isLastStep => currentStep == _reportStepIndex;
+
+  void _selectPropertyElement(String id) {
+    setState(() => _missionData.selectedPropertyElementId = id);
+  }
+
+  void _attachRoomsToDefaultElement({String name = 'Habitation principale'}) {
+    var element = _missionData.propertyElements.isEmpty
+        ? null
+        : _missionData.propertyElements.first;
+    final createdDefault = element == null;
+    if (element == null) {
+      element = PropertyElement.create(PropertyElementType.housing, name: name);
+      _missionData.propertyElements.add(element);
+    }
+    _missionData.selectedPropertyElementId ??= element.id;
+    for (final room in selectedRooms) {
+      if (createdDefault || room.propertyElementId.isEmpty) {
+        room.propertyElementId = element.id;
+      }
+    }
+  }
+
+  Widget _buildPropertyStructure() {
+    return StepPropertyType(
+      elements: _missionData.propertyElements,
+      selectedElementId: _missionData.selectedPropertyElementId,
+      onSelected: _selectPropertyElement,
+      onChanged: () => setState(() {}),
+    );
+  }
+
+  Widget _buildPropertyComposition({bool technicalMode = false}) {
+    final selectedId = _missionData.selectedPropertyElementId;
+    if (selectedId == null) {
+      return const Center(
+        child: Text('Sélectionnez d’abord un élément principal.'),
+      );
+    }
+    return StepPropertyComposition(
+      rooms: selectedRooms,
+      missionId: _missionId,
+      discoveryAccess: _discoveryAccess,
+      onDiscoveryLimitReached: _openDiscoveryPaywall,
+      propertyElements: _missionData.propertyElements,
+      selectedPropertyElementId: selectedId,
+      onPropertyElementSelected: _selectPropertyElement,
+      technicalMode: technicalMode,
+      onRoomsChanged: () => setState(() {}),
+    );
+  }
+
+  void _setPropertyElementCompleted(String id, bool completed) {
+    setState(() {
+      if (completed) {
+        _missionData.completedPropertyElementIds.add(id);
+      } else {
+        _missionData.completedPropertyElementIds.remove(id);
+      }
+    });
+  }
+
+  List<String> get _requiredPropertyElementIds => _missionData.propertyElements
+      .where(
+        (element) =>
+            selectedRooms.any((room) => room.propertyElementId == element.id),
+      )
+      .map((element) => element.id)
+      .toList(growable: false);
+
+  Widget _buildGuidedBuildingStage(
+    Widget Function(List<RoomItem> rooms, String elementId) builder,
+  ) {
+    final selectedId = _missionData.selectedPropertyElementId;
+    if (selectedId == null || _missionData.propertyElements.isEmpty) {
+      return const Center(child: Text('Aucun bâtiment sélectionné.'));
+    }
+    final rooms = selectedRooms
+        .where((room) => room.propertyElementId == selectedId)
+        .toList(growable: false);
+    return BuildingWorkflowShell(
+      elements: _missionData.propertyElements,
+      rooms: selectedRooms,
+      selectedElementId: selectedId,
+      completedElementIds: _missionData.completedPropertyElementIds,
+      onSelected: _selectPropertyElement,
+      onCompletionChanged: _setPropertyElementCompleted,
+      child: builder(rooms, selectedId),
+    );
+  }
 
   @override
   void initState() {
@@ -222,7 +322,108 @@ class _WizardPageState extends State<WizardPage> {
     return _discoveryAccess?.hasPaidAccessFor(_missionId) ?? false;
   }
 
+  Future<void> _openPreviousEntryReport() async {
+    await ReferenceReportRepository.instance.load();
+    if (!mounted) return;
+    final reports = ReferenceReportRepository.instance.reports
+        .where(
+          (report) =>
+              report.source == ReferenceReportSource.constatPlus &&
+              report.missionType == 'entry',
+        )
+        .toList(growable: false);
+    if (reports.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Aucun ancien état des lieux d’entrée Constat+ n’est disponible.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final selected = await showDialog<ReferenceReport>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Ouvrir un ancien rapport Constat+'),
+        content: SizedBox(
+          width: 560,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: reports.length,
+            itemBuilder: (context, index) {
+              final report = reports[index];
+              return ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: Text(report.title),
+                subtitle: Text(
+                  '${report.createdAt.day.toString().padLeft(2, '0')}/'
+                  '${report.createdAt.month.toString().padLeft(2, '0')}/'
+                  '${report.createdAt.year}',
+                ),
+                onTap: () => Navigator.pop(dialogContext, report),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted) return;
+
+    final sourceRooms = selected.zones.isNotEmpty
+        ? selected.zones
+        : selected.snapshot.rooms
+              .map(
+                (room) => RoomItem(
+                  type: room.type,
+                  name: room.name,
+                  level: room.level,
+                  propertyElementId: room.propertyElementId,
+                ),
+              )
+              .toList(growable: false);
+    setState(() {
+      _missionData.propertyElements
+        ..clear()
+        ..addAll(selected.snapshot.propertyElements.map((item) => item.copy()));
+      _missionData.selectedPropertyElementId =
+          _missionData.propertyElements.isEmpty
+          ? null
+          : _missionData.propertyElements.first.id;
+      selectedRooms
+        ..clear()
+        ..addAll(
+          sourceRooms.map(
+            (room) => RoomItem(
+              type: room.type,
+              name: room.name,
+              level: room.level,
+              propertyElementId: room.propertyElementId,
+            ),
+          ),
+        );
+      _attachRoomsToDefaultElement();
+      _reportSnapshot = selected.snapshot;
+      _missionData.visitSnapshot = selected.snapshot;
+      currentStep = 3;
+    });
+  }
+
   void _nextStep() {
+    if (currentStep == _propertyStructureStepIndex &&
+        _missionData.propertyElements.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ajoutez au moins un élément principal.')),
+      );
+      return;
+    }
     if (currentStep == _compositionStepIndex && selectedRooms.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -230,6 +431,22 @@ class _WizardPageState extends State<WizardPage> {
         ),
       );
       return;
+    }
+
+    if (currentStep == _visitStepIndex) {
+      final missing = _requiredPropertyElementIds.where(
+        (id) => !_missionData.completedPropertyElementIds.contains(id),
+      );
+      if (missing.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Terminez chaque bâtiment contenant des pièces avant de continuer.',
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     if (currentStep == _visitStepIndex &&
@@ -284,32 +501,31 @@ class _WizardPageState extends State<WizardPage> {
           onChanged: () => setState(() {}),
         );
       case 1:
-        return StepPropertyComposition(
-          rooms: selectedRooms,
-          missionId: _missionId,
-          discoveryAccess: _discoveryAccess,
-          onDiscoveryLimitReached: _openDiscoveryPaywall,
-          technicalMode: true,
-          onRoomsChanged: () => setState(() {}),
-        );
+        return _buildPropertyStructure();
       case 2:
-        return StepBeforeWorksVisit(
-          rooms: selectedRooms,
-          data: _missionData.beforeWorks,
-          onChanged: () => setState(() {}),
-        );
+        return _buildPropertyComposition(technicalMode: true);
       case 3:
+        return _buildGuidedBuildingStage(
+          (_, elementId) => StepBeforeWorksVisit(
+            rooms: selectedRooms,
+            data: _missionData.beforeWorks,
+            propertyElements: _missionData.propertyElements,
+            activePropertyElementId: elementId,
+            onChanged: () => setState(() {}),
+          ),
+        );
+      case 4:
         return StepBeforeWorksPhotos(
           findings: _missionData.beforeWorks.findings,
           areas: _missionData.beforeWorks.areas,
         );
-      case 4:
+      case 5:
         return StepSignature(
           controller: _signatureController,
           onContinue: _openReportFromSignatures,
           onPostpone: _openReportFromSignatures,
         );
-      case 5:
+      case 6:
         return StepReport(
           missionId: _missionId,
           missionType: widget.missionType.databaseValue,
@@ -326,7 +542,11 @@ class _WizardPageState extends State<WizardPage> {
   Widget _buildAfterWorksStepContent() {
     switch (currentStep) {
       case 0:
-        return const StepExitMissionOrder();
+        return StepBeforeWorksInfo(
+          data: _missionData.beforeWorks,
+          afterWorks: true,
+          onChanged: () => setState(() {}),
+        );
       case 1:
         return StepReferenceReport(
           selected: _missionData.referenceReport,
@@ -335,25 +555,23 @@ class _WizardPageState extends State<WizardPage> {
           onNoReference: _selectNoReference,
         );
       case 2:
-        return StepPropertyComposition(
-          rooms: selectedRooms,
-          missionId: _missionId,
-          discoveryAccess: _discoveryAccess,
-          onDiscoveryLimitReached: _openDiscoveryPaywall,
-          technicalMode: true,
-          onRoomsChanged: () => setState(() {}),
-        );
+        return _buildPropertyStructure();
       case 3:
-        return StepComparativeRemarks(
-          rooms: selectedRooms,
-          remarks: _missionData.comparisonRemarks,
-          referenceFindings: _missionData.referenceReport?.findings ?? const [],
-          afterWorks: true,
-          onOpenReference: _missionData.referenceReport == null
-              ? null
-              : _openReference,
-        );
+        return _buildPropertyComposition(technicalMode: true);
       case 4:
+        return _buildGuidedBuildingStage(
+          (rooms, _) => StepComparativeRemarks(
+            rooms: rooms,
+            remarks: _missionData.comparisonRemarks,
+            referenceFindings:
+                _missionData.referenceReport?.findings ?? const [],
+            afterWorks: true,
+            onOpenReference: _missionData.referenceReport == null
+                ? null
+                : _openReference,
+          ),
+        );
+      case 5:
         return StepReport(
           missionId: _missionId,
           missionType: widget.missionType.databaseValue,
@@ -388,13 +606,24 @@ class _WizardPageState extends State<WizardPage> {
             ),
           ),
         );
+      _missionData.propertyElements
+        ..clear()
+        ..addAll(report.snapshot.propertyElements.map((item) => item.copy()));
+      _missionData.selectedPropertyElementId =
+          _missionData.propertyElements.isEmpty
+          ? null
+          : _missionData.propertyElements.first.id;
       if (report.zones.isNotEmpty) {
         selectedRooms
           ..clear()
           ..addAll(
             report.zones.map(
-              (room) =>
-                  RoomItem(type: room.type, name: room.name, level: room.level),
+              (room) => RoomItem(
+                type: room.type,
+                name: room.name,
+                level: room.level,
+                propertyElementId: room.propertyElementId,
+              ),
             ),
           );
       } else if (report.areas.isNotEmpty) {
@@ -412,6 +641,7 @@ class _WizardPageState extends State<WizardPage> {
                 ),
           );
       }
+      _attachRoomsToDefaultElement(name: 'Bâtiment de référence');
     });
   }
 
@@ -441,25 +671,22 @@ class _WizardPageState extends State<WizardPage> {
   Widget _buildStandardStepContent() {
     switch (currentStep) {
       case 0:
-        return const StepPropertyType();
+        return _buildPropertyStructure();
       case 1:
         return const StepGeneralInfo();
       case 2:
         return const StepKeysMeters();
       case 3:
-        return StepPropertyComposition(
-          rooms: selectedRooms,
-          missionId: _missionId,
-          discoveryAccess: _discoveryAccess,
-          onDiscoveryLimitReached: _openDiscoveryPaywall,
-          onRoomsChanged: () => setState(() {}),
-        );
+        return _buildPropertyComposition();
       case 4:
         return StepVisit(
           missionId: _missionId,
           missionType: widget.missionType.databaseValue,
           rooms: selectedRooms,
+          propertyElements: _missionData.propertyElements,
+          onBuildingCompletionChanged: _setPropertyElementCompleted,
           controller: _visitController,
+          initialSnapshot: _reportSnapshot,
         );
       case 5:
         return StepSignature(
@@ -473,6 +700,7 @@ class _WizardPageState extends State<WizardPage> {
           missionType: widget.missionType.databaseValue,
           snapshot: _reportSnapshot,
           initialReportType: _reportType,
+          rooms: selectedRooms,
         );
       default:
         return const SizedBox.shrink();
@@ -484,20 +712,26 @@ class _WizardPageState extends State<WizardPage> {
       case 0:
         return const StepExitMissionOrder();
       case 1:
-        return StepPropertyComposition(
-          rooms: selectedRooms,
-          missionId: _missionId,
-          discoveryAccess: _discoveryAccess,
-          onDiscoveryLimitReached: _openDiscoveryPaywall,
-          onRoomsChanged: () => setState(() {}),
-        );
+        return _buildPropertyStructure();
       case 2:
-        return StepExitComparison(rooms: selectedRooms);
+        return _buildPropertyComposition();
       case 3:
-        return StepExitCalculations(rooms: selectedRooms);
+        return _buildGuidedBuildingStage(
+          (rooms, _) => StepExitComparison(
+            rooms: rooms,
+            remarks: _missionData.comparisonRemarks,
+          ),
+        );
       case 4:
-        return StepExitClosure();
+        return StepExitCalculations(
+          rooms: selectedRooms,
+          remarks: _missionData.comparisonRemarks,
+          lines: _missionData.exitDamageLines,
+          dismissedSourceIds: _missionData.dismissedExitRemarkIds,
+        );
       case 5:
+        return StepExitClosure();
+      case 6:
         return StepReport(
           missionId: _missionId,
           missionType: widget.missionType.databaseValue,
@@ -570,6 +804,14 @@ class _WizardPageState extends State<WizardPage> {
                     'Étape ${currentStep + 1} / ${_steps.length}',
                     style: const TextStyle(fontSize: 16, color: Colors.black54),
                   ),
+                  if (widget.missionType == MissionType.entry) ...[
+                    const SizedBox(width: 16),
+                    OutlinedButton.icon(
+                      onPressed: _openPreviousEntryReport,
+                      icon: const Icon(Icons.folder_open_outlined),
+                      label: const Text('Ouvrir un ancien rapport'),
+                    ),
+                  ],
                   if (_discoveryAccess != null &&
                       !_discoveryAccess!.hasPaidAccessFor(_missionId)) ...[
                     const SizedBox(width: 16),

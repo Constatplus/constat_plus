@@ -6,6 +6,7 @@ import '../commercial/application/commercial_access_controller.dart';
 import '../commercial/presentation/commercial_access_messages.dart';
 import '../pricing/pricing_page.dart';
 import 'before_works/models/before_works_data.dart';
+import 'before_works/models/technical_finding.dart';
 import 'comparison/models/comparison_remark.dart';
 import 'property_composition/models/room_item.dart';
 import 'reference/models/reference_report.dart';
@@ -202,9 +203,11 @@ class _StepReportState extends State<StepReport> {
         referenceReport: widget.referenceReport,
         comparisonRemarks: widget.comparisonRemarks,
       );
-      if (_reportType == InspectionReportType.beforeWorks &&
-          widget.beforeWorksData != null) {
+      if (_reportType == InspectionReportType.entry ||
+          (_reportType == InspectionReportType.beforeWorks &&
+              widget.beforeWorksData != null)) {
         final id = DateTime.now().microsecondsSinceEpoch.toString();
+        final beforeWorks = widget.beforeWorksData;
         await ReferenceReportRepository.instance.save(
           ReferenceReport(
             id: id,
@@ -220,8 +223,8 @@ class _StepReportState extends State<StepReport> {
                 )
                 .toList(),
             snapshot: widget.snapshot,
-            findings: widget.beforeWorksData!.findings,
-            areas: widget.beforeWorksData!.areas
+            findings: beforeWorks?.findings ?? <TechnicalFinding>[],
+            areas: (beforeWorks?.areas ?? <BeforeWorksArea>[])
                 .map(
                   (area) => BeforeWorksArea(
                     id: area.id,
@@ -232,6 +235,9 @@ class _StepReportState extends State<StepReport> {
                 )
                 .toList(growable: false),
             source: ReferenceReportSource.constatPlus,
+            missionType: _reportType == InspectionReportType.entry
+                ? 'entry'
+                : 'before_works',
           ),
           bytes,
         );

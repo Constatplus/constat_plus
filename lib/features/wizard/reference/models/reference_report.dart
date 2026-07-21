@@ -17,6 +17,7 @@ class ReferenceReport {
     required this.zones,
     required this.snapshot,
     required this.findings,
+    this.missionType = 'before_works',
     this.areas = const <BeforeWorksArea>[],
     this.pdfPath,
     this.pdfBytes,
@@ -34,6 +35,7 @@ class ReferenceReport {
   final List<RoomItem> zones;
   final VisitReportSnapshot snapshot;
   final List<TechnicalFinding> findings;
+  final String missionType;
   final List<BeforeWorksArea> areas;
   final String? pdfPath;
   final Uint8List? pdfBytes;

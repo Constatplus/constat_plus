@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../commercial/domain/models/discovery_access_state.dart';
+import 'property_composition/models/property_element.dart';
 import 'property_composition/models/room_item.dart';
+import 'property_composition/services/room_reorder.dart';
 
 class StepPropertyComposition extends StatefulWidget {
   final List<RoomItem> rooms;
@@ -10,7 +12,10 @@ class StepPropertyComposition extends StatefulWidget {
   final String missionId;
   final DiscoveryAccessState? discoveryAccess;
   final Future<bool> Function(int roomsUsed, int roomLimit)?
-      onDiscoveryLimitReached;
+  onDiscoveryLimitReached;
+  final List<PropertyElement> propertyElements;
+  final String selectedPropertyElementId;
+  final ValueChanged<String> onPropertyElementSelected;
 
   const StepPropertyComposition({
     super.key,
@@ -19,6 +24,9 @@ class StepPropertyComposition extends StatefulWidget {
     required this.missionId,
     required this.discoveryAccess,
     required this.onDiscoveryLimitReached,
+    required this.propertyElements,
+    required this.selectedPropertyElementId,
+    required this.onPropertyElementSelected,
     this.technicalMode = false,
   });
 
@@ -87,7 +95,18 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     'Annexe',
   ];
 
-  List<RoomItem> get _rooms => widget.rooms;
+  List<RoomItem> get _rooms => widget.rooms
+      .where(
+        (room) => room.propertyElementId == widget.selectedPropertyElementId,
+      )
+      .toList(growable: true);
+
+  PropertyElement? get _selectedElement {
+    for (final element in widget.propertyElements) {
+      if (element.id == widget.selectedPropertyElementId) return element;
+    }
+    return null;
+  }
 
   void _notifyChanged() {
     widget.onRoomsChanged();
@@ -95,13 +114,10 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
 
   Future<void> _addRoom(String type) async {
     setState(() {
-      _rooms.add(
-        RoomItem(
-          type: type,
-          name: type,
-          level: _defaultLevelFor(type),
-        ),
+      widget.rooms.add(
+        RoomItem(type: type, name: type, level: _defaultLevelFor(type)),
       );
+      widget.rooms.last.propertyElementId = widget.selectedPropertyElementId;
     });
 
     _notifyChanged();
@@ -146,9 +162,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Indiquez le nom de la pièce.'),
-        ),
+        const SnackBar(content: Text('Indiquez le nom de la pièce.')),
       );
       return;
     }
@@ -164,7 +178,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
 
   void _removeRoom(int index) {
     setState(() {
-      _rooms.removeAt(index);
+      widget.rooms.remove(_rooms[index]);
     });
 
     _notifyChanged();
@@ -176,8 +190,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     }
 
     setState(() {
-      final room = _rooms.removeAt(index);
-      _rooms.insert(index - 1, room);
+      _swapScopedRooms(index, index - 1);
     });
 
     _notifyChanged();
@@ -189,11 +202,33 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     }
 
     setState(() {
-      final room = _rooms.removeAt(index);
-      _rooms.insert(index + 1, room);
+      _swapScopedRooms(index, index + 1);
     });
 
     _notifyChanged();
+  }
+
+  void _swapScopedRooms(int first, int second) {
+    final scoped = _rooms;
+    final firstGlobal = widget.rooms.indexOf(scoped[first]);
+    final secondGlobal = widget.rooms.indexOf(scoped[second]);
+    final value = widget.rooms[firstGlobal];
+    widget.rooms[firstGlobal] = widget.rooms[secondGlobal];
+    widget.rooms[secondGlobal] = value;
+  }
+
+  void _reorderScopedRooms(int oldIndex, int newIndex) {
+    final reordered = _rooms;
+    reorderRooms(reordered, oldIndex, newIndex);
+    final globalIndices = <int>[
+      for (var index = 0; index < widget.rooms.length; index++)
+        if (widget.rooms[index].propertyElementId ==
+            widget.selectedPropertyElementId)
+          index,
+    ];
+    for (var index = 0; index < globalIndices.length; index++) {
+      widget.rooms[globalIndices[index]] = reordered[index];
+    }
   }
 
   IconData _iconForRoom(String type) {
@@ -280,16 +315,47 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        SizedBox(
-          width: 330,
-          child: _buildTemplatesPanel(),
-        ),
-        const SizedBox(width: 28),
+        _buildElementSelector(),
+        const SizedBox(height: 18),
         Expanded(
-          child: _buildCompositionPanel(),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 330, child: _buildTemplatesPanel()),
+              const SizedBox(width: 28),
+              Expanded(child: _buildCompositionPanel()),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildElementSelector() {
+    return Row(
+      children: [
+        const Text(
+          'Bâtiment ou zone :',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.propertyElements
+                .map((element) {
+                  return ChoiceChip(
+                    label: Text(element.name),
+                    selected: element.id == widget.selectedPropertyElementId,
+                    onSelected: (_) =>
+                        widget.onPropertyElementSelected(element.id),
+                  );
+                })
+                .toList(growable: false),
+          ),
         ),
       ],
     );
@@ -310,11 +376,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
         const SizedBox(height: 6),
         const Text(
           'Cliquez plusieurs fois sur une pièce pour l’ajouter plusieurs fois.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.4,
-            color: Color(0xFF64748B),
-          ),
+          style: TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF64748B)),
         ),
         const SizedBox(height: 18),
         Expanded(
@@ -379,9 +441,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             labelText: 'Pièce personnalisée',
             hintText: 'Exemple : Véranda',
             prefixIcon: const Icon(Icons.edit_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
           onSubmitted: (_) => _addCustomRoom(),
         ),
@@ -407,8 +467,8 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             Expanded(
               child: Text(
                 widget.technicalMode
-                    ? 'Composition du constat'
-                    : 'Composition du bien',
+                    ? 'Composition de ${_selectedElement?.name ?? 'la zone'}'
+                    : 'Pièces de ${_selectedElement?.name ?? 'l’élément'}',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -417,10 +477,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF2FF),
                 borderRadius: BorderRadius.circular(999),
@@ -438,10 +495,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
         const SizedBox(height: 6),
         const Text(
           'Renommez les pièces et indiquez leur niveau dans l’ordre de la visite.',
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF64748B),
-          ),
+          style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
         ),
         const SizedBox(height: 18),
         Expanded(
@@ -452,17 +506,13 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
                   itemCount: _rooms.length,
                   onReorderItem: (oldIndex, newIndex) {
                     setState(() {
-                      final room = _rooms.removeAt(oldIndex);
-                      _rooms.insert(newIndex, room);
+                      _reorderScopedRooms(oldIndex, newIndex);
                     });
 
                     _notifyChanged();
                   },
                   itemBuilder: (context, index) {
-                    return _buildRoomCard(
-                      room: _rooms[index],
-                      index: index,
-                    );
+                    return _buildRoomCard(room: _rooms[index], index: index);
                   },
                 ),
         ),
@@ -476,19 +526,13 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.home_work_outlined,
-              size: 62,
-              color: Color(0xFF94A3B8),
-            ),
+            Icon(Icons.home_work_outlined, size: 62, color: Color(0xFF94A3B8)),
             SizedBox(height: 16),
             Text(
               'Aucune pièce ajoutée',
@@ -501,9 +545,7 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             SizedBox(height: 6),
             Text(
               'Cliquez sur une pièce proposée pour commencer.',
-              style: TextStyle(
-                color: Color(0xFF64748B),
-              ),
+              style: TextStyle(color: Color(0xFF64748B)),
             ),
           ],
         ),
@@ -511,19 +553,14 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     );
   }
 
-  Widget _buildRoomCard({
-    required RoomItem room,
-    required int index,
-  }) {
+  Widget _buildRoomCard({required RoomItem room, required int index}) {
     return Card(
       key: ValueKey(room),
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(
-          color: Color(0xFFE2E8F0),
-        ),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -567,8 +604,9 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
             Expanded(
               flex: 2,
               child: DropdownButtonFormField<String>(
-                initialValue:
-                    _levels.contains(room.level) ? room.level : _levels.first,
+                initialValue: _levels.contains(room.level)
+                    ? room.level
+                    : _levels.first,
                 decoration: const InputDecoration(
                   labelText: 'Niveau',
                   isDense: true,

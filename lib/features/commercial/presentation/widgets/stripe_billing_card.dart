@@ -8,6 +8,7 @@ import '../../application/billing/stripe_billing_controller.dart';
 import '../../domain/models/billing_models.dart';
 import '../../domain/models/commercial_enums.dart';
 import '../../domain/models/subscription_plan.dart';
+import '../commercial_formatters.dart';
 import '../pages/payment_status_page.dart';
 import '../pages/stripe_checkout_pending_page.dart';
 import '../secure_checkout_page.dart';
@@ -16,11 +17,7 @@ class StripeBillingCard extends StatefulWidget {
   final SubscriptionPlan plan;
   final String? missionId;
 
-  const StripeBillingCard({
-    super.key,
-    required this.plan,
-    this.missionId,
-  });
+  const StripeBillingCard({super.key, required this.plan, this.missionId});
 
   @override
   State<StripeBillingCard> createState() => _StripeBillingCardState();
@@ -99,9 +96,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
       if (result.outcome == PurchaseOutcome.pending && sessionId != null) {
         await Navigator.of(context).push<void>(
           MaterialPageRoute<void>(
-            builder: (_) => StripeCheckoutPendingPage(
-              sessionId: sessionId,
-            ),
+            builder: (_) => StripeCheckoutPendingPage(sessionId: sessionId),
           ),
         );
 
@@ -150,6 +145,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
           planName: widget.plan.name,
           priceLabel: product.displayPrice,
           billingLabel: _billingLabel(),
+          pricingNotice: _pricingNotice(),
           features: _featuresForPlan(),
           onCheckout: _purchase,
           isLoading: _purchasing,
@@ -169,36 +165,48 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
   }
 
   List<String> _featuresForPlan() {
+    if (widget.plan.featureLabels.isNotEmpty) {
+      return widget.plan.featureLabels;
+    }
     final planName = widget.plan.name.toLowerCase();
 
     if (planName.contains('pro')) {
       return const [
-        '10 états des lieux par mois',
-        '150 analyses Gianni IA par mois',
-        'Rapports Word et PDF',
-        'Sauvegarde et synchronisation Cloud',
-        'Accès professionnel multi-support',
-        'Assistance prioritaire',
+        'Jusqu’à 10 états des lieux par mois',
+        '150 analyses IA par mois',
+        'Toutes les fonctionnalités Solo',
+        'Gestion d’équipe',
+        'Tableau de bord entreprise',
+        'Contrôle interne',
+        'Affectation des experts',
+        'Historique complet',
+        'Communication interne par dossier',
       ];
     }
 
     if (planName.contains('solo')) {
       return const [
-        '5 états des lieux par mois',
-        '50 analyses Gianni IA par mois',
-        'Rapports Word et PDF',
-        'Sauvegarde et synchronisation Cloud',
-        'Accès sur Windows, Android et iPhone',
+        'Jusqu’à 5 états des lieux par mois',
+        '50 analyses IA par mois',
+        'Rapports PDF et Word',
+        'Signature électronique',
+        'Sauvegarde cloud',
       ];
     }
 
     return const [
-      '1 état des lieux complet',
-      '5 analyses Gianni IA',
-      'Rapport Word et PDF',
-      'Conservation du dossier',
-      'Paiement unique sans abonnement',
+      'Utilisable pour un seul état des lieux',
+      '5 analyses IA',
+      'Pas d’abonnement',
     ];
+  }
+
+  String _pricingNotice() {
+    final additionalPrice = widget.plan.additionalMissionPriceMinor;
+    if (additionalPrice != null) {
+      return 'Prix affiché ${widget.plan.taxDisplay.label}. Au-delà des ${widget.plan.missionQuota} états des lieux inclus, chaque état des lieux supplémentaire est facturé ${CommercialFormatters.money(additionalPrice, widget.plan.currency)} HTVA.';
+    }
+    return 'Prix affiché ${widget.plan.taxDisplay.label}. Paiement unique sans abonnement.';
   }
 
   @override
@@ -207,34 +215,25 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
       return const SizedBox.shrink();
     }
 
-    if (AccessService.instance.isDemo ||
-        AuthService.currentUser == null) {
+    if (AccessService.instance.isDemo || AuthService.currentUser == null) {
       return Card(
         elevation: 0,
         color: const Color(0xFFFFF7ED),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(
-            color: Color(0xFFFED7AA),
-          ),
+          side: const BorderSide(color: Color(0xFFFED7AA)),
         ),
         child: const Padding(
           padding: EdgeInsets.all(18),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.info_outline,
-                color: Color(0xFFEA580C),
-              ),
+              Icon(Icons.info_outline, color: Color(0xFFEA580C)),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Connectez-vous avec un compte réel pour acheter cette offre.',
-                  style: TextStyle(
-                    height: 1.4,
-                    color: Color(0xFF9A3412),
-                  ),
+                  style: TextStyle(height: 1.4, color: Color(0xFF9A3412)),
                 ),
               ),
             ],
@@ -246,9 +245,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.all(24),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -258,9 +255,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
         color: const Color(0xFFFFF7ED),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(
-            color: Color(0xFFFED7AA),
-          ),
+          side: const BorderSide(color: Color(0xFFFED7AA)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(18),
@@ -269,10 +264,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: Color(0xFFEA580C),
-                  ),
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFFEA580C)),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -288,10 +280,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
               const SizedBox(height: 10),
               Text(
                 _error?.toString() ?? 'Prix Stripe indisponible.',
-                style: const TextStyle(
-                  height: 1.4,
-                  color: Color(0xFF7C2D12),
-                ),
+                style: const TextStyle(height: 1.4, color: Color(0xFF7C2D12)),
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
@@ -313,9 +302,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
           color: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(
-              color: Color(0xFFE2E8F0),
-            ),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -324,10 +311,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
               children: [
                 const Row(
                   children: [
-                    Icon(
-                      Icons.lock_outline,
-                      color: Color(0xFF1264F6),
-                    ),
+                    Icon(Icons.lock_outline, color: Color(0xFF1264F6)),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -353,10 +337,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
                 const SizedBox(height: 8),
                 const Text(
                   'Choisissez votre moyen de paiement sur la page sécurisée : Bancontact, Visa, Mastercard, Apple Pay ou Google Pay selon les moyens activés.',
-                  style: TextStyle(
-                    height: 1.45,
-                    color: Color(0xFF64748B),
-                  ),
+                  style: TextStyle(height: 1.45, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 18),
                 const Wrap(
@@ -399,9 +380,7 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
             _purchasing
                 ? 'Ouverture du paiement…'
                 : 'S’abonner – Paiement sécurisé',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 10),
@@ -422,23 +401,16 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
 class _PaymentMethodBadge extends StatelessWidget {
   final String label;
 
-  const _PaymentMethodBadge({
-    required this.label,
-  });
+  const _PaymentMethodBadge({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Text(
         label,

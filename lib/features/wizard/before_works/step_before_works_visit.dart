@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../property_composition/models/room_item.dart';
+import '../property_composition/models/property_element.dart';
 import 'models/before_works_data.dart';
 import 'models/technical_finding.dart';
 
@@ -13,11 +14,15 @@ class StepBeforeWorksVisit extends StatefulWidget {
     required this.rooms,
     required this.data,
     required this.onChanged,
+    required this.propertyElements,
+    required this.activePropertyElementId,
   });
 
   final List<RoomItem> rooms;
   final BeforeWorksData data;
   final VoidCallback onChanged;
+  final List<PropertyElement> propertyElements;
+  final String activePropertyElementId;
 
   @override
   State<StepBeforeWorksVisit> createState() => _StepBeforeWorksVisitState();
@@ -40,15 +45,23 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
   final ImagePicker _picker = ImagePicker();
 
   List<TechnicalFinding> get _findings => widget.data.findings;
+  List<BeforeWorksArea> get _areas =>
+      widget.data.areasForPropertyElement(widget.activePropertyElementId);
 
   @override
   void initState() {
     super.initState();
-    widget.data.ensureInitialStructure(widget.rooms.map((room) => room.name));
+    widget.data.syncPropertyStructure(widget.propertyElements, widget.rooms);
+  }
+
+  @override
+  void didUpdateWidget(covariant StepBeforeWorksVisit oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    widget.data.syncPropertyStructure(widget.propertyElements, widget.rooms);
   }
 
   void _addFinding() {
-    final areas = widget.data.areas;
+    final areas = _areas;
     setState(() {
       final finding = TechnicalFinding(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -193,7 +206,11 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
 
   @override
   Widget build(BuildContext context) {
-    final areas = widget.data.areas;
+    final areas = _areas;
+    final areaIds = areas.map((area) => area.id).toSet();
+    final visibleFindings = _findings.asMap().entries.where(
+      (entry) => areaIds.contains(entry.value.areaId),
+    );
     return ListView(
       children: <Widget>[
         const Text(
@@ -208,8 +225,8 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
         const SizedBox(height: 22),
         _compositionCard(),
         const SizedBox(height: 22),
-        for (var index = 0; index < _findings.length; index++) ...<Widget>[
-          _findingCard(index, areas),
+        for (final entry in visibleFindings) ...<Widget>[
+          _findingCard(entry.key, areas),
           const SizedBox(height: 14),
         ],
         Align(
@@ -225,7 +242,7 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
   }
 
   Widget _compositionCard() {
-    final roots = widget.data.areas
+    final roots = _areas
         .where((area) => area.parentId == null)
         .toList(growable: false);
     return Card(
@@ -240,30 +257,9 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
             ),
             const SizedBox(height: 12),
             for (final root in roots) _areaTile(root),
-            Wrap(
-              spacing: 10,
-              children: <Widget>[
-                OutlinedButton.icon(
-                  onPressed: () => _addArea(
-                    BeforeWorksAreaType.building,
-                    suggestedName:
-                        'Maison ou bâtiment n° ${roots.where((item) => item.type == BeforeWorksAreaType.building).length + 1}',
-                  ),
-                  icon: const Icon(Icons.apartment),
-                  label: const Text('Ajouter un bâtiment'),
-                ),
-                OutlinedButton.icon(
-                  onPressed:
-                      roots.any((item) => item.type == BeforeWorksAreaType.road)
-                      ? null
-                      : () => _addArea(
-                          BeforeWorksAreaType.road,
-                          suggestedName: 'Voirie',
-                        ),
-                  icon: const Icon(Icons.add_road),
-                  label: const Text('Ajouter la voirie'),
-                ),
-              ],
+            const Text(
+              'Les bâtiments sont gérés dans la composition principale de la mission.',
+              style: TextStyle(color: Color(0xFF64748B)),
             ),
           ],
         ),
@@ -272,7 +268,7 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
   }
 
   Widget _areaTile(BeforeWorksArea area) {
-    final children = widget.data.areas
+    final children = _areas
         .where((item) => item.parentId == area.id)
         .toList(growable: false);
     return ExpansionTile(

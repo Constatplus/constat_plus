@@ -46,17 +46,30 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
   @override
   void initState() {
     super.initState();
-    if (widget.remarks.isEmpty) {
-      widget.remarks.add(
-        ComparisonRemark(id: DateTime.now().microsecondsSinceEpoch.toString()),
-      );
-    }
+    _ensureRemarkForCurrentRooms();
+  }
+
+  @override
+  void didUpdateWidget(covariant StepComparativeRemarks oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _ensureRemarkForCurrentRooms();
+  }
+
+  void _ensureRemarkForCurrentRooms() {
+    if (widget.rooms.isEmpty) return;
+    final roomNames = widget.rooms.map((room) => room.name).toSet();
+    if (widget.remarks.any((remark) => roomNames.contains(remark.zone))) return;
+    widget.remarks.add(
+      ComparisonRemark(id: DateTime.now().microsecondsSinceEpoch.toString())
+        ..zone = widget.rooms.first.name,
+    );
   }
 
   void _add() {
     setState(() {
       widget.remarks.add(
-        ComparisonRemark(id: DateTime.now().microsecondsSinceEpoch.toString()),
+        ComparisonRemark(id: DateTime.now().microsecondsSinceEpoch.toString())
+          ..zone = widget.rooms.isEmpty ? '' : widget.rooms.first.name,
       );
     });
   }
@@ -72,6 +85,11 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
   @override
   Widget build(BuildContext context) {
     final roomNames = widget.rooms.map((room) => room.name).toList();
+    final visibleRemarks = widget.remarks
+        .asMap()
+        .entries
+        .where((entry) => roomNames.contains(entry.value.zone))
+        .toList(growable: false);
     return ListView(
       children: <Widget>[
         Row(
@@ -96,8 +114,8 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
           ],
         ),
         const SizedBox(height: 20),
-        for (var index = 0; index < widget.remarks.length; index++) ...<Widget>[
-          _remarkCard(index, roomNames),
+        for (var index = 0; index < visibleRemarks.length; index++) ...<Widget>[
+          _remarkCard(visibleRemarks[index].key, index, roomNames),
           const SizedBox(height: 14),
         ],
         Align(
@@ -112,8 +130,12 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
     );
   }
 
-  Widget _remarkCard(int index, List<String> roomNames) {
-    final remark = widget.remarks[index];
+  Widget _remarkCard(
+    int remarkIndex,
+    int displayIndex,
+    List<String> roomNames,
+  ) {
+    final remark = widget.remarks[remarkIndex];
     final findings = widget.referenceFindings
         .where((finding) => remark.zone.isEmpty || finding.zone == remark.zone)
         .toList();
@@ -126,7 +148,7 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
             Row(
               children: <Widget>[
                 Text(
-                  'Remarque ${index + 1}',
+                  'Remarque ${displayIndex + 1}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -136,7 +158,9 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
                 IconButton(
                   onPressed: widget.remarks.length == 1
                       ? null
-                      : () => setState(() => widget.remarks.removeAt(index)),
+                      : () => setState(
+                          () => widget.remarks.removeAt(remarkIndex),
+                        ),
                   icon: const Icon(Icons.delete_outline),
                 ),
               ],

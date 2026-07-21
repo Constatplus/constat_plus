@@ -37,7 +37,7 @@ class OfferDetailsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${CommercialFormatters.money(plan.priceMinor, plan.currency)}${monthly ? ' / mois' : ''}',
+                      '${CommercialFormatters.money(plan.priceMinor, plan.currency)} ${plan.taxDisplay.label}${monthly ? ' / mois' : ''}',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -57,7 +57,9 @@ class OfferDetailsPage extends StatelessWidget {
                       label: 'Analyses IA',
                       value: plan.aiAnalysisQuota == 0
                           ? 'Non incluses'
-                          : '${plan.aiAnalysisQuota} par mois',
+                          : monthly
+                          ? '${plan.aiAnalysisQuota} par mois'
+                          : '${plan.aiAnalysisQuota}',
                     ),
                     _DetailLine(
                       label: 'Utilisateurs',
@@ -67,6 +69,40 @@ class OfferDetailsPage extends StatelessWidget {
                       label: 'Renouvellement',
                       value: monthly ? 'Mensuel automatique' : 'Aucun',
                     ),
+                    if (plan.additionalMissionPriceMinor != null)
+                      _DetailLine(
+                        label: 'Mission supplémentaire',
+                        value:
+                            '${CommercialFormatters.money(plan.additionalMissionPriceMinor!, plan.currency)} HTVA',
+                      ),
+                    if (plan.featureLabels.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Comprend',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...plan.featureLabels.map(
+                        (feature) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                size: 20,
+                                color: Color(0xFF15803D),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(feature)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     PlatformBillingCard(plan: plan, missionId: missionId),
                     const SizedBox(height: 16),

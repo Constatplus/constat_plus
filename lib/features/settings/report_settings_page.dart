@@ -35,6 +35,7 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
   final _entryNotes = TextEditingController();
   final _exitNotes = TextEditingController();
   final _beforeWorksNotes = TextEditingController();
+  final _afterWorksNotes = TextEditingController();
   final _primaryColor = TextEditingController();
   final _secondaryColor = TextEditingController();
   final _headingColor = TextEditingController();
@@ -71,6 +72,7 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
     _entryNotes.text = value.entryPreliminaryNotes;
     _exitNotes.text = value.exitPreliminaryNotes;
     _beforeWorksNotes.text = value.beforeWorksPreliminaryNotes;
+    _afterWorksNotes.text = value.afterWorksPreliminaryNotes;
     _primaryColor.text = value.primaryColorHex;
     _secondaryColor.text = value.secondaryColorHex;
     _headingColor.text = value.headingColorHex;
@@ -93,6 +95,7 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
       entryPreliminaryNotes: _entryNotes.text.trim(),
       exitPreliminaryNotes: _exitNotes.text.trim(),
       beforeWorksPreliminaryNotes: _beforeWorksNotes.text.trim(),
+      afterWorksPreliminaryNotes: _afterWorksNotes.text.trim(),
       primaryColorHex: _cleanHex(_primaryColor.text, current.primaryColorHex),
       secondaryColorHex: _cleanHex(
         _secondaryColor.text,
@@ -162,6 +165,7 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
       _entryNotes,
       _exitNotes,
       _beforeWorksNotes,
+      _afterWorksNotes,
       _primaryColor,
       _secondaryColor,
       _headingColor,
@@ -485,6 +489,12 @@ class _ReportSettingsPageState extends State<ReportSettingsPage>
           children: [
             _field(_beforeWorksNotes, 'Notes liminaires', maxLines: 9),
           ],
+        ),
+        _section(
+          title: 'Récolement après travaux',
+          subtitle:
+              'Ce texte accompagne la comparaison avec le constat avant travaux.',
+          children: [_field(_afterWorksNotes, 'Notes liminaires', maxLines: 9)],
         ),
       ],
     );

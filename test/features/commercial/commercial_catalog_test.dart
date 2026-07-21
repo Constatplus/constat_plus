@@ -21,8 +21,14 @@ void main() {
       'price_minor': 9900,
       'currency': 'EUR',
       'mission_quota': 5,
-      'ai_analysis_quota': 20,
+      'ai_analysis_quota': 50,
       'maximum_users': 1,
+      'tax_display': 'htva',
+      'additional_mission_price_minor': 2000,
+      'feature_labels': [
+        'Jusqu’à 5 états des lieux par mois',
+        '50 analyses IA par mois',
+      ],
       'platform_availability': ['android', 'windows', 'ios'],
       'active': true,
       'created_at': now.toIso8601String(),
@@ -31,7 +37,10 @@ void main() {
 
     expect(plan.priceMinor, 9900);
     expect(plan.missionQuota, 5);
-    expect(plan.aiAnalysisQuota, 20);
+    expect(plan.aiAnalysisQuota, 50);
+    expect(plan.taxDisplay, PriceTaxDisplay.htva);
+    expect(plan.additionalMissionPriceMinor, 2000);
+    expect(plan.featureLabels, contains('50 analyses IA par mois'));
     expect(plan.supports(CommercialPlatform.android), isTrue);
   });
 
@@ -54,7 +63,7 @@ void main() {
     );
 
     expect(overview.remainingMissions, 2);
-    expect(overview.remainingAiAnalyses, 12);
+    expect(overview.remainingAiAnalyses, 42);
   });
 
   testWidgets('la page des offres affiche le catalogue injecté', (
@@ -68,7 +77,9 @@ void main() {
 
     expect(find.text('Solo'), findsOneWidget);
     expect(find.textContaining('99 €'), findsOneWidget);
-    expect(find.textContaining('5 missions'), findsOneWidget);
+    expect(find.textContaining('HTVA'), findsWidgets);
+    expect(find.textContaining('5 états des lieux'), findsOneWidget);
+    expect(find.textContaining('20 € HTVA'), findsOneWidget);
   });
 }
 
@@ -82,8 +93,17 @@ SubscriptionPlan _plan(DateTime now) {
     priceMinor: 9900,
     currency: 'EUR',
     missionQuota: 5,
-    aiAnalysisQuota: 20,
+    aiAnalysisQuota: 50,
     maximumUsers: 1,
+    taxDisplay: PriceTaxDisplay.htva,
+    additionalMissionPriceMinor: 2000,
+    featureLabels: const <String>[
+      'Jusqu’à 5 états des lieux par mois',
+      '50 analyses IA par mois',
+      'Rapports PDF et Word',
+      'Signature électronique',
+      'Sauvegarde cloud',
+    ],
     platformAvailability: CommercialPlatform.values.toSet(),
     active: true,
     createdAt: now,

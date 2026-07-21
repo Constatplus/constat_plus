@@ -9,16 +9,20 @@ import 'reference/reference_pdf_viewer_page.dart';
 import 'report/models/visit_report_snapshot.dart';
 
 class StepExitComparison extends StatefulWidget {
-  const StepExitComparison({super.key, required this.rooms});
+  const StepExitComparison({
+    super.key,
+    required this.rooms,
+    required this.remarks,
+  });
 
   final List<RoomItem> rooms;
+  final List<ComparisonRemark> remarks;
 
   @override
   State<StepExitComparison> createState() => _StepExitComparisonState();
 }
 
 class _StepExitComparisonState extends State<StepExitComparison> {
-  final List<ComparisonRemark> _remarks = <ComparisonRemark>[];
   ReferenceReport? _reference;
 
   Future<void> _pickEntryPdf() async {
@@ -86,7 +90,7 @@ class _StepExitComparisonState extends State<StepExitComparison> {
         Expanded(
           child: StepComparativeRemarks(
             rooms: widget.rooms,
-            remarks: _remarks,
+            remarks: widget.remarks,
             referenceFindings: const [],
             afterWorks: false,
           ),

@@ -1,4 +1,6 @@
 import 'technical_finding.dart';
+import '../../property_composition/models/property_element.dart';
+import '../../property_composition/models/room_item.dart';
 
 enum BeforeWorksAreaType {
   building,
@@ -78,6 +80,7 @@ class BeforeWorksData {
   final List<PresentParty> presentParties = <PresentParty>[PresentParty()];
   final List<BeforeWorksArea> areas = <BeforeWorksArea>[];
   final List<TechnicalFinding> findings = <TechnicalFinding>[];
+  final Map<String, String> propertyElementAreaIds = <String, String>{};
 
   String areaPath(BeforeWorksArea area) {
     final parents = areas.where((item) => item.id == area.parentId);
@@ -106,6 +109,75 @@ class BeforeWorksData {
       );
     }
     _attachLegacyFindings();
+  }
+
+  void syncPropertyStructure(
+    List<PropertyElement> elements,
+    List<RoomItem> rooms,
+  ) {
+    for (final element in elements) {
+      final mappedId = propertyElementAreaIds[element.id];
+      final mapped = areas.where((area) => area.id == mappedId);
+      final namedRoots = areas.where(
+        (area) => area.parentId == null && area.name == element.name,
+      );
+      BeforeWorksArea root;
+      if (mapped.isNotEmpty) {
+        root = mapped.first;
+      } else if (namedRoots.isNotEmpty) {
+        root = namedRoots.first;
+      } else {
+        root = BeforeWorksArea(
+          id: 'property-${element.id}',
+          name: element.name,
+          type: element.type == PropertyElementType.road
+              ? BeforeWorksAreaType.road
+              : BeforeWorksAreaType.building,
+        );
+        areas.add(root);
+      }
+      root.name = element.name;
+      propertyElementAreaIds[element.id] = root.id;
+
+      final elementRooms = rooms.where(
+        (room) => room.propertyElementId == element.id,
+      );
+      for (final room in elementRooms) {
+        final exists = areas.any(
+          (area) => area.parentId == root.id && area.name == room.name,
+        );
+        if (!exists) {
+          areas.add(
+            BeforeWorksArea(
+              id: _newId('room'),
+              name: room.name,
+              type: root.type == BeforeWorksAreaType.road
+                  ? BeforeWorksAreaType.roadZone
+                  : BeforeWorksAreaType.room,
+              parentId: root.id,
+            ),
+          );
+        }
+      }
+    }
+    _attachLegacyFindings();
+  }
+
+  List<BeforeWorksArea> areasForPropertyElement(String elementId) {
+    final rootId = propertyElementAreaIds[elementId];
+    if (rootId == null) return const <BeforeWorksArea>[];
+    final ids = <String>{rootId};
+    var changed = true;
+    while (changed) {
+      final before = ids.length;
+      ids.addAll(
+        areas
+            .where((area) => ids.contains(area.parentId))
+            .map((area) => area.id),
+      );
+      changed = ids.length != before;
+    }
+    return areas.where((area) => ids.contains(area.id)).toList(growable: false);
   }
 
   void _attachLegacyFindings() {

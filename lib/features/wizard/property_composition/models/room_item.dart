@@ -3,6 +3,12 @@ class RoomItem {
 
   String name;
   String level;
+  String propertyElementId;
 
-  RoomItem({required this.type, required this.name, required this.level});
+  RoomItem({
+    required this.type,
+    required this.name,
+    required this.level,
+    this.propertyElementId = '',
+  });
 }

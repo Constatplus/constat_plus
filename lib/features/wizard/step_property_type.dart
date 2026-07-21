@@ -1,180 +1,184 @@
 import 'package:flutter/material.dart';
 
-class StepPropertyType extends StatefulWidget {
-  const StepPropertyType({super.key});
+import 'property_composition/models/property_element.dart';
 
-  @override
-  State<StepPropertyType> createState() => _StepPropertyTypeState();
-}
+class StepPropertyType extends StatelessWidget {
+  const StepPropertyType({
+    super.key,
+    required this.elements,
+    required this.selectedElementId,
+    required this.onSelected,
+    required this.onChanged,
+  });
 
-class _StepPropertyTypeState extends State<StepPropertyType> {
-  String? selectedType;
+  final List<PropertyElement> elements;
+  final String? selectedElementId;
+  final ValueChanged<String> onSelected;
+  final VoidCallback onChanged;
 
-  final List<_PropertyType> types = const [
-    _PropertyType(
-      'Maison',
-      'Bien complet avec façades et extérieurs',
-      Icons.home_rounded,
-    ),
-    _PropertyType(
-      'Appartement',
-      'Lot privatif dans un immeuble',
-      Icons.apartment_rounded,
-    ),
-    _PropertyType(
-      'Studio',
-      'Petite unité avec espace unique',
-      Icons.king_bed_rounded,
-    ),
-    _PropertyType(
-      'Commerce',
-      'Surface commerciale ou magasin',
-      Icons.storefront_rounded,
-    ),
-    _PropertyType(
-      'Bureau',
-      'Local professionnel ou administratif',
-      Icons.business_center_rounded,
-    ),
-    _PropertyType(
-      'Garage',
-      'Garage, box ou emplacement fermé',
-      Icons.garage_rounded,
-    ),
-    _PropertyType(
-      'Immeuble',
-      'Plusieurs niveaux ou plusieurs lots',
-      Icons.location_city_rounded,
-    ),
-    _PropertyType(
-      'Autre',
-      'Bien spécifique ou personnalisé',
-      Icons.add_circle_outline_rounded,
-    ),
-  ];
+  Future<void> _addElement(
+    BuildContext context,
+    PropertyElementType type,
+  ) async {
+    String? customName;
+    if (type == PropertyElementType.custom) {
+      final controller = TextEditingController();
+      customName = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Ajouter une zone personnalisée'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Nom de la zone'),
+            onSubmitted: (value) => Navigator.pop(dialogContext, value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, controller.text),
+              child: const Text('Ajouter'),
+            ),
+          ],
+        ),
+      );
+      controller.dispose();
+      if (customName == null || customName.trim().isEmpty) return;
+    }
+
+    final sameTypeCount = elements.where((item) => item.type == type).length;
+    final defaultName = sameTypeCount == 0
+        ? type.label
+        : '${type.label} ${sameTypeCount + 1}';
+    final element = PropertyElement.create(
+      type,
+      name: customName ?? defaultName,
+    );
+    elements.add(element);
+    onChanged();
+    onSelected(element.id);
+  }
+
+  IconData _icon(PropertyElementType type) => switch (type) {
+    PropertyElementType.housing => Icons.home_work_outlined,
+    PropertyElementType.road => Icons.add_road_outlined,
+    PropertyElementType.annex => Icons.other_houses_outlined,
+    PropertyElementType.garage => Icons.garage_outlined,
+    PropertyElementType.warehouse => Icons.warehouse_outlined,
+    PropertyElementType.garden => Icons.yard_outlined,
+    PropertyElementType.land => Icons.landscape_outlined,
+    PropertyElementType.custom => Icons.dashboard_customize_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Type de bien',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Choisissez le type de bien à visiter.',
-          style: TextStyle(fontSize: 17, color: Colors.black54),
-        ),
-        const SizedBox(height: 28),
-        Expanded(
-          child: GridView.builder(
-            itemCount: types.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 18,
-              mainAxisSpacing: 18,
-              childAspectRatio: 1.45,
-            ),
-            itemBuilder: (context, index) {
-              final type = types[index];
-              final selected = selectedType == type.name;
-
-              return InkWell(
-                borderRadius: BorderRadius.circular(22),
-                onTap: () {
-                  setState(() {
-                    selectedType = type.name;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: selected ? const Color(0xFFEAF2FF) : Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: selected
-                          ? const Color(0xFF1565C0)
-                          : Colors.grey.shade300,
-                      width: selected ? 2 : 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 14,
-                        offset: const Offset(0, 8),
+        SizedBox(
+          width: 390,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Éléments principaux',
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ajoutez chaque bâtiment ou zone qui compose la mission.',
+                style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: PropertyElementType.values.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final type = PropertyElementType.values[index];
+                    return ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? const Color(0xFF1565C0)
-                              : const Color(0xFFF4F8FA),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Icon(
-                          type.icon,
-                          color: selected ? Colors.white : Colors.black87,
-                          size: 32,
-                        ),
+                      leading: Icon(
+                        _icon(type),
+                        color: const Color(0xFF1264F6),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              type.name,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: selected
-                                    ? const Color(0xFF1565C0)
-                                    : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              type.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (selected)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: Color(0xFF1565C0),
-                        ),
-                    ],
-                  ),
+                      title: Text(type.label),
+                      trailing: const Icon(Icons.add_circle_outline),
+                      onTap: () => _addElement(context, type),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 28),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Composition de la mission (${elements.length})',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Renommez les éléments puis choisissez celui à composer.',
+                style: TextStyle(color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 18),
+              Expanded(
+                child: elements.isEmpty
+                    ? const Center(
+                        child: Text('Ajoutez au moins un élément principal.'),
+                      )
+                    : ListView.separated(
+                        itemCount: elements.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final element = elements[index];
+                          final selected = element.id == selectedElementId;
+                          return Card(
+                            color: selected ? const Color(0xFFEAF2FF) : null,
+                            child: ListTile(
+                              leading: Icon(_icon(element.type)),
+                              title: TextFormField(
+                                key: ValueKey(element.id),
+                                initialValue: element.name,
+                                decoration: const InputDecoration(
+                                  labelText: 'Nom de l’élément',
+                                  border: InputBorder.none,
+                                ),
+                                onChanged: (value) {
+                                  element.name = value;
+                                  onChanged();
+                                },
+                              ),
+                              trailing: selected
+                                  ? const Icon(
+                                      Icons.check_circle,
+                                      color: Color(0xFF1264F6),
+                                    )
+                                  : const Icon(Icons.chevron_right),
+                              onTap: () => onSelected(element.id),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
-}
-
-class _PropertyType {
-  final String name;
-  final String description;
-  final IconData icon;
-
-  const _PropertyType(this.name, this.description, this.icon);
 }

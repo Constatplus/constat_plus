@@ -8,6 +8,7 @@ class SecureCheckoutPage extends StatefulWidget {
     required this.planName,
     required this.priceLabel,
     required this.billingLabel,
+    required this.pricingNotice,
     required this.features,
     required this.onCheckout,
     this.isLoading = false,
@@ -16,6 +17,7 @@ class SecureCheckoutPage extends StatefulWidget {
   final String planName;
   final String priceLabel;
   final String billingLabel;
+  final String pricingNotice;
   final List<String> features;
   final Future<void> Function() onCheckout;
   final bool isLoading;
@@ -42,22 +44,6 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
     }
 
     return _isSubscription ? 'S’abonner maintenant' : 'Payer maintenant';
-  }
-
-  String get _pricingNotice {
-    final planName = widget.planName.toLowerCase();
-
-    if (planName.contains('solo')) {
-      return 'Prix affiché HTVA. Au-delà des 5 rapports inclus, '
-          'chaque rapport supplémentaire est facturé 20 € HTVA.';
-    }
-
-    if (planName.contains('pro')) {
-      return 'Prix affiché HTVA. Au-delà des 10 rapports inclus, '
-          'chaque rapport supplémentaire est facturé 15 € HTVA.';
-    }
-
-    return 'Prix affiché TVAC. Paiement unique de 69 € sans abonnement.';
   }
 
   Future<void> _startCheckout() async {
@@ -95,9 +81,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
   void _openLegal(LegalDocumentType document) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => LegalDocumentsPage(
-          initialDocument: document,
-        ),
+        builder: (_) => LegalDocumentsPage(initialDocument: document),
       ),
     );
   }
@@ -142,13 +126,9 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _buildPlanCard(context),
-                      ),
+                      Expanded(child: _buildPlanCard(context)),
                       const SizedBox(width: 24),
-                      Expanded(
-                        child: _buildPaymentCard(context),
-                      ),
+                      Expanded(child: _buildPaymentCard(context)),
                     ],
                   ),
                 ),
@@ -166,10 +146,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFEAF2FF),
               borderRadius: BorderRadius.circular(999),
@@ -201,9 +178,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
                 padding: const EdgeInsets.only(bottom: 7),
                 child: Text(
                   widget.billingLabel,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                  ),
+                  style: const TextStyle(color: Color(0xFF64748B)),
                 ),
               ),
             ],
@@ -215,12 +190,10 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-              ),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Text(
-              _pricingNotice,
+              widget.pricingNotice,
               style: const TextStyle(
                 height: 1.4,
                 color: Color(0xFF475569),
@@ -268,14 +241,11 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
                 child: Text(
                   _isSubscription
                       ? 'Vous pourrez gérer ou résilier votre abonnement '
-                          'depuis votre compte ou depuis la boutique utilisée '
-                          'pour l’achat.'
+                            'depuis votre compte ou depuis la boutique utilisée '
+                            'pour l’achat.'
                       : 'La mission est consommée uniquement lors de la '
-                          'génération du rapport définitif.',
-                  style: const TextStyle(
-                    height: 1.4,
-                    color: Color(0xFF64748B),
-                  ),
+                            'génération du rapport définitif.',
+                  style: const TextStyle(height: 1.4, color: Color(0xFF64748B)),
                 ),
               ),
             ],
@@ -292,10 +262,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.lock_outline,
-                color: Color(0xFF1264F6),
-              ),
+              Icon(Icons.lock_outline, color: Color(0xFF1264F6)),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -313,10 +280,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
           const Text(
             'Le paiement s’ouvre dans une page sécurisée. '
             'Constat+ ne stocke aucune donnée bancaire complète.',
-            style: TextStyle(
-              height: 1.45,
-              color: Color(0xFF64748B),
-            ),
+            style: TextStyle(height: 1.45, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 22),
           const Text(
@@ -358,16 +322,12 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
                   const Text('J’ai lu et j’accepte les '),
                   _LegalLink(
                     label: 'Conditions Générales d’Utilisation',
-                    onTap: () => _openLegal(
-                      LegalDocumentType.termsOfUse,
-                    ),
+                    onTap: () => _openLegal(LegalDocumentType.termsOfUse),
                   ),
                   const Text(' et les '),
                   _LegalLink(
                     label: 'Conditions Générales de Vente',
-                    onTap: () => _openLegal(
-                      LegalDocumentType.termsOfSale,
-                    ),
+                    onTap: () => _openLegal(LegalDocumentType.termsOfSale),
                   ),
                   const Text('.'),
                 ],
@@ -413,9 +373,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
                   : const Icon(Icons.lock_outline),
               label: Text(
                 _checkoutButtonLabel,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1264F6),
@@ -433,10 +391,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
             child: Text(
               'Transaction chiffrée • Aucun numéro de carte conservé',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-              ),
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
           ),
         ],
@@ -446,9 +401,7 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
 }
 
 class _CardShell extends StatelessWidget {
-  const _CardShell({
-    required this.child,
-  });
+  const _CardShell({required this.child});
 
   final Widget child;
 
@@ -476,9 +429,7 @@ class _CardShell extends StatelessWidget {
           padding: const EdgeInsets.all(26),
           decoration: BoxDecoration(
             borderRadius: borderRadius,
-            border: Border.all(
-              color: const Color(0xFFE2E8F0),
-            ),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: child,
         ),
@@ -488,25 +439,18 @@ class _CardShell extends StatelessWidget {
 }
 
 class _PaymentBadge extends StatelessWidget {
-  const _PaymentBadge({
-    required this.label,
-  });
+  const _PaymentBadge({required this.label});
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 9,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Text(
         label,
@@ -520,10 +464,7 @@ class _PaymentBadge extends StatelessWidget {
 }
 
 class _LegalLink extends StatelessWidget {
-  const _LegalLink({
-    required this.label,
-    required this.onTap,
-  });
+  const _LegalLink({required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
@@ -536,10 +477,7 @@ class _LegalLink extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(4),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 1,
-            vertical: 2,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
           child: Text(
             label,
             style: const TextStyle(

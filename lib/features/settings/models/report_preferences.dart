@@ -35,6 +35,7 @@ class ReportPreferences {
   final String entryPreliminaryNotes;
   final String exitPreliminaryNotes;
   final String beforeWorksPreliminaryNotes;
+  final String afterWorksPreliminaryNotes;
   final List<ReportSectionPreference> sections;
   final String primaryColorHex;
   final String secondaryColorHex;
@@ -63,6 +64,7 @@ class ReportPreferences {
     required this.entryPreliminaryNotes,
     required this.exitPreliminaryNotes,
     required this.beforeWorksPreliminaryNotes,
+    required this.afterWorksPreliminaryNotes,
     required this.sections,
     required this.primaryColorHex,
     required this.secondaryColorHex,
@@ -91,6 +93,10 @@ class ReportPreferences {
       'Le présent constat avant travaux décrit l’état apparent et visible des lieux au jour de la visite. '
       'Il a pour objet de conserver la preuve des désordres préexistants avant le commencement des travaux.';
 
+  static const defaultAfterWorksNotes =
+      'Le présent récolement après travaux compare les constatations visibles au rapport avant travaux de référence. '
+      'Il relève les modifications, désordres ou dommages apparus dans les zones examinées après l’exécution des travaux.';
+
   factory ReportPreferences.defaults() {
     return const ReportPreferences(
       plan: SubscriptionPlan.solo,
@@ -107,6 +113,7 @@ class ReportPreferences {
       entryPreliminaryNotes: defaultEntryNotes,
       exitPreliminaryNotes: defaultExitNotes,
       beforeWorksPreliminaryNotes: defaultBeforeWorksNotes,
+      afterWorksPreliminaryNotes: defaultAfterWorksNotes,
       primaryColorHex: '1E5AA8',
       secondaryColorHex: '238636',
       headingColorHex: '1E293B',
@@ -179,6 +186,7 @@ class ReportPreferences {
     String? entryPreliminaryNotes,
     String? exitPreliminaryNotes,
     String? beforeWorksPreliminaryNotes,
+    String? afterWorksPreliminaryNotes,
     List<ReportSectionPreference>? sections,
     String? primaryColorHex,
     String? secondaryColorHex,
@@ -209,6 +217,8 @@ class ReportPreferences {
       exitPreliminaryNotes: exitPreliminaryNotes ?? this.exitPreliminaryNotes,
       beforeWorksPreliminaryNotes:
           beforeWorksPreliminaryNotes ?? this.beforeWorksPreliminaryNotes,
+      afterWorksPreliminaryNotes:
+          afterWorksPreliminaryNotes ?? this.afterWorksPreliminaryNotes,
       sections: sections ?? this.sections,
       primaryColorHex: primaryColorHex ?? this.primaryColorHex,
       secondaryColorHex: secondaryColorHex ?? this.secondaryColorHex,

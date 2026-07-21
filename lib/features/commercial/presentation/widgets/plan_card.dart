@@ -71,6 +71,10 @@ class PlanCard extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+                    TextSpan(
+                      text: ' ${plan.taxDisplay.label}',
+                      style: TextStyle(color: secondary, fontSize: 15),
+                    ),
                     if (plan.billingPeriod == BillingPeriod.monthly)
                       TextSpan(
                         text: ' / mois',
@@ -106,6 +110,17 @@ class PlanCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (plan.additionalMissionPriceMinor != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Au-delà : ${CommercialFormatters.money(plan.additionalMissionPriceMinor!, plan.currency)} HTVA par état des lieux supplémentaire',
+                  style: TextStyle(
+                    color: secondary,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               highlighted
                   ? FilledButton(
@@ -128,20 +143,20 @@ class PlanCard extends StatelessWidget {
   }
 
   List<String> _features(SubscriptionPlan value) {
+    if (value.featureLabels.isNotEmpty) return value.featureLabels;
     if (value.billingPeriod == BillingPeriod.none) {
-      return const [
-        '1 mission payante',
-        'Rapport définitif de la mission',
-        'Aucun renouvellement automatique',
+      return [
+        'Utilisable pour un seul état des lieux',
+        '${value.aiAnalysisQuota} analyses IA',
+        'Pas d’abonnement',
       ];
     }
     return [
-      '${value.missionQuota} missions par période mensuelle',
-      '${value.aiAnalysisQuota} analyses IA configurées',
-      value.maximumUsers == 1
-          ? '1 utilisateur principal'
-          : 'Jusqu’à ${value.maximumUsers} utilisateurs à terme',
-      'Anciens dossiers conservés en lecture',
+      'Jusqu’à ${value.missionQuota} états des lieux par mois',
+      '${value.aiAnalysisQuota} analyses IA par mois',
+      'Rapports PDF et Word',
+      'Signature électronique',
+      'Sauvegarde cloud',
     ];
   }
 }

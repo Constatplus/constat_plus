@@ -85,7 +85,9 @@ class _StepReferenceReportState extends State<StepReferenceReport> {
 
   @override
   Widget build(BuildContext context) {
-    final reports = ReferenceReportRepository.instance.reports;
+    final reports = ReferenceReportRepository.instance.reports
+        .where((report) => report.missionType == 'before_works')
+        .toList(growable: false);
     return ListView(
       children: <Widget>[
         const Text(

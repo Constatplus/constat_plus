@@ -9,7 +9,9 @@ import '../../core/ai/offline_inspection_ai_service.dart';
 import '../../core/ai/online_inspection_ai_service.dart';
 import '../commercial/infrastructure/repositories/supabase_discovery_access_repository.dart';
 import '../commercial/presentation/pages/discovery_paywall_page.dart';
+import 'property_composition/models/property_element.dart';
 import 'property_composition/models/room_item.dart';
+import 'property_composition/services/room_reorder.dart';
 import 'visit/widgets/electrical_panel.dart';
 import 'visit/widgets/vocabulary_help_dialog.dart';
 import 'visit/services/wall_content_swap.dart';
@@ -31,7 +33,11 @@ class StepVisit extends StatefulWidget {
   final String missionId;
   final String missionType;
   final List<RoomItem> rooms;
+  final List<PropertyElement> propertyElements;
   final StepVisitController controller;
+  final VisitReportSnapshot initialSnapshot;
+  final void Function(String elementId, bool completed)?
+  onBuildingCompletionChanged;
 
   const StepVisit({
     super.key,
@@ -39,6 +45,11 @@ class StepVisit extends StatefulWidget {
     required this.missionType,
     required this.rooms,
     required this.controller,
+    this.propertyElements = const <PropertyElement>[],
+    this.onBuildingCompletionChanged,
+    this.initialSnapshot = const VisitReportSnapshot(
+      rooms: <VisitRoomReport>[],
+    ),
   });
 
   @override
@@ -165,10 +176,19 @@ class _StepVisitState extends State<StepVisit> {
 
   int _selectedRoomIndex = 0;
   int _selectedSectionIndex = 0;
+  String? _selectedPropertyElementId;
+  bool _showBuildingOverview = false;
 
   @override
   void initState() {
     super.initState();
+
+    if (widget.propertyElements.isNotEmpty) {
+      _selectedPropertyElementId = widget.propertyElements.first.id;
+      _showBuildingOverview = widget.propertyElements.length > 1;
+      final indices = _roomIndicesForElement(_selectedPropertyElementId!);
+      if (indices.isNotEmpty) _selectedRoomIndex = indices.first;
+    }
 
     for (var index = 0; index < widget.rooms.length; index++) {
       final room = widget.rooms[index];
@@ -179,11 +199,113 @@ class _StepVisitState extends State<StepVisit> {
       }
     }
 
+    _restoreSnapshot(widget.initialSnapshot);
+
     widget.controller.attach(_buildReportSnapshot);
+  }
+
+  void _restoreSnapshot(VisitReportSnapshot snapshot) {
+    for (var roomIndex = 0; roomIndex < widget.rooms.length; roomIndex++) {
+      final room = widget.rooms[roomIndex];
+      final matches = snapshot.rooms.where(
+        (report) =>
+            (report.propertyElementId.isEmpty ||
+                report.propertyElementId == room.propertyElementId) &&
+            report.name == room.name &&
+            report.type == room.type &&
+            report.level == room.level,
+      );
+      final report = matches.isNotEmpty
+          ? matches.first
+          : roomIndex < snapshot.rooms.length
+          ? snapshot.rooms[roomIndex]
+          : null;
+      if (report == null) continue;
+
+      for (final entry in report.sections.entries) {
+        _controllerFor(roomIndex, entry.key).text = entry.value;
+        if (entry.value.trim() == 'Conforme aux généralités.') {
+          _conformToGeneralities[_sectionKey(roomIndex, entry.key)] = true;
+        }
+      }
+      for (final wall in report.electricalByWall.entries) {
+        _electricalQuantities[_wallKey(roomIndex, wall.key)] =
+            Map<String, int>.from(wall.value);
+      }
+      for (final furniture in report.furnitureDescriptions.entries) {
+        _furnitureItemsFor(roomIndex).add(furniture.key);
+        _furnitureControllerFor(roomIndex, furniture.key).text =
+            furniture.value;
+      }
+
+      final kitchen = report.kitchen;
+      if (kitchen != null) {
+        _furnitureItemsFor(roomIndex).add('Cuisine équipée');
+        _kitchenControllerFor(roomIndex, 'general').text =
+            kitchen.generalDescription;
+        _kitchenControllerFor(roomIndex, 'worktop').text =
+            kitchen.worktopDescription;
+        for (final equipment in kitchen.worktopEquipment.entries) {
+          _worktopEquipmentFor(roomIndex).add(equipment.key);
+          _kitchenControllerFor(
+            roomIndex,
+            'worktop-equipment::${equipment.key}',
+          ).text = equipment.value;
+        }
+        _upperUnitsFor(roomIndex).addAll(
+          kitchen.upperUnits.map(
+            (unit) => _KitchenUnit(type: unit.type, comment: unit.comment),
+          ),
+        );
+        _lowerUnitsFor(roomIndex).addAll(
+          kitchen.lowerUnits.map(
+            (unit) => _KitchenUnit(type: unit.type, comment: unit.comment),
+          ),
+        );
+      }
+
+      _prefillPhotosForRoom(roomIndex).addAll(
+        report.photoPaths
+            .where((path) => File(path).existsSync())
+            .map(XFile.new),
+      );
+    }
   }
 
   RoomItem get _currentRoom => widget.rooms[_selectedRoomIndex];
   String get _currentSection => _sections[_selectedSectionIndex];
+
+  List<int> _roomIndicesForElement(String elementId) => <int>[
+    for (var index = 0; index < widget.rooms.length; index++)
+      if (widget.rooms[index].propertyElementId == elementId) index,
+  ];
+
+  List<int> get _visibleRoomIndices {
+    final elementId = _selectedPropertyElementId;
+    if (elementId == null) {
+      return List<int>.generate(widget.rooms.length, (index) => index);
+    }
+    return _roomIndicesForElement(elementId);
+  }
+
+  int get _visibleRoomPosition =>
+      _visibleRoomIndices.indexOf(_selectedRoomIndex);
+
+  void _openPropertyElement(String elementId) {
+    final indices = _roomIndicesForElement(elementId);
+    if (indices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune pièce dans cet élément.')),
+      );
+      return;
+    }
+    setState(() {
+      _selectedPropertyElementId = elementId;
+      _selectedRoomIndex = indices.first;
+      _selectedSectionIndex = 0;
+      _showBuildingOverview = false;
+    });
+  }
 
   Future<void> _swapWalls() async {
     var firstWall = _walls.first;
@@ -305,7 +427,7 @@ class _StepVisitState extends State<StepVisit> {
 
   String _roomKey(int roomIndex) {
     final room = widget.rooms[roomIndex];
-    return '$roomIndex-${room.type}-${room.level}-${room.name}';
+    return roomIdentityKey(room);
   }
 
   String _sectionKey(int roomIndex, String section) {
@@ -518,17 +640,21 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   void _previousRoom() {
-    if (_selectedRoomIndex == 0) return;
+    final indices = _visibleRoomIndices;
+    final position = indices.indexOf(_selectedRoomIndex);
+    if (position <= 0) return;
 
     setState(() {
-      _selectedRoomIndex--;
+      _selectedRoomIndex = indices[position - 1];
       _selectedSectionIndex = 0;
     });
   }
 
   Future<void> _nextRoom() async {
-    if (_selectedRoomIndex >= widget.rooms.length - 1) return;
-    await _selectRoom(_selectedRoomIndex + 1);
+    final indices = _visibleRoomIndices;
+    final position = indices.indexOf(_selectedRoomIndex);
+    if (position < 0 || position >= indices.length - 1) return;
+    await _selectRoom(indices[position + 1]);
   }
 
   void _toggleRoomCompleted() {
@@ -541,6 +667,16 @@ class _StepVisitState extends State<StepVisit> {
         _completedRooms.add(key);
       }
     });
+    final elementId = _currentRoom.propertyElementId;
+    if (elementId.isNotEmpty) {
+      final roomIndices = _roomIndicesForElement(elementId);
+      final completed =
+          roomIndices.isNotEmpty &&
+          roomIndices.every(
+            (roomIndex) => _completedRooms.contains(_roomKey(roomIndex)),
+          );
+      widget.onBuildingCompletionChanged?.call(elementId, completed);
+    }
   }
 
   void _toggleGeneralities(bool value) {
@@ -1343,11 +1479,17 @@ class _StepVisitState extends State<StepVisit> {
           furnitureDescriptions: furnitureDescriptions,
           kitchen: kitchen,
           photoPaths: photoPaths.toSet().toList(growable: false),
+          propertyElementId: room.propertyElementId,
         ),
       );
     }
 
-    return VisitReportSnapshot(rooms: roomReports);
+    return VisitReportSnapshot(
+      rooms: roomReports,
+      propertyElements: widget.propertyElements
+          .map((element) => element.copy())
+          .toList(growable: false),
+    );
   }
 
   @override
@@ -1385,6 +1527,10 @@ class _StepVisitState extends State<StepVisit> {
           style: TextStyle(fontSize: 18, color: Colors.black54),
         ),
       );
+    }
+
+    if (_showBuildingOverview && widget.propertyElements.isNotEmpty) {
+      return _buildBuildingOverview();
     }
 
     final room = _currentRoom;
@@ -1429,31 +1575,132 @@ class _StepVisitState extends State<StepVisit> {
     );
   }
 
-  Widget _buildRoomList() {
+  Widget _buildBuildingOverview() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Pièces du bien',
-          style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+          'Bâtiments et zones de la mission',
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Choisissez un élément pour poursuivre la visite. Toutes les saisies sont conservées.',
+          style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 24),
+        Expanded(
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 390,
+              mainAxisExtent: 190,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: widget.propertyElements.length,
+            itemBuilder: (context, index) {
+              final element = widget.propertyElements[index];
+              final roomIndices = _roomIndicesForElement(element.id);
+              final completed = roomIndices
+                  .where(
+                    (roomIndex) =>
+                        _completedRooms.contains(_roomKey(roomIndex)),
+                  )
+                  .length;
+              final complete =
+                  roomIndices.isNotEmpty && completed == roomIndices.length;
+              return Card(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openPropertyElement(element.id),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.domain_outlined),
+                            const Spacer(),
+                            Icon(
+                              complete ? Icons.check_circle : Icons.timelapse,
+                              color: complete
+                                  ? const Color(0xFF16A34A)
+                                  : const Color(0xFFF59E0B),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          element.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '$completed / ${roomIndices.length} pièces terminées',
+                        ),
+                        const Spacer(),
+                        LinearProgressIndicator(
+                          value: roomIndices.isEmpty
+                              ? 0
+                              : completed / roomIndices.length,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoomList() {
+    final visibleRoomIndices = _visibleRoomIndices;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Pièces du bâtiment',
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (widget.propertyElements.length > 1)
+              IconButton(
+                tooltip: 'Liste des bâtiments',
+                onPressed: () => setState(() => _showBuildingOverview = true),
+                icon: const Icon(Icons.domain_outlined),
+              ),
+          ],
         ),
         const SizedBox(height: 6),
         Text(
-          '${widget.rooms.length} pièce(s)',
+          '${visibleRoomIndices.length} pièce(s)',
           style: const TextStyle(color: Color(0xFF64748B)),
         ),
         const SizedBox(height: 14),
         Expanded(
           child: ListView.separated(
-            itemCount: widget.rooms.length,
+            itemCount: visibleRoomIndices.length,
             separatorBuilder: (_, _) {
               return const SizedBox(height: 8);
             },
             itemBuilder: (context, index) {
-              final room = widget.rooms[index];
-              final selected = index == _selectedRoomIndex;
-              final completed = _completedRooms.contains(_roomKey(index));
-              final completedSections = _completedSectionCount(index);
+              final roomIndex = visibleRoomIndices[index];
+              final room = widget.rooms[roomIndex];
+              final selected = roomIndex == _selectedRoomIndex;
+              final completed = _completedRooms.contains(_roomKey(roomIndex));
+              final completedSections = _completedSectionCount(roomIndex);
 
               return Material(
                 color: selected
@@ -1462,7 +1709,7 @@ class _StepVisitState extends State<StepVisit> {
                 borderRadius: BorderRadius.circular(15),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(15),
-                  onTap: () => _selectRoom(index),
+                  onTap: () => _selectRoom(roomIndex),
                   child: Container(
                     padding: const EdgeInsets.all(13),
                     decoration: BoxDecoration(
@@ -1558,7 +1805,7 @@ class _StepVisitState extends State<StepVisit> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${room.level} • Pièce ${_selectedRoomIndex + 1} / ${widget.rooms.length}',
+                    '${room.level} • Pièce ${_visibleRoomPosition + 1} / ${_visibleRoomIndices.length}',
                     style: const TextStyle(color: Color(0xFF64748B)),
                   ),
                 ],
@@ -1624,10 +1871,10 @@ class _StepVisitState extends State<StepVisit> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            TextButton.icon(
+            IconButton(
+              tooltip: 'Intervertir des murs',
               onPressed: _swapWalls,
               icon: const Icon(Icons.swap_horiz_rounded),
-              label: const Text('Intervertir des murs'),
             ),
           ],
         ),
@@ -2177,20 +2424,23 @@ class _StepVisitState extends State<StepVisit> {
           Expanded(
             child: ListView(
               children: [
-                CheckboxListTile(
-                  value: conform,
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text(
-                    'Conforme aux généralités',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                Material(
+                  type: MaterialType.transparency,
+                  child: CheckboxListTile(
+                    value: conform,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: const Text(
+                      'Conforme aux généralités',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text(
+                      'Insère automatiquement cette mention dans la description.',
+                    ),
+                    onChanged: (value) {
+                      _toggleGeneralities(value ?? false);
+                    },
                   ),
-                  subtitle: const Text(
-                    'Insère automatiquement cette mention dans la description.',
-                  ),
-                  onChanged: (value) {
-                    _toggleGeneralities(value ?? false);
-                  },
                 ),
                 if (_currentSection == 'Électricité') ...[
                   const SizedBox(height: 10),
@@ -2369,20 +2619,24 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   Widget _buildNavigation() {
+    final position = _visibleRoomPosition;
+    final lastRoom = position == _visibleRoomIndices.length - 1;
     return Row(
       children: [
         OutlinedButton.icon(
-          onPressed: _selectedRoomIndex == 0 ? null : _previousRoom,
+          onPressed: position <= 0 ? null : _previousRoom,
           icon: const Icon(Icons.arrow_back),
           label: const Text('Pièce précédente'),
         ),
         const Spacer(),
         FilledButton.icon(
-          onPressed: _selectedRoomIndex == widget.rooms.length - 1
+          onPressed: lastRoom && widget.propertyElements.isNotEmpty
+              ? () => setState(() => _showBuildingOverview = true)
+              : lastRoom
               ? null
               : _nextRoom,
-          icon: const Icon(Icons.arrow_forward),
-          label: const Text('Pièce suivante'),
+          icon: Icon(lastRoom ? Icons.domain_outlined : Icons.arrow_forward),
+          label: Text(lastRoom ? 'Retour aux bâtiments' : 'Pièce suivante'),
         ),
       ],
     );

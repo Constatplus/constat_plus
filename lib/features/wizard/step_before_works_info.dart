@@ -7,10 +7,12 @@ class StepBeforeWorksInfo extends StatefulWidget {
     super.key,
     required this.data,
     required this.onChanged,
+    this.afterWorks = false,
   });
 
   final BeforeWorksData data;
   final VoidCallback onChanged;
+  final bool afterWorks;
 
   @override
   State<StepBeforeWorksInfo> createState() => _StepBeforeWorksInfoState();
@@ -48,14 +50,18 @@ class _StepBeforeWorksInfoState extends State<StepBeforeWorksInfo> {
     final data = widget.data;
     return ListView(
       children: <Widget>[
-        const Text(
-          'Ordre de mission avant travaux',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+        Text(
+          widget.afterWorks
+              ? 'Ordre de mission de récolement'
+              : 'Ordre de mission avant travaux',
+          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Constituez le rapport de référence technique avant le commencement du chantier.',
-          style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+        Text(
+          widget.afterWorks
+              ? 'Identifiez les intervenants avec la même terminologie que le constat avant travaux.'
+              : 'Constituez le rapport de référence technique avant le commencement du chantier.',
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 16),
         ),
         const SizedBox(height: 22),
         Wrap(

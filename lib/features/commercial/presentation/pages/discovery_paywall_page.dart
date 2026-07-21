@@ -144,10 +144,7 @@ class _DiscoveryPaywallPageState extends State<DiscoveryPaywallPage> {
                     trailing: FilledButton(
                       onPressed: () => _select(plan),
                       child: Text(
-                        CommercialFormatters.money(
-                          plan.priceMinor,
-                          plan.currency,
-                        ),
+                        '${CommercialFormatters.money(plan.priceMinor, plan.currency)} ${plan.taxDisplay.label}${plan.billingPeriod.name == 'monthly' ? ' / mois' : ''}',
                       ),
                     ),
                   ),

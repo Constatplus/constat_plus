@@ -1,7 +1,13 @@
+import '../../property_composition/models/property_element.dart';
+
 class VisitReportSnapshot {
   final List<VisitRoomReport> rooms;
+  final List<PropertyElement> propertyElements;
 
-  const VisitReportSnapshot({required this.rooms});
+  const VisitReportSnapshot({
+    required this.rooms,
+    this.propertyElements = const <PropertyElement>[],
+  });
 
   bool get isEmpty => rooms.isEmpty;
 }
@@ -15,6 +21,7 @@ class VisitRoomReport {
   final Map<String, String> furnitureDescriptions;
   final KitchenReport? kitchen;
   final List<String> photoPaths;
+  final String propertyElementId;
 
   const VisitRoomReport({
     required this.name,
@@ -25,6 +32,7 @@ class VisitRoomReport {
     required this.furnitureDescriptions,
     required this.kitchen,
     required this.photoPaths,
+    this.propertyElementId = '',
   });
 }
 

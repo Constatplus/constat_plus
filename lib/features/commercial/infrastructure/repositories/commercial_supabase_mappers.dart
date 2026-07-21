@@ -25,6 +25,16 @@ class CommercialSupabaseMappers {
       missionQuota: _integer(map['mission_quota']),
       aiAnalysisQuota: _integer(map['ai_analysis_quota']),
       maximumUsers: _integer(map['maximum_users']),
+      taxDisplay: map['tax_display'] == 'tvac'
+          ? PriceTaxDisplay.tvac
+          : PriceTaxDisplay.htva,
+      additionalMissionPriceMinor: _optionalInteger(
+        map['additional_mission_price_minor'],
+      ),
+      featureLabels: (map['feature_labels'] as List? ?? const <dynamic>[])
+          .map((value) => value.toString())
+          .where((value) => value.trim().isNotEmpty)
+          .toList(growable: false),
       platformAvailability: platforms,
       active: map['active'] == true,
       createdAt: _date(map['created_at']),
@@ -93,6 +103,9 @@ class CommercialSupabaseMappers {
     num number => number.toInt(),
     _ => int.tryParse(value?.toString() ?? '') ?? 0,
   };
+
+  static int? _optionalInteger(Object? value) =>
+      value == null ? null : _integer(value);
 
   static DateTime _date(Object? value) =>
       DateTime.parse(value.toString()).toUtc();

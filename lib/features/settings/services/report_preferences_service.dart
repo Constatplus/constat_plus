@@ -73,6 +73,10 @@ class ReportPreferencesService {
         'before_works_notes',
         defaults.beforeWorksPreliminaryNotes,
       ),
+      afterWorksPreliminaryNotes: readString(
+        'after_works_notes',
+        defaults.afterWorksPreliminaryNotes,
+      ),
       sections: ordered,
       primaryColorHex: readString('primary_color', defaults.primaryColorHex),
       secondaryColorHex: readString(
@@ -115,6 +119,10 @@ class ReportPreferencesService {
     await prefs.setString(
       '${_prefix}before_works_notes',
       value.beforeWorksPreliminaryNotes,
+    );
+    await prefs.setString(
+      '${_prefix}after_works_notes',
+      value.afterWorksPreliminaryNotes,
     );
     await prefs.setString('${_prefix}primary_color', value.primaryColorHex);
     await prefs.setString('${_prefix}secondary_color', value.secondaryColorHex);
