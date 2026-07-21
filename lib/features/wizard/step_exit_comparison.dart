@@ -65,37 +65,54 @@ class _StepExitComparisonState extends State<StepExitComparison> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 700;
+        final selectButton = OutlinedButton.icon(
+          onPressed: _pickEntryPdf,
+          icon: const Icon(Icons.upload_file_outlined),
+          label: Text(
+            _reference == null
+                ? "Sélectionner le PDF d'entrée"
+                : 'Remplacer ${_reference!.title}',
+          ),
+        );
+        final consultButton = FilledButton.icon(
+          onPressed: _reference == null ? null : _openReference,
+          icon: const Icon(Icons.visibility_outlined),
+          label: const Text("Consulter l'état des lieux d'entrée"),
+        );
+        return Column(
           children: <Widget>[
-            OutlinedButton.icon(
-              onPressed: _pickEntryPdf,
-              icon: const Icon(Icons.upload_file_outlined),
-              label: Text(
-                _reference == null
-                    ? "Sélectionner le PDF d'entrée"
-                    : 'Remplacer ${_reference!.title}',
+            if (compact)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  selectButton,
+                  const SizedBox(height: 8),
+                  consultButton,
+                ],
+              )
+            else
+              Row(
+                children: <Widget>[
+                  Flexible(child: selectButton),
+                  const SizedBox(width: 12),
+                  Flexible(child: consultButton),
+                ],
+              ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StepComparativeRemarks(
+                rooms: widget.rooms,
+                remarks: widget.remarks,
+                referenceFindings: const [],
+                afterWorks: false,
               ),
             ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: _reference == null ? null : _openReference,
-              icon: const Icon(Icons.visibility_outlined),
-              label: const Text("Consulter l'état des lieux d'entrée"),
-            ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: StepComparativeRemarks(
-            rooms: widget.rooms,
-            remarks: widget.remarks,
-            referenceFindings: const [],
-            afterWorks: false,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

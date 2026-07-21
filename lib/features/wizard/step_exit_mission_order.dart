@@ -66,11 +66,15 @@ class _StepExitMissionOrderState extends State<StepExitMissionOrder> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return ListView(
       children: [
-        const Text(
+        Text(
           'Ordre de mission',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: compact ? 24 : 30,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(

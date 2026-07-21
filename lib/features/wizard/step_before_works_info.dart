@@ -48,13 +48,17 @@ class _StepBeforeWorksInfoState extends State<StepBeforeWorksInfo> {
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
+    final compact = MediaQuery.sizeOf(context).width < 700;
     return ListView(
       children: <Widget>[
         Text(
           widget.afterWorks
               ? 'Ordre de mission de récolement'
               : 'Ordre de mission avant travaux',
-          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: compact ? 24 : 30,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -68,47 +72,53 @@ class _StepBeforeWorksInfoState extends State<StepBeforeWorksInfo> {
           spacing: 12,
           runSpacing: 12,
           children: <Widget>[
-            _dateField('Date de la mission', data.missionDate, false),
+            _dateField(
+              'Date de la mission',
+              data.missionDate,
+              false,
+              compact: compact,
+            ),
             _dateField(
               'Début prévu des travaux',
               data.plannedWorksStartDate,
               true,
+              compact: compact,
             ),
             _field(
               'Adresse du bien ou du chantier',
               data.address,
               (value) => data.address = value,
-              520,
+              compact ? double.infinity : 520,
             ),
             _field(
               'Mandant',
               data.principal,
               (value) => data.principal = value,
-              340,
+              compact ? double.infinity : 340,
             ),
             _field(
               'Propriétaire ou occupant',
               data.ownerOrOccupant,
               (value) => data.ownerOrOccupant = value,
-              340,
+              compact ? double.infinity : 340,
             ),
             _field(
               'Maître d’ouvrage',
               data.projectOwner,
               (value) => data.projectOwner = value,
-              340,
+              compact ? double.infinity : 340,
             ),
             _field(
               'Entrepreneur',
               data.contractor,
               (value) => data.contractor = value,
-              340,
+              compact ? double.infinity : 340,
             ),
             _field(
               'Architecte',
               data.architect,
               (value) => data.architect = value,
-              340,
+              compact ? double.infinity : 340,
             ),
           ],
         ),
@@ -138,42 +148,7 @@ class _StepBeforeWorksInfoState extends State<StepBeforeWorksInfo> {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(14),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _partyField(
-                      'Nom',
-                      data.presentParties[index].name,
-                      (value) => data.presentParties[index].name = value,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _partyField(
-                      'Qualité',
-                      data.presentParties[index].quality,
-                      (value) => data.presentParties[index].quality = value,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _partyField(
-                      'Partie représentée',
-                      data.presentParties[index].represents,
-                      (value) => data.presentParties[index].represents = value,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: data.presentParties.length == 1
-                        ? null
-                        : () {
-                            setState(() => data.presentParties.removeAt(index));
-                            widget.onChanged();
-                          },
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-                ],
-              ),
+              child: _partyEditor(index, compact),
             ),
           ),
           const SizedBox(height: 8),
@@ -193,8 +168,71 @@ class _StepBeforeWorksInfoState extends State<StepBeforeWorksInfo> {
     );
   }
 
-  Widget _dateField(String label, DateTime? date, bool worksStart) => SizedBox(
-    width: 260,
+  Widget _partyEditor(int index, bool compact) {
+    final party = widget.data.presentParties[index];
+    final removeButton = IconButton(
+      onPressed: widget.data.presentParties.length == 1
+          ? null
+          : () {
+              setState(() => widget.data.presentParties.removeAt(index));
+              widget.onChanged();
+            },
+      icon: const Icon(Icons.delete_outline),
+    );
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _partyField('Nom', party.name, (value) => party.name = value),
+          const SizedBox(height: 10),
+          _partyField(
+            'Qualité',
+            party.quality,
+            (value) => party.quality = value,
+          ),
+          const SizedBox(height: 10),
+          _partyField(
+            'Partie représentée',
+            party.represents,
+            (value) => party.represents = value,
+          ),
+          Align(alignment: Alignment.centerRight, child: removeButton),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(
+          child: _partyField('Nom', party.name, (value) => party.name = value),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _partyField(
+            'Qualité',
+            party.quality,
+            (value) => party.quality = value,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _partyField(
+            'Partie représentée',
+            party.represents,
+            (value) => party.represents = value,
+          ),
+        ),
+        removeButton,
+      ],
+    );
+  }
+
+  Widget _dateField(
+    String label,
+    DateTime? date,
+    bool worksStart, {
+    required bool compact,
+  }) => SizedBox(
+    width: compact ? double.infinity : 260,
     child: InkWell(
       onTap: () => _pickDate(worksStart: worksStart),
       child: InputDecorator(

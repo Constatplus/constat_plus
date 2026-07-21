@@ -121,31 +121,59 @@ class _PhotoPickerSectionState extends State<PhotoPickerSection>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.photo_library_outlined, color: Colors.blue),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '${widget.title} (${_photos.length})',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final title = Text(
+                '${widget.title} (${_photos.length})',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-              ),
-              OutlinedButton.icon(
+              );
+              final galleryButton = OutlinedButton.icon(
                 onPressed: _selectPhotos,
                 icon: const Icon(Icons.collections_outlined),
                 label: const Text('Galerie'),
-              ),
-              const SizedBox(width: 10),
-              FilledButton.icon(
+              );
+              final cameraButton = FilledButton.icon(
                 onPressed: _takePhoto,
                 icon: const Icon(Icons.photo_camera_outlined),
                 label: const Text('Photo'),
-              ),
-            ],
+              );
+              if (constraints.maxWidth < 520) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.photo_library_outlined,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: title),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [galleryButton, cameraButton],
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  const Icon(Icons.photo_library_outlined, color: Colors.blue),
+                  const SizedBox(width: 10),
+                  Expanded(child: title),
+                  galleryButton,
+                  const SizedBox(width: 10),
+                  cameraButton,
+                ],
+              );
+            },
           ),
           if (_photos.isNotEmpty) ...[
             const SizedBox(height: 16),

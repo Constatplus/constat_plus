@@ -293,6 +293,11 @@ class _StepReportState extends State<StepReport> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
+          scrollable: true,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.sizeOf(dialogContext).width < 600 ? 16 : 40,
+            vertical: 24,
+          ),
           title: const Text('Export impossible'),
           content: SelectableText(error.toString()),
           actions: [
@@ -350,6 +355,11 @@ class _StepReportState extends State<StepReport> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(dialogContext).width < 600 ? 16 : 40,
+          vertical: 24,
+        ),
         title: const Text('Rapport définitif indisponible'),
         content: Text(commercialAccessMessage(result.reason)),
         actions: [
@@ -380,6 +390,11 @@ class _StepReportState extends State<StepReport> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(dialogContext).width < 600 ? 16 : 40,
+          vertical: 24,
+        ),
         title: const Text('Export Word indisponible'),
         content: const Text(
           'Le Mode Découverte permet uniquement de consulter un aperçu. Choisissez une mission ou un abonnement pour obtenir un export exploitable.',
@@ -461,20 +476,26 @@ class _StepReportState extends State<StepReport> {
                         children: [
                           SizedBox(
                             width: fieldWidth,
-                            child: DropdownButtonFormField<InspectionReportType>(
-                              initialValue: _reportType,
-                              isExpanded: true,
-                              decoration: _decoration('Type de rapport'),
-                              items: InspectionReportType.values
-                                  .map(
-                                    (type) => DropdownMenuItem<InspectionReportType>(
-                                      value: type,
-                                      child: Text(type.label),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: standardReport ? _changeReportType : null,
-                            ),
+                            child:
+                                DropdownButtonFormField<InspectionReportType>(
+                                  initialValue: _reportType,
+                                  isExpanded: true,
+                                  decoration: _decoration('Type de rapport'),
+                                  items: InspectionReportType.values
+                                      .map(
+                                        (type) =>
+                                            DropdownMenuItem<
+                                              InspectionReportType
+                                            >(
+                                              value: type,
+                                              child: Text(type.label),
+                                            ),
+                                      )
+                                      .toList(),
+                                  onChanged: standardReport
+                                      ? _changeReportType
+                                      : null,
+                                ),
                           ),
                           _field(
                             _titleController,
@@ -506,8 +527,16 @@ class _StepReportState extends State<StepReport> {
                           _field(_companyController, 'Entreprise', fieldWidth),
                           _field(_ownerController, 'Propriétaire', fieldWidth),
                           _field(_tenantController, 'Locataire', fieldWidth),
-                          _field(_expertController, 'Nom de l’expert', fieldWidth),
-                          _field(_registrationController, 'Matricule', fieldWidth),
+                          _field(
+                            _expertController,
+                            'Nom de l’expert',
+                            fieldWidth,
+                          ),
+                          _field(
+                            _registrationController,
+                            'Matricule',
+                            fieldWidth,
+                          ),
                           _field(_emailController, 'E-mail', fieldWidth),
                         ],
                       ),
@@ -517,16 +546,21 @@ class _StepReportState extends State<StepReport> {
                       context,
                       title: 'Présentation du document',
                       icon: Icons.draw_outlined,
-                      child: SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        value: _includeExpertSignature,
-                        title: const Text('Afficher la signature de l’expert'),
-                        subtitle: const Text(
-                          'La signature configurée sera ajoutée au rapport final.',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile.adaptive(
+                          contentPadding: EdgeInsets.zero,
+                          value: _includeExpertSignature,
+                          title: const Text(
+                            'Afficher la signature de l’expert',
+                          ),
+                          subtitle: const Text(
+                            'La signature configurée sera ajoutée au rapport final.',
+                          ),
+                          onChanged: (value) {
+                            setState(() => _includeExpertSignature = value);
+                          },
                         ),
-                        onChanged: (value) {
-                          setState(() => _includeExpertSignature = value);
-                        },
                       ),
                     ),
                     SizedBox(height: Responsive.spacingMd(context)),
@@ -638,12 +672,7 @@ class _StepReportState extends State<StepReport> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(
-        Responsive.value(
-          context: context,
-          mobile: 18,
-          tablet: 22,
-          desktop: 26,
-        ),
+        Responsive.value(context: context, mobile: 18, tablet: 22, desktop: 26),
       ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -732,12 +761,7 @@ class _StepReportState extends State<StepReport> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(
-        Responsive.value(
-          context: context,
-          mobile: 16,
-          tablet: 20,
-          desktop: 22,
-        ),
+        Responsive.value(context: context, mobile: 16, tablet: 20, desktop: 22),
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -863,10 +887,7 @@ class _StepReportState extends State<StepReport> {
   Widget _field(TextEditingController controller, String label, double width) {
     return SizedBox(
       width: width,
-      child: TextField(
-        controller: controller,
-        decoration: _decoration(label),
-      ),
+      child: TextField(controller: controller, decoration: _decoration(label)),
     );
   }
 
@@ -885,5 +906,4 @@ class _StepReportState extends State<StepReport> {
       ),
     );
   }
-
 }

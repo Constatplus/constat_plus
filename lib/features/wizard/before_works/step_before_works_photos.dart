@@ -17,12 +17,16 @@ class StepBeforeWorksPhotos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
     final withPhotos = findings.where((item) => item.photoPaths.isNotEmpty);
     return ListView(
       children: <Widget>[
-        const Text(
+        Text(
           'Photos du constat',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: compact ? 24 : 30,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -62,8 +66,8 @@ class StepBeforeWorksPhotos extends StatelessWidget {
                           .map(
                             (path) => Image.file(
                               File(path),
-                              width: 180,
-                              height: 130,
+                              width: compact ? 132 : 180,
+                              height: compact ? 100 : 130,
                               fit: BoxFit.cover,
                             ),
                           )

@@ -220,35 +220,42 @@ class _StepSignatureState extends State<StepSignature> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: _SignatureCard(
-                            title: 'Première partie',
-                            subtitle: 'Propriétaire, bailleur ou représentant',
-                            initialName: _firstParty.signerName,
-                            initialPoints: _firstParty.points,
-                            postponed: _firstParty.postponed,
-                            onChanged: _updateFirstParty,
+                          child: SingleChildScrollView(
+                            child: _SignatureCard(
+                              title: 'Première partie',
+                              subtitle:
+                                  'Propriétaire, bailleur ou représentant',
+                              initialName: _firstParty.signerName,
+                              initialPoints: _firstParty.points,
+                              postponed: _firstParty.postponed,
+                              onChanged: _updateFirstParty,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 18),
                         Expanded(
-                          child: _SignatureCard(
-                            title: 'Deuxième partie',
-                            subtitle: 'Locataire, occupant ou représentant',
-                            initialName: _secondParty.signerName,
-                            initialPoints: _secondParty.points,
-                            postponed: _secondParty.postponed,
-                            onChanged: _updateSecondParty,
+                          child: SingleChildScrollView(
+                            child: _SignatureCard(
+                              title: 'Deuxième partie',
+                              subtitle: 'Locataire, occupant ou représentant',
+                              initialName: _secondParty.signerName,
+                              initialPoints: _secondParty.points,
+                              postponed: _secondParty.postponed,
+                              onChanged: _updateSecondParty,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 18),
                         Expanded(
-                          child: _SignatureCard(
-                            title: 'Expert',
-                            subtitle: 'Géomètre-expert ou rédacteur',
-                            initialName: _expert.signerName,
-                            initialPoints: _expert.points,
-                            postponed: _expert.postponed,
-                            onChanged: _updateExpert,
+                          child: SingleChildScrollView(
+                            child: _SignatureCard(
+                              title: 'Expert',
+                              subtitle: 'Géomètre-expert ou rédacteur',
+                              initialName: _expert.signerName,
+                              initialPoints: _expert.points,
+                              postponed: _expert.postponed,
+                              onChanged: _updateExpert,
+                            ),
                           ),
                         ),
                       ],
@@ -263,31 +270,66 @@ class _StepSignatureState extends State<StepSignature> {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Color(0xFF1264F6)),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Le bouton « Remettre à plus tard » conserve le dossier '
-                      'et permet de passer directement à la génération du rapport.',
-                      style: TextStyle(color: Color(0xFF475569)),
+              child: compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.info_outline, color: Color(0xFF1264F6)),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Le bouton « Remettre à plus tard » conserve le dossier '
+                                'et permet de passer directement à la génération du rapport.',
+                                style: TextStyle(color: Color(0xFF475569)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: _postpone,
+                          icon: const Icon(Icons.schedule_outlined),
+                          label: const Text('Remettre à plus tard'),
+                        ),
+                        const SizedBox(height: 10),
+                        FilledButton.icon(
+                          onPressed: _continue,
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Valider et continuer'),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: Color(0xFF1264F6),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Le bouton « Remettre à plus tard » conserve le dossier '
+                            'et permet de passer directement à la génération du rapport.',
+                            style: TextStyle(color: Color(0xFF475569)),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        OutlinedButton.icon(
+                          onPressed: _postpone,
+                          icon: const Icon(Icons.schedule_outlined),
+                          label: const Text('Remettre à plus tard'),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton.icon(
+                          onPressed: _continue,
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Valider et continuer'),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  OutlinedButton.icon(
-                    onPressed: _postpone,
-                    icon: const Icon(Icons.schedule_outlined),
-                    label: const Text('Remettre à plus tard'),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: _continue,
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Valider et continuer'),
-                  ),
-                ],
-              ),
             ),
           ],
         );
@@ -556,14 +598,17 @@ class _SignatureCardState extends State<_SignatureCard> {
               ),
             ],
           ),
-          CheckboxListTile(
-            value: _postponed,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text('Cette personne signera plus tard'),
-            onChanged: (value) {
-              _togglePostponed(value ?? false);
-            },
+          Material(
+            color: Colors.transparent,
+            child: CheckboxListTile(
+              value: _postponed,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Cette personne signera plus tard'),
+              onChanged: (value) {
+                _togglePostponed(value ?? false);
+              },
+            ),
           ),
         ],
       ),

@@ -85,14 +85,18 @@ class _StepReferenceReportState extends State<StepReferenceReport> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
     final reports = ReferenceReportRepository.instance.reports
         .where((report) => report.missionType == 'before_works')
         .toList(growable: false);
     return ListView(
       children: <Widget>[
-        const Text(
+        Text(
           'Rapport avant travaux de référence',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: compact ? 24 : 30,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(

@@ -53,24 +53,15 @@ class _BuildingWorkflowShellState extends State<BuildingWorkflowShell> {
     final completed = widget.completedElementIds.contains(selected.id);
     return Column(
       children: [
-        Row(
-          children: [
-            OutlinedButton.icon(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 700;
+            final listButton = OutlinedButton.icon(
               onPressed: () => setState(() => _showOverview = true),
               icon: const Icon(Icons.domain_outlined),
               label: const Text('Liste des bâtiments'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                selected.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            FilledButton.icon(
+            );
+            final completeButton = FilledButton.icon(
               onPressed: () {
                 widget.onCompletionChanged(selected.id, !completed);
                 setState(() => _showOverview = true);
@@ -79,8 +70,37 @@ class _BuildingWorkflowShellState extends State<BuildingWorkflowShell> {
               label: Text(
                 completed ? 'Rouvrir ce bâtiment' : 'Terminer ce bâtiment',
               ),
-            ),
-          ],
+            );
+            final title = Text(
+              selected.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 18 : 20,
+                fontWeight: FontWeight.bold,
+              ),
+            );
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  title,
+                  const SizedBox(height: 10),
+                  listButton,
+                  const SizedBox(height: 8),
+                  completeButton,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                listButton,
+                const SizedBox(width: 12),
+                Expanded(child: title),
+                completeButton,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
         Expanded(child: widget.child),

@@ -105,29 +105,41 @@ class _MaintenanceTabState extends State<MaintenanceTab>
                 ),
                 if (item.selected) ...[
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _selectDate(item),
-                          icon: const Icon(Icons.calendar_month_outlined),
-                          label: Text(_formatDate(item.date)),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final dateButton = OutlinedButton.icon(
+                        onPressed: () => _selectDate(item),
+                        icon: const Icon(Icons.calendar_month_outlined),
+                        label: Text(_formatDate(item.date)),
+                      );
+                      final companyField = TextFormField(
+                        initialValue: item.company,
+                        decoration: const InputDecoration(
+                          labelText: 'Entreprise',
+                          prefixIcon: Icon(Icons.business_outlined),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: TextFormField(
-                          initialValue: item.company,
-                          decoration: const InputDecoration(
-                            labelText: 'Entreprise',
-                            prefixIcon: Icon(Icons.business_outlined),
-                          ),
-                          onChanged: (value) {
-                            item.company = value;
-                          },
-                        ),
-                      ),
-                    ],
+                        onChanged: (value) {
+                          item.company = value;
+                        },
+                      );
+                      if (constraints.maxWidth < 560) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            dateButton,
+                            const SizedBox(height: 12),
+                            companyField,
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: dateButton),
+                          const SizedBox(width: 14),
+                          Expanded(child: companyField),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 14),
                   TextFormField(

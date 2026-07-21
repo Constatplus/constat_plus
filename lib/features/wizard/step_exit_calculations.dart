@@ -120,12 +120,16 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
   @override
   Widget build(BuildContext context) {
     final roomNames = widget.rooms.map((room) => room.name).toList();
+    final compact = MediaQuery.sizeOf(context).width < 700;
 
     return ListView(
       children: <Widget>[
-        const Text(
+        Text(
           'Calcul de l’indemnité compensatoire',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: compact ? 24 : 30,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -162,6 +166,7 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
                 ),
                 const SizedBox(height: 10),
                 SegmentedButton<ExitDamageOriginType>(
+                  direction: compact ? Axis.vertical : Axis.horizontal,
                   segments: const <ButtonSegment<ExitDamageOriginType>>[
                     ButtonSegment<ExitDamageOriginType>(
                       value: ExitDamageOriginType.room,
@@ -314,14 +319,15 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
           ),
           const SizedBox(height: 12),
         ],
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 10,
           children: <Widget>[
             OutlinedButton.icon(
               onPressed: _addLine,
               icon: const Icon(Icons.add),
               label: const Text('Ajouter un poste'),
             ),
-            const SizedBox(width: 12),
             FilledButton.icon(
               onPressed: () => setState(() {}),
               icon: const Icon(Icons.calculate_outlined),
@@ -345,23 +351,48 @@ class _StepExitCalculationsState extends State<StepExitCalculations> {
             color: const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Row(
-            children: <Widget>[
-              const Text(
-                'Indemnité compensatoire totale',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              const Spacer(),
-              Text(
-                '${_total.toStringAsFixed(2)} € TVAC',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF1D4ED8),
+          child: compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text(
+                      'Indemnité compensatoire totale',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_total.toStringAsFixed(2)} € TVAC',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: <Widget>[
+                    const Text(
+                      'Indemnité compensatoire totale',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_total.toStringAsFixed(2)} € TVAC',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
         const SizedBox(height: 26),
         StepSignatures(data: _signatures, includeExpert: true, embedded: true),

@@ -206,6 +206,7 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
     final areas = _areas;
     final areaIds = areas.map((area) => area.id).toSet();
     final visibleFindings = _findings.asMap().entries.where(
@@ -213,9 +214,12 @@ class _StepBeforeWorksVisitState extends State<StepBeforeWorksVisit> {
     );
     return ListView(
       children: <Widget>[
-        const Text(
+        Text(
           'Visite avant travaux',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: compact ? 24 : 30,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(

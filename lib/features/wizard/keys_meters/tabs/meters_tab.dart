@@ -24,9 +24,15 @@ class _MetersTabState extends State<MetersTab> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           title: const Text("Ajouter un compteur"),
           content: SizedBox(
-            width: 380,
+            width: MediaQuery.sizeOf(context).width < 460
+                ? MediaQuery.sizeOf(context).width - 80
+                : 380,
             child: ListView(
               shrinkWrap: true,
               children: [

@@ -7,8 +7,8 @@ import '../../core/auth/auth_service.dart';
 import '../../core/auth/auth_profile.dart';
 import '../../core/auth/user_role.dart';
 import '../../core/access/access_service.dart';
+import '../admin/admin_dashboard_page.dart';
 import '../../screens/home_page.dart';
-import '../correction/correction_page.dart';
 import '../landing/landing_page.dart';
 import 'update_password_page.dart';
 
@@ -118,7 +118,7 @@ class _AuthenticatedAreaState extends State<_AuthenticatedArea> {
         );
 
         return switch (profile.role) {
-          UserRole.controller => const CorrectionPage(controllerMode: true),
+          UserRole.controller => const AdminDashboardPage(controllerMode: true),
           UserRole.admin => const HomePage(),
           UserRole.user => const HomePage(),
         };

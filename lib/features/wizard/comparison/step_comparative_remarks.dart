@@ -84,6 +84,7 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
     final roomNames = widget.rooms.map((room) => room.name).toList();
     final visibleRemarks = widget.remarks
         .asMap()
@@ -92,27 +93,51 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
         .toList(growable: false);
     return ListView(
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
+        if (compact)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Text(
                 widget.afterWorks
                     ? 'Remarques comparatives de récolement'
                     : 'Remarques comparatives de sortie',
                 style: const TextStyle(
-                  fontSize: 30,
+                  fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-            ),
-            if (widget.onOpenReference != null)
-              FilledButton.icon(
-                onPressed: widget.onOpenReference,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Consulter le rapport avant travaux'),
+              if (widget.onOpenReference != null) ...<Widget>[
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: widget.onOpenReference,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('Consulter le rapport avant travaux'),
+                ),
+              ],
+            ],
+          )
+        else
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  widget.afterWorks
+                      ? 'Remarques comparatives de récolement'
+                      : 'Remarques comparatives de sortie',
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-          ],
-        ),
+              if (widget.onOpenReference != null)
+                FilledButton.icon(
+                  onPressed: widget.onOpenReference,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('Consulter le rapport avant travaux'),
+                ),
+            ],
+          ),
         const SizedBox(height: 20),
         for (var index = 0; index < visibleRemarks.length; index++) ...<Widget>[
           _remarkCard(visibleRemarks[index].key, index, roomNames),
@@ -136,6 +161,7 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
     List<String> roomNames,
   ) {
     final remark = widget.remarks[remarkIndex];
+    final compact = MediaQuery.sizeOf(context).width < 600;
     final findings = widget.referenceFindings
         .where((finding) => remark.zone.isEmpty || finding.zone == remark.zone)
         .toList();
@@ -170,7 +196,7 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
               runSpacing: 12,
               children: <Widget>[
                 _dropdown<String>(
-                  280,
+                  compact ? double.infinity : 280,
                   'Zone',
                   roomNames.contains(remark.zone) ? remark.zone : null,
                   roomNames,
@@ -180,7 +206,7 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
                   }),
                 ),
                 _dropdown<String>(
-                  260,
+                  compact ? double.infinity : 260,
                   'Poste',
                   _posts.contains(remark.post) ? remark.post : null,
                   _posts,
@@ -188,8 +214,9 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
                 ),
                 if (widget.afterWorks)
                   SizedBox(
-                    width: 360,
+                    width: compact ? double.infinity : 360,
                     child: DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue:
                           findings.any(
                             (item) => item.id == remark.referenceFindingId,
@@ -217,8 +244,9 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
                   ),
                 if (widget.afterWorks)
                   SizedBox(
-                    width: 340,
+                    width: compact ? double.infinity : 340,
                     child: DropdownButtonFormField<ComparisonStatus>(
+                      isExpanded: true,
                       initialValue: remark.status,
                       decoration: _input('Statut comparatif'),
                       items: ComparisonStatus.values
@@ -313,6 +341,7 @@ class _StepComparativeRemarksState extends State<StepComparativeRemarks> {
   ) => SizedBox(
     width: width,
     child: DropdownButtonFormField<T>(
+      isExpanded: true,
       initialValue: value,
       decoration: _input(label),
       items: values
