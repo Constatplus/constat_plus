@@ -50,7 +50,7 @@ void main() {
     expect(legacyRoom.propertyElementId, isEmpty);
   });
 
-  testWidgets('permet d’ajouter plusieurs habitations et de les sélectionner', (
+  testWidgets('permet d’ajouter plusieurs maisons et de les sélectionner', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -75,14 +75,14 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Habitation').first);
+    await tester.tap(find.text('Maison').first);
     await tester.pump();
-    await tester.tap(find.text('Habitation').first);
+    await tester.tap(find.text('Maison').first);
     await tester.pump();
 
     expect(elements, hasLength(2));
-    expect(elements.first.name, 'Habitation');
-    expect(elements.last.name, 'Habitation 2');
+    expect(elements.first.name, 'Maison');
+    expect(elements.last.name, 'Maison 2');
     expect(selectedId, elements.last.id);
   });
 }

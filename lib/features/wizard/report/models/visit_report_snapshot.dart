@@ -22,6 +22,7 @@ class VisitRoomReport {
   final KitchenReport? kitchen;
   final List<String> photoPaths;
   final String propertyElementId;
+  final List<String> wallNames;
 
   const VisitRoomReport({
     required this.name,
@@ -33,6 +34,7 @@ class VisitRoomReport {
     required this.kitchen,
     required this.photoPaths,
     this.propertyElementId = '',
+    this.wallNames = const <String>[],
   });
 }
 

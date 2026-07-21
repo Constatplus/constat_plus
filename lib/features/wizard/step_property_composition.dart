@@ -65,24 +65,61 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
     'Façade latérale droite',
   ];
 
-  static const List<String> _technicalTemplates = <String>[
-    'Bâtiment voisin',
-    'Façade',
-    'Pignon',
-    'Mur mitoyen',
-    'Toiture',
+  static const List<String> _technicalBuildingTemplates = <String>[
+    'Hall d’entrée',
+    'Séjour',
+    'Salon',
+    'Salle à manger',
+    'Cuisine',
+    'Arrière-cuisine',
+    'Buanderie',
+    'WC',
+    'Salle de bain',
+    'Salle de douche',
+    'Hall de nuit',
+    'Chambre',
+    'Dressing',
+    'Bureau',
+    'Véranda',
+    'Garage',
     'Cave',
-    'Pièce intérieure',
-    'Jardin',
+    'Grenier',
+    'Local technique',
+    'Escalier',
+    'Palier',
     'Terrasse',
-    'Trottoir',
-    'Voirie',
-    'Clôture',
-    'Mur de soutènement',
+    'Balcon',
+    'Jardin',
+    'Façade avant',
+    'Façade arrière',
+    'Façade gauche',
+    'Façade droite',
+    'Toiture',
+    'Combles',
+    'Autre',
   ];
 
-  List<String> get _roomTemplates =>
-      widget.technicalMode ? _technicalTemplates : _propertyTemplates;
+  static const List<String> _roadTemplates = <String>[
+    'Chaussée',
+    'Trottoir',
+    'Accotement',
+    'Bordure',
+    'Avaloir',
+    'Égout',
+    'Parking',
+    'Signalisation',
+    'Marquage au sol',
+    'Espace vert',
+    'Mobilier urbain',
+    'Autre',
+  ];
+
+  List<String> get _roomTemplates {
+    if (!widget.technicalMode) return _propertyTemplates;
+    return _selectedElement?.type == PropertyElementType.road
+        ? _roadTemplates
+        : _technicalBuildingTemplates;
+  }
 
   final List<String> _levels = const [
     'Sous-sol',
@@ -131,15 +168,28 @@ class _StepPropertyCompositionState extends State<StepPropertyComposition> {
       'Façade arrière',
       'Façade latérale gauche',
       'Façade latérale droite',
+      'Façade gauche',
+      'Façade droite',
+      'Toiture',
+      'Balcon',
       'Façade',
       'Pignon',
       'Mur mitoyen',
-      'Toiture',
       'Trottoir',
       'Voirie',
       'Clôture',
       'Mur de soutènement',
       'Bâtiment voisin',
+      'Chaussée',
+      'Accotement',
+      'Bordure',
+      'Avaloir',
+      'Égout',
+      'Parking',
+      'Signalisation',
+      'Marquage au sol',
+      'Espace vert',
+      'Mobilier urbain',
     };
 
     if (exteriorRooms.contains(type)) {

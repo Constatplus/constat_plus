@@ -155,6 +155,7 @@ class ReferenceReportRepository {
               'type': room.type,
               'level': room.level,
               'propertyElementId': room.propertyElementId,
+              'wallNames': room.wallNames,
               'sections': room.sections,
               'electricalByWall': room.electricalByWall,
               'furnitureDescriptions': room.furnitureDescriptions,
@@ -220,6 +221,10 @@ class ReferenceReportRepository {
             type: room['type'] as String? ?? '',
             level: room['level'] as String? ?? '',
             propertyElementId: room['propertyElementId'] as String? ?? '',
+            wallNames:
+                (room['wallNames'] as List<dynamic>? ?? const <dynamic>[])
+                    .whereType<String>()
+                    .toList(growable: false),
             sections: _stringMap(room['sections']),
             electricalByWall: electrical,
             furnitureDescriptions: _stringMap(room['furnitureDescriptions']),

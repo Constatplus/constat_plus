@@ -173,6 +173,7 @@ class _WizardPageState extends State<WizardPage> {
       selectedElementId: _missionData.selectedPropertyElementId,
       onSelected: _selectPropertyElement,
       onChanged: () => setState(() {}),
+      technicalMode: _isBeforeWorks || _isAfterWorks,
     );
   }
 
@@ -416,7 +417,14 @@ class _WizardPageState extends State<WizardPage> {
     });
   }
 
-  void _nextStep() {
+  bool get _hasIncompleteExitComparison => selectedRooms.any(
+    (room) => !_missionData.comparisonRemarks.any(
+      (remark) =>
+          remark.zone == room.name && remark.afterDescription.trim().isNotEmpty,
+    ),
+  );
+
+  Future<void> _nextStep() async {
     if (currentStep == _propertyStructureStepIndex &&
         _missionData.propertyElements.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -433,7 +441,34 @@ class _WizardPageState extends State<WizardPage> {
       return;
     }
 
-    if (currentStep == _visitStepIndex) {
+    if (currentStep == _visitStepIndex &&
+        _isExit &&
+        _hasIncompleteExitComparison) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Remarques comparatives incomplètes'),
+          content: const Text(
+            'Certaines pièces ne comportent pas encore de remarque comparative.\n\n'
+            'Vous pourrez toujours compléter ces remarques ultérieurement.\n\n'
+            'Souhaitez-vous poursuivre vers le calcul des indemnités ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Retour'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Continuer'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true || !mounted) return;
+    }
+
+    if (currentStep == _visitStepIndex && !_isExit) {
       final missing = _requiredPropertyElementIds.where(
         (id) => !_missionData.completedPropertyElementIds.contains(id),
       );

@@ -1,4 +1,10 @@
 enum PropertyElementType {
+  apartment('Appartement'),
+  duplex('Duplex'),
+  house('Maison'),
+  villa('Villa'),
+  hangar('Hangar'),
+  other('Autre'),
   housing('Habitation'),
   road('Voirie'),
   annex('Bâtiment annexe'),

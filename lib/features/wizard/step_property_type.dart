@@ -9,28 +9,49 @@ class StepPropertyType extends StatelessWidget {
     required this.selectedElementId,
     required this.onSelected,
     required this.onChanged,
+    this.technicalMode = false,
   });
 
   final List<PropertyElement> elements;
   final String? selectedElementId;
   final ValueChanged<String> onSelected;
   final VoidCallback onChanged;
+  final bool technicalMode;
+
+  static const _buildingTypes = <PropertyElementType>[
+    PropertyElementType.apartment,
+    PropertyElementType.duplex,
+    PropertyElementType.house,
+    PropertyElementType.villa,
+    PropertyElementType.garage,
+    PropertyElementType.warehouse,
+    PropertyElementType.hangar,
+    PropertyElementType.other,
+  ];
+
+  List<PropertyElementType> get _availableTypes => widgetTypes(technicalMode);
+
+  static List<PropertyElementType> widgetTypes(bool technicalMode) =>
+      <PropertyElementType>[
+        if (technicalMode) PropertyElementType.road,
+        ..._buildingTypes,
+      ];
 
   Future<void> _addElement(
     BuildContext context,
     PropertyElementType type,
   ) async {
     String? customName;
-    if (type == PropertyElementType.custom) {
+    if (type == PropertyElementType.other) {
       final controller = TextEditingController();
       customName = await showDialog<String>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Ajouter une zone personnalisée'),
+          title: const Text('Ajouter un autre bien'),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nom de la zone'),
+            decoration: const InputDecoration(labelText: 'Nom du bien'),
             onSubmitted: (value) => Navigator.pop(dialogContext, value),
           ),
           actions: [
@@ -63,6 +84,12 @@ class StepPropertyType extends StatelessWidget {
   }
 
   IconData _icon(PropertyElementType type) => switch (type) {
+    PropertyElementType.apartment => Icons.apartment_outlined,
+    PropertyElementType.duplex => Icons.stairs_outlined,
+    PropertyElementType.house => Icons.home_outlined,
+    PropertyElementType.villa => Icons.villa_outlined,
+    PropertyElementType.hangar => Icons.factory_outlined,
+    PropertyElementType.other => Icons.more_horiz,
     PropertyElementType.housing => Icons.home_work_outlined,
     PropertyElementType.road => Icons.add_road_outlined,
     PropertyElementType.annex => Icons.other_houses_outlined,
@@ -95,10 +122,10 @@ class StepPropertyType extends StatelessWidget {
               const SizedBox(height: 20),
               Expanded(
                 child: ListView.separated(
-                  itemCount: PropertyElementType.values.length,
+                  itemCount: _availableTypes.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final type = PropertyElementType.values[index];
+                    final type = _availableTypes[index];
                     return ListTile(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),

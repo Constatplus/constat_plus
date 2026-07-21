@@ -14,7 +14,6 @@ import 'property_composition/models/room_item.dart';
 import 'property_composition/services/room_reorder.dart';
 import 'visit/widgets/electrical_panel.dart';
 import 'visit/widgets/vocabulary_help_dialog.dart';
-import 'visit/services/wall_content_swap.dart';
 import 'report/models/visit_report_snapshot.dart';
 
 class _KitchenUnit {
@@ -205,6 +204,23 @@ class _StepVisitState extends State<StepVisit> {
   }
 
   void _restoreSnapshot(VisitReportSnapshot snapshot) {
+    List<String>? savedWallNames;
+    for (final room in snapshot.rooms) {
+      if (room.wallNames.length == _walls.length) {
+        savedWallNames = room.wallNames;
+        break;
+      }
+    }
+    if (savedWallNames != null) {
+      for (var index = 0; index < _walls.length; index++) {
+        final sectionIndex = _sections.indexOf(_walls[index]);
+        if (sectionIndex >= 0) _sections[sectionIndex] = savedWallNames[index];
+      }
+      _walls
+        ..clear()
+        ..addAll(savedWallNames);
+    }
+
     for (var roomIndex = 0; roomIndex < widget.rooms.length; roomIndex++) {
       final room = widget.rooms[roomIndex];
       final matches = snapshot.rooms.where(
@@ -307,122 +323,54 @@ class _StepVisitState extends State<StepVisit> {
     });
   }
 
-  Future<void> _swapWalls() async {
-    var firstWall = _walls.first;
-    var secondWall = _walls[1];
-    final selection = await showDialog<({String first, String second})>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Intervertir deux murs'),
-          content: SizedBox(
-            width: 430,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Choisissez les deux murs dont les descriptions, photos et données électriques doivent être échangées.',
-                ),
-                const SizedBox(height: 18),
-                DropdownButtonFormField<String>(
-                  initialValue: firstWall,
-                  decoration: const InputDecoration(labelText: 'Premier mur'),
-                  items: _walls
-                      .map(
-                        (wall) =>
-                            DropdownMenuItem(value: wall, child: Text(wall)),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setDialogState(() => firstWall = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: secondWall,
-                  decoration: const InputDecoration(labelText: 'Second mur'),
-                  items: _walls
-                      .map(
-                        (wall) =>
-                            DropdownMenuItem(value: wall, child: Text(wall)),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setDialogState(() => secondWall = value);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: firstWall == secondWall
-                  ? null
-                  : () => Navigator.pop(dialogContext, (
-                      first: firstWall,
-                      second: secondWall,
-                    )),
-              child: const Text('Continuer'),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _renameWall(String currentName, String newName) {
+    final name = newName.trim();
+    if (name.isEmpty || name == currentName || _walls.contains(name)) return;
+    final wallIndex = _walls.indexOf(currentName);
+    final sectionIndex = _sections.indexOf(currentName);
+    if (wallIndex < 0 || sectionIndex < 0) return;
 
-    if (selection == null || !mounted) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirmer l’interversion'),
-        content: Text(
-          'Toutes les données de « ${selection.first} » et « ${selection.second} » seront échangées dans ${_currentRoom.name}.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Intervertir'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
-    final firstSectionKey = _sectionKey(_selectedRoomIndex, selection.first);
-    final secondSectionKey = _sectionKey(_selectedRoomIndex, selection.second);
-    final firstElectricalKey = _wallKey(_selectedRoomIndex, selection.first);
-    final secondElectricalKey = _wallKey(_selectedRoomIndex, selection.second);
     setState(() {
-      swapMapEntries(_controllers, firstSectionKey, secondSectionKey);
-      swapMapEntries(_photos, firstSectionKey, secondSectionKey);
-      swapMapEntries(_conformToGeneralities, firstSectionKey, secondSectionKey);
-      swapMapEntries(
-        _electricalQuantities,
-        firstElectricalKey,
-        secondElectricalKey,
-      );
-      swapMapEntries(
-        _electricalBlockQuantities,
-        firstElectricalKey,
-        secondElectricalKey,
-      );
-      swapMapEntries(
-        _electricalBlockComponents,
-        firstElectricalKey,
-        secondElectricalKey,
-      );
+      for (var roomIndex = 0; roomIndex < widget.rooms.length; roomIndex++) {
+        _moveMapEntry(
+          _controllers,
+          _sectionKey(roomIndex, currentName),
+          _sectionKey(roomIndex, name),
+        );
+        _moveMapEntry(
+          _photos,
+          _sectionKey(roomIndex, currentName),
+          _sectionKey(roomIndex, name),
+        );
+        _moveMapEntry(
+          _conformToGeneralities,
+          _sectionKey(roomIndex, currentName),
+          _sectionKey(roomIndex, name),
+        );
+        _moveMapEntry(
+          _electricalQuantities,
+          _wallKey(roomIndex, currentName),
+          _wallKey(roomIndex, name),
+        );
+        _moveMapEntry(
+          _electricalBlockQuantities,
+          _wallKey(roomIndex, currentName),
+          _wallKey(roomIndex, name),
+        );
+        _moveMapEntry(
+          _electricalBlockComponents,
+          _wallKey(roomIndex, currentName),
+          _wallKey(roomIndex, name),
+        );
+      }
+      _walls[wallIndex] = name;
+      _sections[sectionIndex] = name;
     });
+  }
+
+  void _moveMapEntry<T>(Map<String, T> values, String from, String to) {
+    final value = values.remove(from);
+    if (value != null) values[to] = value;
   }
 
   String _roomKey(int roomIndex) {
@@ -1480,6 +1428,7 @@ class _StepVisitState extends State<StepVisit> {
           kitchen: kitchen,
           photoPaths: photoPaths.toSet().toList(growable: false),
           propertyElementId: room.propertyElementId,
+          wallNames: List<String>.unmodifiable(_walls),
         ),
       );
     }
@@ -1863,20 +1812,9 @@ class _StepVisitState extends State<StepVisit> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Postes de la pièce',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            IconButton(
-              tooltip: 'Intervertir des murs',
-              onPressed: _swapWalls,
-              icon: const Icon(Icons.swap_horiz_rounded),
-            ),
-          ],
+        const Text(
+          'Postes de la pièce',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 11),
         Expanded(
@@ -1925,17 +1863,37 @@ class _StepVisitState extends State<StepVisit> {
                         ),
                         const SizedBox(width: 9),
                         Expanded(
-                          child: Text(
-                            section,
-                            style: TextStyle(
-                              fontWeight: selected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                              color: selected
-                                  ? const Color(0xFF1264F6)
-                                  : const Color(0xFF334155),
-                            ),
-                          ),
+                          child: _walls.contains(section)
+                              ? TextFormField(
+                                  key: ValueKey(section),
+                                  initialValue: section,
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    border: InputBorder.none,
+                                  ),
+                                  style: TextStyle(
+                                    fontWeight: selected
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                    color: selected
+                                        ? const Color(0xFF1264F6)
+                                        : const Color(0xFF334155),
+                                  ),
+                                  onTap: () => _selectSection(index),
+                                  onFieldSubmitted: (value) =>
+                                      _renameWall(section, value),
+                                )
+                              : Text(
+                                  section,
+                                  style: TextStyle(
+                                    fontWeight: selected
+                                        ? FontWeight.bold
+                                        : FontWeight.w500,
+                                    color: selected
+                                        ? const Color(0xFF1264F6)
+                                        : const Color(0xFF334155),
+                                  ),
+                                ),
                         ),
                         if (photoCount > 0)
                           Container(
