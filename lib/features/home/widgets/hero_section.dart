@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/responsive/responsive.dart';
+
 class HeroSection extends StatelessWidget {
   final VoidCallback onEntry;
   final VoidCallback onExit;
@@ -45,7 +47,7 @@ class HeroSection extends StatelessWidget {
     );
   }
 
-  Widget _textContent({required bool isMobile}) {
+  Widget _textContent(BuildContext context, {required bool isMobile}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -71,7 +73,12 @@ class HeroSection extends StatelessWidget {
         Text(
           "L'expertise immobilière assistée par l'intelligence artificielle.",
           style: TextStyle(
-            fontSize: isMobile ? 26 : 36,
+            fontSize: Responsive.value(
+              context: context,
+              mobile: 26.0,
+              tablet: 32.0,
+              desktop: 36.0,
+            ),
             fontWeight: FontWeight.bold,
             color: const Color(0xFF0F172A),
             height: 1.2,
@@ -125,14 +132,15 @@ class HeroSection extends StatelessWidget {
             ],
           )
         else
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
             children: [
               ElevatedButton.icon(
                 onPressed: onEntry,
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Nouvel état des lieux'),
               ),
-              const SizedBox(width: 16),
               OutlinedButton.icon(
                 onPressed: onExit,
                 icon: const Icon(Icons.assignment),
@@ -165,7 +173,7 @@ class HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 760;
+        final isMobile = constraints.maxWidth < Responsive.mobileBreakpoint;
 
         return Container(
           width: double.infinity,
@@ -188,12 +196,17 @@ class HeroSection extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _textContent(isMobile: true),
+                    _textContent(context, isMobile: true),
                     const SizedBox(height: 22),
-                    Image.asset(
-                      'assets/images/hero.png',
-                      height: 230,
-                      fit: BoxFit.contain,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 180,
+                        maxHeight: 230,
+                      ),
+                      child: Image.asset(
+                        'assets/images/hero.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ],
                 )
@@ -201,7 +214,7 @@ class HeroSection extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(flex: 5, child: _textContent(isMobile: false)),
+                    Expanded(flex: 5, child: _textContent(context, isMobile: false)),
                     const SizedBox(width: 40),
                     Expanded(
                       flex: 4,

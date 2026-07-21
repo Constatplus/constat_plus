@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/access/access_service.dart';
 import '../../core/models/mission_type.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/utils/mission_identifier.dart';
 import '../commercial/domain/models/discovery_access_state.dart';
 import '../commercial/infrastructure/repositories/supabase_discovery_access_repository.dart';
@@ -800,32 +801,52 @@ Widget _buildPropertyStructure() {
   }
 
   Widget _buildBottomNavigation() {
+    final isMobile = Responsive.isMobile(context);
+
+    final previousButton = OutlinedButton.icon(
+      onPressed: _previousStep,
+      icon: const Icon(Icons.arrow_back),
+      label: const Text('Précédent'),
+    );
+
+    Widget? actionButton;
+    if (!_isSignatureStep && !_isLastStep) {
+      actionButton = FilledButton.icon(
+        onPressed: _nextStep,
+        icon: const Icon(Icons.arrow_forward),
+        label: const Text('Continuer'),
+      );
+    } else if (_isExit && _isSignatureStep) {
+      actionButton = FilledButton.icon(
+        onPressed: _nextStep,
+        icon: const Icon(Icons.description_outlined),
+        label: const Text('Générer le rapport de sortie'),
+      );
+    } else if (_isBeforeWorks && _isSignatureStep) {
+      actionButton = FilledButton.icon(
+        onPressed: _openReportFromSignatures,
+        icon: const Icon(Icons.description_outlined),
+        label: const Text('Ouvrir le rapport avant travaux'),
+      );
+    }
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (actionButton != null)
+            SizedBox(height: 48, child: actionButton),
+          if (actionButton != null) const SizedBox(height: 10),
+          SizedBox(height: 48, child: previousButton),
+        ],
+      );
+    }
+
     return Row(
       children: [
-        OutlinedButton.icon(
-          onPressed: _previousStep,
-          icon: const Icon(Icons.arrow_back),
-          label: const Text('Précédent'),
-        ),
+        previousButton,
         const Spacer(),
-        if (!_isSignatureStep && !_isLastStep)
-          FilledButton.icon(
-            onPressed: _nextStep,
-            icon: const Icon(Icons.arrow_forward),
-            label: const Text('Continuer'),
-          ),
-        if (_isExit && _isSignatureStep)
-          FilledButton.icon(
-            onPressed: _nextStep,
-            icon: const Icon(Icons.description_outlined),
-            label: const Text('Générer le rapport de sortie'),
-          ),
-        if (_isBeforeWorks && _isSignatureStep)
-          FilledButton.icon(
-            onPressed: _openReportFromSignatures,
-            icon: const Icon(Icons.description_outlined),
-            label: const Text('Ouvrir le rapport avant travaux'),
-          ),
+        if (actionButton != null) actionButton,
       ],
     );
   }
@@ -833,108 +854,197 @@ Widget _buildPropertyStructure() {
   @override
   Widget build(BuildContext context) {
     final progress = (currentStep + 1) / _steps.length;
+    final isMobile = Responsive.isMobile(context);
+    final isTablet = Responsive.isTablet(context);
+    final pagePadding = Responsive.pagePadding(context);
+    final contentPadding = EdgeInsets.all(
+      Responsive.value<double>(
+        context: context,
+        mobile: 14,
+        tablet: 22,
+        desktop: 32,
+      ),
+    );
+    final titleSize = Responsive.value<double>(
+      context: context,
+      mobile: 24,
+      tablet: 29,
+      desktop: 34,
+    );
+    final cardRadius = Responsive.value<double>(
+      context: context,
+      mobile: 20,
+      tablet: 24,
+      desktop: 30,
+    );
+
+    final stepInformation = Text(
+      '${widget.missionType.shortLabel} • Étape ${currentStep + 1} / ${_steps.length}',
+      style: TextStyle(
+        fontSize: isMobile ? 14 : 16,
+        color: Colors.black54,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+
+    final openPreviousReportButton = widget.missionType == MissionType.entry
+        ? OutlinedButton.icon(
+            onPressed: _openPreviousEntryReport,
+            icon: const Icon(Icons.folder_open_outlined),
+            label: Text(isMobile ? 'Ancien rapport' : 'Ouvrir un ancien rapport'),
+          )
+        : null;
+
+    final discoveryBadge = _discoveryAccess != null &&
+            !_discoveryAccess!.hasPaidAccessFor(_missionId)
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              'Mode Découverte : ${selectedRooms.length} / '
+              '${_discoveryAccess!.policy.maxFullyDescribedRooms} pièces',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          )
+        : null;
+
+    Widget header;
+    if (isMobile) {
+      header = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.missionType.label,
+            style: TextStyle(
+              fontSize: titleSize,
+              fontWeight: FontWeight.bold,
+              height: 1.15,
+            ),
+          ),
+          const SizedBox(height: 8),
+          stepInformation,
+          if (openPreviousReportButton != null || discoveryBadge != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                if (openPreviousReportButton != null) openPreviousReportButton,
+                if (discoveryBadge != null) discoveryBadge,
+              ],
+            ),
+          ],
+        ],
+      );
+    } else {
+      header = Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 16,
+        runSpacing: 12,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isTablet ? 440 : 620,
+            ),
+            child: Text(
+              widget.missionType.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: titleSize,
+                fontWeight: FontWeight.bold,
+                height: 1.1,
+              ),
+            ),
+          ),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              stepInformation,
+              if (openPreviousReportButton != null) openPreviousReportButton,
+              if (discoveryBadge != null) discoveryBadge,
+            ],
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FA),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
-              Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: Responsive.maxContentWidth(context),
+            ),
+            child: Padding(
+              padding: pagePadding,
+              child: Column(
                 children: [
-                  Expanded(
+                  header,
+                  SizedBox(height: isMobile ? 14 : 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: isMobile ? 8 : 10,
+                      backgroundColor: Colors.white,
+                      color: _isExit ? const Color(0xFFDC2626) : Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: Text(
-                      widget.missionType.label,
-                      maxLines: 1,
+                      _steps[currentStep],
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        fontSize: isMobile ? 16 : 18,
+                        fontWeight:
+                            _isExit ? FontWeight.w700 : FontWeight.w600,
+                        color: _isExit
+                            ? const Color(0xFFB91C1C)
+                            : Colors.black54,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 20),
-                  Text(
-                    '${widget.missionType.shortLabel} • '
-                    'Étape ${currentStep + 1} / ${_steps.length}',
-                    style: const TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
-                  if (widget.missionType == MissionType.entry) ...[
-                    const SizedBox(width: 16),
-                    OutlinedButton.icon(
-                      onPressed: _openPreviousEntryReport,
-                      icon: const Icon(Icons.folder_open_outlined),
-                      label: const Text('Ouvrir un ancien rapport'),
-                    ),
-                  ],
-                  if (_discoveryAccess != null &&
-                      !_discoveryAccess!.hasPaidAccessFor(_missionId)) ...[
-                    const SizedBox(width: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                  SizedBox(height: isMobile ? 16 : 24),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      padding: contentPadding,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
-                        borderRadius: BorderRadius.circular(999),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(cardRadius),
+                        border: _isExit
+                            ? Border.all(color: const Color(0xFFFECACA))
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        'Mode Découverte : ${selectedRooms.length} / ${_discoveryAccess!.policy.maxFullyDescribedRooms} pièces',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: _buildStepContent(),
                     ),
-                  ],
+                  ),
+                  SizedBox(height: isMobile ? 14 : 20),
+                  _buildBottomNavigation(),
                 ],
               ),
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 10,
-                  backgroundColor: Colors.white,
-                  color: _isExit ? const Color(0xFFDC2626) : Colors.blue,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _steps[currentStep],
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: _isExit ? FontWeight.w700 : FontWeight.normal,
-                    color: _isExit ? const Color(0xFFB91C1C) : Colors.black54,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: _isExit
-                        ? Border.all(color: const Color(0xFFFECACA))
-                        : null,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: _buildStepContent(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildBottomNavigation(),
-            ],
+            ),
           ),
         ),
       ),

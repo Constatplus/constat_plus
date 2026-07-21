@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/responsive/responsive.dart';
+
 import '../../../core/access/access_service.dart';
 
 class HomeTopBar extends StatelessWidget {
@@ -20,7 +22,7 @@ class HomeTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 750;
+        final isMobile = constraints.maxWidth < 750 || Responsive.isMobile(context);
 
         if (isMobile) {
           return Column(

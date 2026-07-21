@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/access/access_service.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/ai/inspection_ai_service.dart';
 import '../../core/ai/offline_inspection_ai_service.dart';
 import '../../core/ai/online_inspection_ai_service.dart';
@@ -15,6 +16,25 @@ import 'property_composition/services/room_reorder.dart';
 import 'visit/widgets/electrical_panel.dart';
 import 'visit/widgets/vocabulary_help_dialog.dart';
 import 'report/models/visit_report_snapshot.dart';
+
+
+class _AnalysisSelection {
+  final Set<String> sections;
+  final bool kitchenGeneral;
+  final bool worktop;
+  final Set<String> worktopEquipment;
+  final bool upperUnits;
+  final bool lowerUnits;
+
+  const _AnalysisSelection({
+    required this.sections,
+    required this.kitchenGeneral,
+    required this.worktop,
+    required this.worktopEquipment,
+    required this.upperUnits,
+    required this.lowerUnits,
+  });
+}
 
 class _KitchenUnit {
   String type;
@@ -899,10 +919,13 @@ class _StepVisitState extends State<StepVisit> {
     int roomIndex,
     InspectionAnalysis analysis, {
     required bool replaceExisting,
+    required _AnalysisSelection selection,
   }) {
     setState(() {
       for (final entry in analysis.sections.entries) {
-        if (entry.value.trim().isEmpty || !_sections.contains(entry.key)) {
+        if (!selection.sections.contains(entry.key) ||
+            entry.value.trim().isEmpty ||
+            !_sections.contains(entry.key)) {
           continue;
         }
         final controller = _controllerFor(roomIndex, entry.key);
@@ -910,19 +933,35 @@ class _StepVisitState extends State<StepVisit> {
           controller.text = entry.value.trim();
         }
       }
+
       if (!analysis.hasKitchen) return;
+
+      final hasKitchenSelection = selection.kitchenGeneral ||
+          selection.worktop ||
+          selection.worktopEquipment.isNotEmpty ||
+          selection.upperUnits ||
+          selection.lowerUnits;
+      if (!hasKitchenSelection) return;
+
       _furnitureItemsFor(roomIndex).add('Cuisine équipée');
       final general = _kitchenControllerFor(roomIndex, 'general');
       final worktop = _kitchenControllerFor(roomIndex, 'worktop');
-      if (replaceExisting || general.text.trim().isEmpty) {
+
+      if (selection.kitchenGeneral &&
+          (replaceExisting || general.text.trim().isEmpty)) {
         general.text = analysis.kitchenGeneral;
       }
-      if (replaceExisting || worktop.text.trim().isEmpty) {
+      if (selection.worktop &&
+          (replaceExisting || worktop.text.trim().isEmpty)) {
         worktop.text = analysis.worktop;
       }
+
       final selectedEquipment = _worktopEquipmentFor(roomIndex);
       for (final entry in analysis.worktopEquipment.entries) {
-        if (entry.value.trim().isEmpty) continue;
+        if (!selection.worktopEquipment.contains(entry.key) ||
+            entry.value.trim().isEmpty) {
+          continue;
+        }
         final known = _kitchenWorktopEquipment.firstWhere(
           (item) => item.toLowerCase() == entry.key.toLowerCase(),
           orElse: () => 'Autre équipement',
@@ -936,8 +975,9 @@ class _StepVisitState extends State<StepVisit> {
           controller.text = entry.value;
         }
       }
+
       final upperUnits = _upperUnitsFor(roomIndex);
-      if (replaceExisting || upperUnits.isEmpty) {
+      if (selection.upperUnits && (replaceExisting || upperUnits.isEmpty)) {
         for (final unit in upperUnits) {
           unit.dispose();
         }
@@ -955,8 +995,9 @@ class _StepVisitState extends State<StepVisit> {
             ),
           );
       }
+
       final lowerUnits = _lowerUnitsFor(roomIndex);
-      if (replaceExisting || lowerUnits.isEmpty) {
+      if (selection.lowerUnits && (replaceExisting || lowerUnits.isEmpty)) {
         for (final unit in lowerUnits) {
           unit.dispose();
         }
@@ -975,6 +1016,207 @@ class _StepVisitState extends State<StepVisit> {
           );
       }
     });
+  }
+
+  Future<_AnalysisSelection?> _showQuickAnalysisProposals(
+    InspectionAnalysis analysis,
+  ) async {
+    final selectedSections = analysis.sections.entries
+        .where((entry) => entry.value.trim().isNotEmpty)
+        .map((entry) => entry.key)
+        .toSet();
+    final selectedEquipment = analysis.worktopEquipment.entries
+        .where((entry) => entry.value.trim().isNotEmpty)
+        .map((entry) => entry.key)
+        .toSet();
+    var kitchenGeneral = analysis.kitchenGeneral.trim().isNotEmpty;
+    var worktop = analysis.worktop.trim().isNotEmpty;
+    var upperUnits = analysis.upperUnits.isNotEmpty;
+    var lowerUnits = analysis.lowerUnits.isNotEmpty;
+
+    return showDialog<_AnalysisSelection>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final screen = MediaQuery.sizeOf(context);
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Color(0xFF1264F6)),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('Propositions de l’analyse rapide')),
+                ],
+              ),
+              content: SizedBox(
+                width: Responsive.isMobile(context) ? screen.width - 48 : 720,
+                height: screen.height * 0.64,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Cochez uniquement les éléments à ajouter à la pièce. '
+                      'L’analyse rapide recherche les matériaux et les équipements '
+                      'principaux. Elle ne complète pas les dégradations détaillées.',
+                      style: TextStyle(color: Color(0xFF64748B), height: 1.4),
+                    ),
+                    const SizedBox(height: 14),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          if (analysis.sections.entries.any(
+                            (entry) => entry.value.trim().isNotEmpty,
+                          )) ...[
+                            const _ProposalSectionTitle('Descriptions proposées'),
+                            ...analysis.sections.entries
+                                .where((entry) => entry.value.trim().isNotEmpty)
+                                .map(
+                                  (entry) => CheckboxListTile(
+                                    value: selectedSections.contains(entry.key),
+                                    contentPadding: EdgeInsets.zero,
+                                    controlAffinity: ListTileControlAffinity.leading,
+                                    title: Text(
+                                      entry.key,
+                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                    ),
+                                    subtitle: Text(entry.value.trim()),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        if (value ?? false) {
+                                          selectedSections.add(entry.key);
+                                        } else {
+                                          selectedSections.remove(entry.key);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                          ],
+                          if (analysis.hasKitchen) ...[
+                            const SizedBox(height: 10),
+                            const _ProposalSectionTitle('Cuisine et équipements'),
+                            if (analysis.kitchenGeneral.trim().isNotEmpty)
+                              CheckboxListTile(
+                                value: kitchenGeneral,
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                title: const Text(
+                                  'Cuisine équipée',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                subtitle: Text(analysis.kitchenGeneral.trim()),
+                                onChanged: (value) => setDialogState(
+                                  () => kitchenGeneral = value ?? false,
+                                ),
+                              ),
+                            if (analysis.worktop.trim().isNotEmpty)
+                              CheckboxListTile(
+                                value: worktop,
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                title: const Text(
+                                  'Plan de travail',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                subtitle: Text(analysis.worktop.trim()),
+                                onChanged: (value) => setDialogState(
+                                  () => worktop = value ?? false,
+                                ),
+                              ),
+                            ...analysis.worktopEquipment.entries
+                                .where((entry) => entry.value.trim().isNotEmpty)
+                                .map(
+                                  (entry) => CheckboxListTile(
+                                    value: selectedEquipment.contains(entry.key),
+                                    contentPadding: EdgeInsets.zero,
+                                    controlAffinity: ListTileControlAffinity.leading,
+                                    title: Text(
+                                      entry.key,
+                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                    ),
+                                    subtitle: Text(entry.value.trim()),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        if (value ?? false) {
+                                          selectedEquipment.add(entry.key);
+                                        } else {
+                                          selectedEquipment.remove(entry.key);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                            if (analysis.upperUnits.isNotEmpty)
+                              CheckboxListTile(
+                                value: upperUnits,
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                title: Text(
+                                  'Meubles hauts (${analysis.upperUnits.length})',
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                subtitle: Text(
+                                  analysis.upperUnits
+                                      .map((unit) => unit['type'] ?? 'Meuble')
+                                      .join(', '),
+                                ),
+                                onChanged: (value) => setDialogState(
+                                  () => upperUnits = value ?? false,
+                                ),
+                              ),
+                            if (analysis.lowerUnits.isNotEmpty)
+                              CheckboxListTile(
+                                value: lowerUnits,
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                title: Text(
+                                  'Meubles bas (${analysis.lowerUnits.length})',
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                subtitle: Text(
+                                  analysis.lowerUnits
+                                      .map((unit) => unit['type'] ?? 'Meuble')
+                                      .join(', '),
+                                ),
+                                onChanged: (value) => setDialogState(
+                                  () => lowerUnits = value ?? false,
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Annuler'),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(
+                      dialogContext,
+                      _AnalysisSelection(
+                        sections: Set<String>.from(selectedSections),
+                        kitchenGeneral: kitchenGeneral,
+                        worktop: worktop,
+                        worktopEquipment: Set<String>.from(selectedEquipment),
+                        upperUnits: upperUnits,
+                        lowerUnits: lowerUnits,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.check),
+                  label: const Text('Appliquer la sélection'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _analyzeAndPrefillCurrentRoom() async {
@@ -1030,6 +1272,8 @@ class _StepVisitState extends State<StepVisit> {
         );
         return;
       }
+      final selection = await _showQuickAnalysisProposals(analysis);
+      if (!mounted || selection == null) return;
       final wouldReplace = _analysisWouldReplaceText(roomIndex, analysis);
       final replaceExisting = wouldReplace
           ? await _confirmTextReplacement()
@@ -1039,6 +1283,7 @@ class _StepVisitState extends State<StepVisit> {
         roomIndex,
         analysis,
         replaceExisting: replaceExisting,
+        selection: selection,
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1084,19 +1329,23 @@ class _StepVisitState extends State<StepVisit> {
 
             return AlertDialog(
               title: Text(
-                'Préremplir « ${_currentRoom.name} » avec des photos',
+                'Analyser rapidement « ${_currentRoom.name} »',
               ),
               content: SizedBox(
-                width: 760,
-                height: 500,
+                width: Responsive.isMobile(context)
+                    ? MediaQuery.sizeOf(context).width - 64
+                    : 760,
+                height: Responsive.isMobile(context)
+                    ? MediaQuery.sizeOf(context).height * 0.62
+                    : 500,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Sélectionnez toutes les photos de la pièce. '
-                      'Vous ne devez pas les classer manuellement. '
-                      'L’analyse visuelle proposera automatiquement des descriptions '
-                      'pour les différents postes. Chaque proposition reste modifiable.',
+                      'Sélectionnez les photos utiles de la pièce. '
+                      'L’analyse rapide recherche uniquement les matériaux et les '
+                      'équipements principaux. Vous choisirez ensuite les propositions '
+                      'à appliquer. Les dégradations détaillées seront ajoutées plus tard.',
                       style: TextStyle(color: Color(0xFF64748B), height: 1.45),
                     ),
                     const SizedBox(height: 16),
@@ -1131,8 +1380,8 @@ class _StepVisitState extends State<StepVisit> {
                             )
                           : GridView.builder(
                               gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 4,
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: Responsive.isMobile(context) ? 2 : 4,
                                     crossAxisSpacing: 12,
                                     mainAxisSpacing: 12,
                                   ),
@@ -1218,7 +1467,7 @@ class _StepVisitState extends State<StepVisit> {
                   label: Text(
                     _isAnalyzingRoom
                         ? 'Analyse en cours…'
-                        : 'Analyser et préremplir',
+                        : 'Lancer l’analyse rapide',
                   ),
                 ),
               ],
@@ -1489,11 +1738,33 @@ class _StepVisitState extends State<StepVisit> {
     final completedSections = _completedSectionCount(_selectedRoomIndex);
     final roomProgress = completedSections / _sections.length;
 
+    if (Responsive.isMobile(context)) {
+      return _buildMobileVisit(
+        room: room,
+        roomCompleted: roomCompleted,
+        completedSections: completedSections,
+        roomProgress: roomProgress,
+      );
+    }
+
+    final roomListWidth = Responsive.value<double>(
+      context: context,
+      mobile: 0,
+      tablet: 220,
+      desktop: 260,
+    );
+    final sectionListWidth = Responsive.value<double>(
+      context: context,
+      mobile: 0,
+      tablet: 200,
+      desktop: 225,
+    );
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(width: 260, child: _buildRoomList()),
-        const SizedBox(width: 22),
+        SizedBox(width: roomListWidth, child: _buildRoomList()),
+        SizedBox(width: Responsive.spacingMd(context)),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1504,20 +1775,157 @@ class _StepVisitState extends State<StepVisit> {
                 completedSections: completedSections,
                 roomProgress: roomProgress,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: Responsive.spacingMd(context)),
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(width: 225, child: _buildSectionList()),
-                    const SizedBox(width: 18),
+                    SizedBox(width: sectionListWidth, child: _buildSectionList()),
+                    SizedBox(width: Responsive.spacingMd(context)),
                     Expanded(child: _buildEditor()),
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: Responsive.spacingSm(context)),
               _buildNavigation(),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileVisit({
+    required RoomItem room,
+    required bool roomCompleted,
+    required int completedSections,
+    required double roomProgress,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildMobileRoomSelector(),
+        const SizedBox(height: 10),
+        _buildMobileSectionStrip(),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _buildEditor(),
+        ),
+        const SizedBox(height: 10),
+        _buildNavigation(),
+      ],
+    );
+  }
+
+  Widget _buildMobileRoomSelector() {
+    final visibleRoomIndices = _visibleRoomIndices;
+
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<int>(
+            initialValue: _selectedRoomIndex,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Pièce visitée',
+              prefixIcon: Icon(Icons.meeting_room_outlined),
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+            items: visibleRoomIndices.map((roomIndex) {
+              final item = widget.rooms[roomIndex];
+              final completed = _completedRooms.contains(_roomKey(roomIndex));
+              return DropdownMenuItem<int>(
+                value: roomIndex,
+                child: Text(
+                  '${completed ? '✓ ' : ''}${item.name}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(growable: false),
+            onChanged: (roomIndex) {
+              if (roomIndex != null) _selectRoom(roomIndex);
+            },
+          ),
+        ),
+        if (widget.propertyElements.length > 1) ...[
+          const SizedBox(width: 8),
+          IconButton.filledTonal(
+            tooltip: 'Bâtiments et zones',
+            onPressed: () => setState(() => _showBuildingOverview = true),
+            icon: const Icon(Icons.domain_outlined),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMobileSectionStrip() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Postes de la pièce',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            Text(
+              '${_selectedSectionIndex + 1} / ${_sections.length}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 48,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _sections.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final section = _sections[index];
+              final selected = index == _selectedSectionIndex;
+              final completed = _sectionHasContent(_selectedRoomIndex, section);
+
+              return ChoiceChip(
+                selected: selected,
+                showCheckmark: false,
+                avatar: Icon(
+                  completed ? Icons.check_circle : Icons.circle_outlined,
+                  size: 17,
+                  color: completed
+                      ? const Color(0xFF16A34A)
+                      : selected
+                      ? const Color(0xFF1264F6)
+                      : const Color(0xFF94A3B8),
+                ),
+                label: Text(section),
+                labelStyle: TextStyle(
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: selected
+                      ? const Color(0xFF1264F6)
+                      : const Color(0xFF334155),
+                ),
+                selectedColor: const Color(0xFFEAF2FF),
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: selected
+                      ? const Color(0xFF1264F6)
+                      : const Color(0xFFE2E8F0),
+                ),
+                onSelected: (_) => _selectSection(index),
+              );
+            },
           ),
         ),
       ],
@@ -1735,52 +2143,73 @@ class _StepVisitState extends State<StepVisit> {
     required double roomProgress,
   }) {
     final prefillPhotoCount = _prefillPhotosForRoom(_selectedRoomIndex).length;
+    final mobile = Responsive.isMobile(context);
+
+    final title = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          room.name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: mobile ? 22 : 27,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${room.level} • Pièce ${_visibleRoomPosition + 1} / ${_visibleRoomIndices.length}',
+          style: const TextStyle(color: Color(0xFF64748B)),
+        ),
+      ],
+    );
+
+    final prefillButton = OutlinedButton.icon(
+      onPressed: _showAutomaticPrefillDialog,
+      icon: const Icon(Icons.auto_awesome_outlined),
+      label: Text(
+        prefillPhotoCount == 0
+            ? 'Analyser la pièce'
+            : 'Analyser la pièce ($prefillPhotoCount photo(s))',
+      ),
+    );
+
+    final completionButton = OutlinedButton.icon(
+      onPressed: _toggleRoomCompleted,
+      icon: Icon(
+        roomCompleted ? Icons.restart_alt : Icons.check_circle_outline,
+      ),
+      label: Text(roomCompleted ? 'Rouvrir la pièce' : 'Terminer la pièce'),
+    );
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    room.name,
-                    style: const TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${room.level} • Pièce ${_visibleRoomPosition + 1} / ${_visibleRoomIndices.length}',
-                    style: const TextStyle(color: Color(0xFF64748B)),
-                  ),
-                ],
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: _showAutomaticPrefillDialog,
-              icon: const Icon(Icons.auto_awesome_outlined),
-              label: Text(
-                prefillPhotoCount == 0
-                    ? 'Préremplir avec des photos'
-                    : 'Photos à analyser ($prefillPhotoCount)',
-              ),
-            ),
-            const SizedBox(width: 10),
-            OutlinedButton.icon(
-              onPressed: _toggleRoomCompleted,
-              icon: Icon(
-                roomCompleted ? Icons.restart_alt : Icons.check_circle_outline,
-              ),
-              label: Text(
-                roomCompleted ? 'Rouvrir la pièce' : 'Terminer la pièce',
-              ),
-            ),
-          ],
-        ),
+        if (mobile) ...[
+          title,
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: prefillButton),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: completionButton),
+            ],
+          ),
+        ] else
+          Row(
+            children: [
+              Expanded(child: title),
+              prefillButton,
+              const SizedBox(width: 10),
+              completionButton,
+            ],
+          ),
         const SizedBox(height: 13),
         Row(
           children: [
@@ -2500,29 +2929,64 @@ class _StepVisitState extends State<StepVisit> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _selectPhotos,
-                      icon: const Icon(Icons.collections_outlined),
-                      label: const Text('Galerie'),
-                    ),
-                    const SizedBox(width: 10),
-                    FilledButton.icon(
-                      onPressed: _takePhoto,
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('Photo'),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${photos.length} photo(s)',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
+                if (Responsive.isMobile(context))
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _selectPhotos,
+                              icon: const Icon(Icons.collections_outlined),
+                              label: const Text('Galerie'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _takePhoto,
+                              icon: const Icon(Icons.photo_camera_outlined),
+                              label: const Text('Photo'),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${photos.length} photo(s)',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _selectPhotos,
+                        icon: const Icon(Icons.collections_outlined),
+                        label: const Text('Galerie'),
+                      ),
+                      const SizedBox(width: 10),
+                      FilledButton.icon(
+                        onPressed: _takePhoto,
+                        icon: const Icon(Icons.photo_camera_outlined),
+                        label: const Text('Photo'),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${photos.length} photo(s)',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
                 if (photos.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   SizedBox(
@@ -2579,24 +3043,61 @@ class _StepVisitState extends State<StepVisit> {
   Widget _buildNavigation() {
     final position = _visibleRoomPosition;
     final lastRoom = position == _visibleRoomIndices.length - 1;
+    final previousButton = OutlinedButton.icon(
+      onPressed: position <= 0 ? null : _previousRoom,
+      icon: const Icon(Icons.arrow_back),
+      label: const Text('Pièce précédente'),
+    );
+    final nextButton = FilledButton.icon(
+      onPressed: lastRoom && widget.propertyElements.isNotEmpty
+          ? () => setState(() => _showBuildingOverview = true)
+          : lastRoom
+          ? null
+          : _nextRoom,
+      icon: Icon(lastRoom ? Icons.domain_outlined : Icons.arrow_forward),
+      label: Text(lastRoom ? 'Retour aux bâtiments' : 'Pièce suivante'),
+    );
+
+    if (Responsive.isMobile(context)) {
+      return Row(
+        children: [
+          Expanded(child: previousButton),
+          const SizedBox(width: 8),
+          Expanded(child: nextButton),
+        ],
+      );
+    }
+
     return Row(
       children: [
-        OutlinedButton.icon(
-          onPressed: position <= 0 ? null : _previousRoom,
-          icon: const Icon(Icons.arrow_back),
-          label: const Text('Pièce précédente'),
-        ),
+        previousButton,
         const Spacer(),
-        FilledButton.icon(
-          onPressed: lastRoom && widget.propertyElements.isNotEmpty
-              ? () => setState(() => _showBuildingOverview = true)
-              : lastRoom
-              ? null
-              : _nextRoom,
-          icon: Icon(lastRoom ? Icons.domain_outlined : Icons.arrow_forward),
-          label: Text(lastRoom ? 'Retour aux bâtiments' : 'Pièce suivante'),
-        ),
+        nextButton,
       ],
     );
   }
+
 }
+
+
+class _ProposalSectionTitle extends StatelessWidget {
+  final String text;
+
+  const _ProposalSectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+    );
+  }
+}
+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/responsive/responsive.dart';
 import '../home/widgets/sidebar.dart';
 
 class MainLayout extends StatelessWidget {
@@ -36,59 +37,83 @@ class MainLayout extends StatelessWidget {
     );
   }
 
+  double _drawerWidth(BuildContext context) {
+    final screenWidth = Responsive.width(context);
+
+    if (screenWidth < 360) {
+      return screenWidth * 0.86;
+    }
+
+    if (screenWidth < 430) {
+      return 285;
+    }
+
+    return 320;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 700;
+    if (Responsive.isMobile(context)) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF4F8FA),
+        drawer: Drawer(
+          width: _drawerWidth(context),
+          child: SafeArea(
+            child: _buildSidebar(),
+          ),
+        ),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+          titleSpacing: 0,
+          title: const Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Constat',
+                  style: TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(
+                  text: '+',
+                  style: TextStyle(
+                    color: Color(0xFF1264F6),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        body: SafeArea(
+          top: false,
+          child: SizedBox.expand(
+            child: child,
+          ),
+        ),
+      );
+    }
 
-        if (isMobile) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF4F8FA),
-            drawer: Drawer(
-              width: 285,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F8FA),
+      body: SafeArea(
+        child: Row(
+          children: [
+            SizedBox(
+              width: Responsive.sideMenuWidth(context),
               child: _buildSidebar(),
             ),
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.white,
-              elevation: 0,
-              titleSpacing: 0,
-              title: const Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Constat',
-                      style: TextStyle(
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextSpan(
-                      text: '+',
-                      style: TextStyle(
-                        color: Color(0xFF1264F6),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+            Expanded(
+              child: SizedBox.expand(
+                child: child,
               ),
             ),
-            body: SafeArea(top: false, child: child),
-          );
-        }
-
-        return Scaffold(
-          backgroundColor: const Color(0xFFF4F8FA),
-          body: Row(
-            children: [
-              _buildSidebar(),
-              Expanded(child: SafeArea(child: child)),
-            ],
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }

@@ -166,18 +166,20 @@ class StepPropertyType extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columnCount = constraints.maxWidth >= 720
+        final columnCount = constraints.maxWidth >= 900
             ? 4
-            : constraints.maxWidth >= 520
-            ? 3
-            : 2;
+            : constraints.maxWidth >= 650
+                ? 3
+                : constraints.maxWidth >= 380
+                    ? 2
+                    : 1;
 
         return GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columnCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.12,
+            childAspectRatio: columnCount == 1 ? 2.45 : 1.12,
           ),
           itemCount: _buildingTypes.length,
           itemBuilder: (context, index) {
@@ -341,78 +343,92 @@ class StepPropertyType extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 700;
+        final isTablet = constraints.maxWidth < 1050;
+        final titleSize = isMobile ? 24.0 : 30.0;
+
+        final selector = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              technicalMode ? 'Éléments principaux' : 'Type de bien',
+              style: TextStyle(
+                fontSize: titleSize,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              technicalMode
+                  ? 'Ajoutez chaque bâtiment ou zone qui compose la mission.'
+                  : 'Sélectionnez un seul type de bien. Les pièces et dépendances seront ajoutées à l’étape suivante.',
+              style: TextStyle(
+                fontSize: isMobile ? 15 : 16,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: technicalMode
+                  ? _buildTechnicalTypeList(context)
+                  : _buildClassicTypeGrid(context),
+            ),
+          ],
+        );
+
+        final selection = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              technicalMode
+                  ? 'Composition de la mission (${elements.length})'
+                  : 'Bien sélectionné',
+              style: TextStyle(
+                fontSize: isMobile ? 20 : 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              technicalMode
+                  ? 'Renommez les éléments puis choisissez celui à composer.'
+                  : 'Vous pourrez composer le bien dans l’étape suivante.',
+              style: const TextStyle(color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 18),
+            Expanded(
+              child: technicalMode
+                  ? _buildTechnicalComposition()
+                  : _buildSelectedProperty(),
+            ),
+          ],
+        );
+
+        if (isTablet) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: selector),
+              const SizedBox(height: 22),
+              Expanded(flex: technicalMode ? 2 : 1, child: selection),
+            ],
+          );
+        }
+
         final leftWidth = technicalMode
             ? 390.0
             : constraints.maxWidth >= 1450
-            ? 720.0
-            : constraints.maxWidth >= 1150
-            ? 560.0
-            : 440.0;
+                ? 720.0
+                : constraints.maxWidth >= 1150
+                    ? 560.0
+                    : 440.0;
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: leftWidth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    technicalMode ? 'Éléments principaux' : 'Type de bien',
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    technicalMode
-                        ? 'Ajoutez chaque bâtiment ou zone qui compose la mission.'
-                        : 'Sélectionnez un seul type de bien. Les pièces et dépendances seront ajoutées à l’étape suivante.',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: technicalMode
-                        ? _buildTechnicalTypeList(context)
-                        : _buildClassicTypeGrid(context),
-                  ),
-                ],
-              ),
-            ),
+            SizedBox(width: leftWidth, child: selector),
             const SizedBox(width: 28),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    technicalMode
-                        ? 'Composition de la mission (${elements.length})'
-                        : 'Bien sélectionné',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    technicalMode
-                        ? 'Renommez les éléments puis choisissez celui à composer.'
-                        : 'Vous pourrez composer le bien dans l’étape suivante.',
-                    style: const TextStyle(color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(height: 18),
-                  Expanded(
-                    child: technicalMode
-                        ? _buildTechnicalComposition()
-                        : _buildSelectedProperty(),
-                  ),
-                ],
-              ),
-            ),
+            Expanded(child: selection),
           ],
         );
       },

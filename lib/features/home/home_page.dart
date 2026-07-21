@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/mission.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/state/app_state.dart';
 import '../../core/widgets/app_shell.dart';
 import '../folders/folders_page.dart';
@@ -91,10 +92,12 @@ class DashboardContent extends StatelessWidget {
       backgroundColor: const Color(0xFFF4F7FB),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+          padding: Responsive.pagePadding(context).copyWith(
+            bottom: Responsive.spacingXl(context),
+          ),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1320),
+              constraints: Responsive.contentConstraints(context),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -243,10 +246,15 @@ class _DashboardTopBar extends StatelessWidget {
         final title = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Bienvenue sur Constat+ 👋',
               style: TextStyle(
-                fontSize: 30,
+                fontSize: Responsive.value(
+                context: context,
+                mobile: 25.0,
+                tablet: 28.0,
+                desktop: 30.0,
+              ),
                 fontWeight: FontWeight.w900,
                 color: Color(0xFF0F172A),
               ),
@@ -357,11 +365,16 @@ class _HeroPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'L’état des lieux professionnel,\nassisté par l’intelligence artificielle.',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 35,
+                    fontSize: Responsive.value(
+                    context: context,
+                    mobile: 28.0,
+                    tablet: 32.0,
+                    desktop: 35.0,
+                  ),
                     height: 1.15,
                     fontWeight: FontWeight.w900,
                   ),
@@ -403,7 +416,14 @@ class _HeroPanel extends StatelessWidget {
           );
 
           return ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 300),
+            constraints: BoxConstraints(
+              minHeight: Responsive.value(
+                context: context,
+                mobile: 250.0,
+                tablet: 280.0,
+                desktop: 300.0,
+              ),
+            ),
             child: content,
           );
         },
@@ -433,8 +453,9 @@ class _MissionChoice extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
-      height: 220,
-      child: Material(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 220),
+        child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
@@ -497,6 +518,7 @@ class _MissionChoice extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

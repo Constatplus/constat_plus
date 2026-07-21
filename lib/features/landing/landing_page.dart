@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../core/access/access_service.dart';
@@ -66,22 +68,27 @@ class _TopNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+      padding: EdgeInsets.symmetric(
+        horizontal: MediaQuery.sizeOf(context).width < 600 ? 18 : 28,
+        vertical: 18,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final logo = const Row(
+          final compact = constraints.maxWidth < 600;
+
+          final logo = Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _LogoMark(),
-              SizedBox(width: 11),
+              const _LogoMark(),
+              const SizedBox(width: 11),
               Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
                       text: 'Constat',
                       style: TextStyle(
-                        color: Color(0xFF0F172A),
-                        fontSize: 27,
+                        color: const Color(0xFF0F172A),
+                        fontSize: compact ? 24 : 27,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -1,
                       ),
@@ -89,8 +96,8 @@ class _TopNavigation extends StatelessWidget {
                     TextSpan(
                       text: '+',
                       style: TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontSize: 29,
+                        color: const Color(0xFF2563EB),
+                        fontSize: compact ? 26 : 29,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -99,6 +106,46 @@ class _TopNavigation extends StatelessWidget {
               ),
             ],
           );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                logo,
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: onPricing,
+                        child: const Text('Nos offres'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onLogin,
+                        child: const Text(
+                          'Se connecter',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onRegister,
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    label: const Text('Commencer'),
+                  ),
+                ),
+              ],
+            );
+          }
 
           final buttons = Wrap(
             spacing: 10,
@@ -168,17 +215,24 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 32),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 14 : 24,
+        10,
+        mobile ? 14 : 24,
+        32,
+      ),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 610),
+        constraints: BoxConstraints(minHeight: mobile ? 0 : 610),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF0B1220), Color(0xFF142C63), Color(0xFF1D4ED8)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(36),
+          borderRadius: BorderRadius.circular(mobile ? 28 : 36),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF0F172A).withValues(alpha: .18),
@@ -193,16 +247,26 @@ class _Hero extends StatelessWidget {
             const Positioned(right: -90, top: -90, child: _Glow(size: 330)),
             const Positioned(left: 380, bottom: -150, child: _Glow(size: 300)),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 44),
+              padding: EdgeInsets.symmetric(
+                horizontal: mobile ? 20 : 38,
+                vertical: mobile ? 26 : 44,
+              ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final copy = _HeroCopy(onStart: onStart, onDemo: onDemo);
-                  const visual = _HeroVisual();
+                  final copy = _HeroCopy(
+                    onStart: onStart,
+                    onDemo: onDemo,
+                    compact: constraints.maxWidth < 600,
+                  );
 
                   if (constraints.maxWidth < 900) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [copy, const SizedBox(height: 36), visual],
+                      children: [
+                        copy,
+                        SizedBox(height: mobile ? 20 : 36),
+                        _HeroVisual(compact: mobile),
+                      ],
                     );
                   }
 
@@ -211,7 +275,10 @@ class _Hero extends StatelessWidget {
                     children: [
                       Expanded(flex: 11, child: copy),
                       const SizedBox(width: 36),
-                      const Expanded(flex: 9, child: _HeroVisual()),
+                      const Expanded(
+                        flex: 9,
+                        child: _HeroVisual(compact: false),
+                      ),
                     ],
                   );
                 },
@@ -225,26 +292,34 @@ class _Hero extends StatelessWidget {
 }
 
 class _HeroCopy extends StatelessWidget {
-  const _HeroCopy({required this.onStart, required this.onDemo});
+  const _HeroCopy({
+    required this.onStart,
+    required this.onDemo,
+    required this.compact,
+  });
 
   final VoidCallback onStart;
   final VoidCallback onDemo;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final titleSize = compact ? 35.0 : 50.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: .10),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: Colors.white.withValues(alpha: .14)),
           ),
           child: const Row(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
                 Icons.auto_awesome_rounded,
@@ -252,72 +327,124 @@ class _HeroCopy extends StatelessWidget {
                 color: Color(0xFFBFDBFE),
               ),
               SizedBox(width: 8),
-              Text(
-                'LE LOGICIEL D’ÉTAT DES LIEUX NOUVELLE GÉNÉRATION',
-                style: TextStyle(
-                  color: Color(0xFFDBEAFE),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .7,
+              Expanded(
+                child: Text(
+                  'LE LOGICIEL D’ÉTAT DES LIEUX NOUVELLE GÉNÉRATION',
+                  style: TextStyle(
+                    color: Color(0xFFDBEAFE),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .7,
+                    height: 1.35,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'Vos constats.\nPlus rapides. Plus précis. Plus professionnels.',
+        SizedBox(height: compact ? 20 : 24),
+        Text(
+          'Vos constats.\nPlus rapides.\nPlus précis.\nPlus professionnels.',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 50,
-            height: 1.04,
+            fontSize: titleSize,
+            height: compact ? 1.08 : 1.04,
             fontWeight: FontWeight.w900,
-            letterSpacing: -1.8,
+            letterSpacing: compact ? -1.0 : -1.8,
           ),
         ),
-        const SizedBox(height: 22),
-        const Text(
+        SizedBox(height: compact ? 18 : 22),
+        Text(
           'Constat+ transforme votre visite en rapport structuré : photos, descriptions, calculs, signatures et export Word réunis dans un seul outil métier.',
           style: TextStyle(
-            color: Color(0xFFD6E4FF),
-            fontSize: 18,
+            color: const Color(0xFFD6E4FF),
+            fontSize: compact ? 16 : 18,
             height: 1.55,
           ),
         ),
-        const SizedBox(height: 28),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF1D4ED8),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 18,
+        SizedBox(height: compact ? 22 : 28),
+        if (compact)
+          Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF1D4ED8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 17,
+                    ),
+                  ),
+                  onPressed: onStart,
+                  icon: const Icon(Icons.rocket_launch_rounded),
+                  label: const Text(
+                    'Créer mon premier constat',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              onPressed: onStart,
-              icon: const Icon(Icons.rocket_launch_rounded),
-              label: const Text('Créer mon premier constat'),
-            ),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.white.withValues(alpha: .45)),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 18,
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: .45),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 17,
+                    ),
+                  ),
+                  onPressed: onDemo,
+                  icon: const Icon(Icons.play_circle_outline_rounded),
+                  label: const Text(
+                    'Voir la démonstration locale',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-              onPressed: onDemo,
-              icon: const Icon(Icons.play_circle_outline_rounded),
-              label: const Text('Voir la démonstration locale'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 28),
+            ],
+          )
+        else
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF1D4ED8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 18,
+                  ),
+                ),
+                onPressed: onStart,
+                icon: const Icon(Icons.rocket_launch_rounded),
+                label: const Text('Créer mon premier constat'),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: .45),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 18,
+                  ),
+                ),
+                onPressed: onDemo,
+                icon: const Icon(Icons.play_circle_outline_rounded),
+                label: const Text('Voir la démonstration locale'),
+              ),
+            ],
+          ),
+        SizedBox(height: compact ? 22 : 28),
         const Wrap(
           spacing: 18,
           runSpacing: 12,
@@ -333,10 +460,26 @@ class _HeroCopy extends StatelessWidget {
 }
 
 class _HeroVisual extends StatelessWidget {
-  const _HeroVisual();
+  const _HeroVisual({required this.compact});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    if (compact) {
+      return SizedBox(
+        width: double.infinity,
+        height: 280,
+        child: Image.asset(
+          'assets/images/gianni_tablet.png',
+          fit: BoxFit.contain,
+          alignment: Alignment.bottomCenter,
+          errorBuilder: (context, error, stackTrace) =>
+              const _MascotFallback(),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 500,
       child: Stack(
@@ -528,8 +671,13 @@ class _TrustStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 18 : 24,
+        vertical: 14,
+      ),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 28,
@@ -562,19 +710,24 @@ class _TrustItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 21, color: const Color(0xFF2563EB)),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF334155),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 330),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 21, color: const Color(0xFF2563EB)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF334155),
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -584,41 +737,58 @@ class _MissionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _SectionShell(
+    return _SectionShell(
       eyebrow: 'UN OUTIL POUR CHAQUE MISSION',
       title: 'Trois parcours métier, une seule application',
       subtitle:
           'Chaque mission dispose de son propre déroulé pour aller vite sur le terrain sans mélanger les informations.',
-      child: Wrap(
-        spacing: 18,
-        runSpacing: 18,
-        alignment: WrapAlignment.center,
-        children: [
-          _MissionCard(
-            icon: Icons.login_rounded,
-            color: Color(0xFF2563EB),
-            title: 'État des lieux d’entrée',
-            description:
-                'Composition du bien, description pièce par pièce, clés, compteurs, photos et signatures.',
-            badge: 'Le plus utilisé',
-          ),
-          _MissionCard(
-            icon: Icons.logout_rounded,
-            color: Color(0xFF7C3AED),
-            title: 'État des lieux de sortie',
-            description:
-                'Comparaison, dégâts locatifs, calculs d’indemnisation et synthèse claire des manquements.',
-            badge: 'Calculs intégrés',
-          ),
-          _MissionCard(
-            icon: Icons.construction_rounded,
-            color: Color(0xFFEA580C),
-            title: 'Constat avant travaux',
-            description:
-                'Façades, voiries, bâtiments voisins, plans et annexes photographiques structurées.',
-            badge: 'Preuve photographique',
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cardWidth = constraints.maxWidth < 600
+              ? constraints.maxWidth
+              : math.min(360.0, constraints.maxWidth);
+
+          return Wrap(
+            spacing: 18,
+            runSpacing: 18,
+            alignment: WrapAlignment.center,
+            children: [
+              SizedBox(
+                width: cardWidth,
+                child: const _MissionCard(
+                  icon: Icons.login_rounded,
+                  color: Color(0xFF2563EB),
+                  title: 'État des lieux d’entrée',
+                  description:
+                      'Composition du bien, description pièce par pièce, clés, compteurs, photos et signatures.',
+                  badge: 'Le plus utilisé',
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: const _MissionCard(
+                  icon: Icons.logout_rounded,
+                  color: Color(0xFF7C3AED),
+                  title: 'État des lieux de sortie',
+                  description:
+                      'Comparaison, dégâts locatifs, calculs d’indemnisation et synthèse claire des manquements.',
+                  badge: 'Calculs intégrés',
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: const _MissionCard(
+                  icon: Icons.construction_rounded,
+                  color: Color(0xFFEA580C),
+                  title: 'Constat avant travaux',
+                  description:
+                      'Façades, voiries, bâtiments voisins, plans et annexes photographiques structurées.',
+                  badge: 'Preuve photographique',
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -642,7 +812,6 @@ class _MissionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 360,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -659,7 +828,10 @@ class _MissionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(13),
@@ -669,7 +841,6 @@ class _MissionCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 28),
               ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -707,11 +878,13 @@ class _MissionCard extends StatelessWidget {
           const SizedBox(height: 22),
           const Row(
             children: [
-              Text(
-                'Découvrir le parcours',
-                style: TextStyle(
-                  color: Color(0xFF2563EB),
-                  fontWeight: FontWeight.w900,
+              Flexible(
+                child: Text(
+                  'Découvrir le parcours',
+                  style: TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               SizedBox(width: 6),
@@ -733,43 +906,50 @@ class _AiSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 1180),
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.all(34),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEF2FF),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: const Color(0xFFC7D2FE)),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final image = SizedBox(
-              height: 360,
-              child: Image.asset(
-                'assets/images/gianni_point.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    const _MascotFallback(),
-              ),
-            );
-            const copy = _AiCopy();
+    final mobile = MediaQuery.sizeOf(context).width < 600;
 
-            if (constraints.maxWidth < 820) {
-              return Column(
-                children: [image, const SizedBox(height: 18), copy],
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 14 : 24,
+        vertical: 36,
+      ),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1180),
+          padding: EdgeInsets.all(mobile ? 22 : 34),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF2FF),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: const Color(0xFFC7D2FE)),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final image = SizedBox(
+                height: mobile ? 250 : 360,
+                child: Image.asset(
+                  'assets/images/gianni_point.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const _MascotFallback(),
+                ),
               );
-            }
-            return Row(
-              children: [
-                Expanded(flex: 4, child: image),
-                const SizedBox(width: 32),
-                const Expanded(flex: 6, child: copy),
-              ],
-            );
-          },
+              final copy = _AiCopy(compact: constraints.maxWidth < 600);
+
+              if (constraints.maxWidth < 820) {
+                return Column(
+                  children: [image, const SizedBox(height: 18), copy],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(flex: 4, child: image),
+                  const SizedBox(width: 32),
+                  Expanded(flex: 6, child: copy),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -777,14 +957,16 @@ class _AiSection extends StatelessWidget {
 }
 
 class _AiCopy extends StatelessWidget {
-  const _AiCopy();
+  const _AiCopy({required this.compact});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'L’ASSISTANT QUI VOUS FAIT GAGNER DU TEMPS',
           style: TextStyle(
             color: Color(0xFF4F46E5),
@@ -792,27 +974,27 @@ class _AiCopy extends StatelessWidget {
             letterSpacing: .8,
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Text(
           'Votre expertise reste humaine. L’IA s’occupe du travail répétitif.',
           style: TextStyle(
-            fontSize: 34,
+            fontSize: compact ? 28 : 34,
             height: 1.12,
             fontWeight: FontWeight.w900,
-            color: Color(0xFF111827),
+            color: const Color(0xFF111827),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Text(
           'Assistant Gianni analyse les photos, suggère les postes à compléter, reformule les observations et contrôle la cohérence du rapport avant sa finalisation.',
           style: TextStyle(
-            fontSize: 17,
+            fontSize: compact ? 16 : 17,
             height: 1.55,
-            color: Color(0xFF4B5563),
+            color: const Color(0xFF4B5563),
           ),
         ),
-        SizedBox(height: 22),
-        Wrap(
+        const SizedBox(height: 22),
+        const Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
@@ -839,6 +1021,7 @@ class _AiChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 320),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -850,11 +1033,13 @@ class _AiChip extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFF4F46E5), size: 20),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF334155),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF334155),
+              ),
             ),
           ),
         ],
@@ -868,43 +1053,63 @@ class _WorkflowSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _SectionShell(
+    return _SectionShell(
       eyebrow: 'DU TERRAIN AU RAPPORT',
       title: 'Un processus simple, même pour un dossier complexe',
       subtitle:
           'Vous restez concentré sur le constat. Constat+ organise le reste.',
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        alignment: WrapAlignment.center,
-        children: [
-          _StepCard(
-            number: '01',
-            icon: Icons.add_home_work_outlined,
-            title: 'Créez le dossier',
-            text: 'Encodez les parties, l’adresse et la composition du bien.',
-          ),
-          _StepCard(
-            number: '02',
-            icon: Icons.photo_camera_outlined,
-            title: 'Réalisez la visite',
-            text: 'Décrivez, photographiez et complétez chaque poste.',
-          ),
-          _StepCard(
-            number: '03',
-            icon: Icons.auto_awesome_outlined,
-            title: 'Laissez l’IA assister',
-            text:
-                'Recevez des suggestions sans perdre la maîtrise de votre expertise.',
-          ),
-          _StepCard(
-            number: '04',
-            icon: Icons.description_outlined,
-            title: 'Générez le rapport',
-            text:
-                'Exportez un document structuré, professionnel et personnalisable.',
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth < 600
+              ? constraints.maxWidth
+              : math.min(270.0, constraints.maxWidth);
+
+          return Wrap(
+            spacing: 16,
+            runSpacing: 24,
+            alignment: WrapAlignment.center,
+            children: [
+              SizedBox(
+                width: width,
+                child: const _StepCard(
+                  number: '01',
+                  icon: Icons.add_home_work_outlined,
+                  title: 'Créez le dossier',
+                  text: 'Encodez les parties, l’adresse et la composition du bien.',
+                ),
+              ),
+              SizedBox(
+                width: width,
+                child: const _StepCard(
+                  number: '02',
+                  icon: Icons.photo_camera_outlined,
+                  title: 'Réalisez la visite',
+                  text: 'Décrivez, photographiez et complétez chaque poste.',
+                ),
+              ),
+              SizedBox(
+                width: width,
+                child: const _StepCard(
+                  number: '03',
+                  icon: Icons.auto_awesome_outlined,
+                  title: 'Laissez l’IA assister',
+                  text:
+                      'Recevez des suggestions sans perdre la maîtrise de votre expertise.',
+                ),
+              ),
+              SizedBox(
+                width: width,
+                child: const _StepCard(
+                  number: '04',
+                  icon: Icons.description_outlined,
+                  title: 'Générez le rapport',
+                  text:
+                      'Exportez un document structuré, professionnel et personnalisable.',
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -925,48 +1130,45 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 270,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                number,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFFBFDBFE),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              number,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFBFDBFE),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(icon, color: const Color(0xFF2563EB)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
             ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(icon, color: const Color(0xFF2563EB)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF0F172A),
           ),
-          const SizedBox(height: 8),
-          Text(
-            text,
-            style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          text,
+          style: const TextStyle(color: Color(0xFF64748B), height: 1.5),
+        ),
+      ],
     );
   }
 }
@@ -986,8 +1188,13 @@ class _SectionShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 54),
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 18 : 24,
+        vertical: mobile ? 38 : 54,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1180),
@@ -1006,11 +1213,11 @@ class _SectionShell extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 35,
+                style: TextStyle(
+                  fontSize: mobile ? 29 : 35,
                   height: 1.15,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF0F172A),
+                  color: const Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 12),
@@ -1019,14 +1226,14 @@ class _SectionShell extends StatelessWidget {
                 child: Text(
                   subtitle,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: mobile ? 15 : 16,
                     height: 1.55,
-                    color: Color(0xFF64748B),
+                    color: const Color(0xFF64748B),
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: mobile ? 24 : 32),
               child,
             ],
           ),
@@ -1037,73 +1244,117 @@ class _SectionShell extends StatelessWidget {
 }
 
 class _FinalCallToAction extends StatelessWidget {
-  const _FinalCallToAction({required this.onStart, required this.onPricing});
+  const _FinalCallToAction({
+    required this.onStart,
+    required this.onPricing,
+  });
 
   final VoidCallback onStart;
   final VoidCallback onPricing;
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 36, 24, 70),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 14 : 24,
+        36,
+        mobile ? 14 : 24,
+        mobile ? 46 : 70,
+      ),
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1180),
-          padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 42),
+          padding: EdgeInsets.symmetric(
+            horizontal: mobile ? 22 : 36,
+            vertical: mobile ? 30 : 42,
+          ),
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
             borderRadius: BorderRadius.circular(30),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final text = const Column(
+              final compact = constraints.maxWidth < 760;
+
+              final text = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Prêt à professionnaliser vos états des lieux ?',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 31,
+                      fontSize: compact ? 27 : 31,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Créez votre compte et découvrez une nouvelle manière de travailler sur le terrain.',
-                    style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 16),
-                  ),
-                ],
-              );
-              final buttons = Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  FilledButton(
-                    onPressed: onStart,
-                    child: const Text('Commencer maintenant'),
-                  ),
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white38),
+                    style: TextStyle(
+                      color: const Color(0xFFCBD5E1),
+                      fontSize: compact ? 15 : 16,
+                      height: 1.45,
                     ),
-                    onPressed: onPricing,
-                    child: const Text('Voir les offres'),
                   ),
                 ],
               );
 
-              if (constraints.maxWidth < 760) {
+              final buttons = compact
+                  ? Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: onStart,
+                            child: const Text('Commencer maintenant'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white38),
+                            ),
+                            onPressed: onPricing,
+                            child: const Text('Voir les offres'),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        FilledButton(
+                          onPressed: onStart,
+                          child: const Text('Commencer maintenant'),
+                        ),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white38),
+                          ),
+                          onPressed: onPricing,
+                          child: const Text('Voir les offres'),
+                        ),
+                      ],
+                    );
+
+              if (compact) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [text, const SizedBox(height: 22), buttons],
                 );
               }
+
               return Row(
                 children: [
-                  const Expanded(child: Column()),
                   Expanded(flex: 3, child: text),
-                  const Spacer(),
+                  const SizedBox(width: 28),
                   buttons,
                 ],
               );
