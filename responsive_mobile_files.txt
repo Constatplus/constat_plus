@@ -1,0 +1,2779 @@
+import 'package:flutter/material.dart';
+
+import '../../core/access/access_service.dart';
+import '../../core/models/mission_type.dart';
+import '../../core/utils/mission_identifier.dart';
+import '../commercial/domain/models/discovery_access_state.dart';
+import '../commercial/infrastructure/repositories/supabase_discovery_access_repository.dart';
+import '../commercial/presentation/pages/discovery_paywall_page.dart';
+import 'before_works/models/before_works_data.dart';
+import 'before_works/step_before_works_photos.dart';
+import 'before_works/step_before_works_visit.dart';
+import 'comparison/step_comparative_remarks.dart';
+import 'models/wizard_mission_data.dart';
+import 'property_composition/models/property_element.dart';
+import 'property_composition/models/room_item.dart';
+import 'property_composition/widgets/building_workflow_shell.dart';
+import 'reference/models/reference_report.dart';
+import 'reference/reference_pdf_viewer_page.dart';
+import 'reference/reference_report_repository.dart';
+import 'reference/step_reference_report.dart';
+import 'report/models/report_settings.dart';
+import 'report/models/visit_report_snapshot.dart';
+import 'step_exit_calculations.dart';
+import 'step_exit_closure.dart';
+import 'step_exit_comparison.dart';
+import 'step_exit_mission_order.dart';
+import 'step_before_works_info.dart';
+import 'step_general_info.dart';
+import 'step_keys_meters.dart';
+import 'step_property_composition.dart';
+import 'step_property_type.dart';
+import 'step_report.dart';
+import 'step_signatures.dart';
+import 'step_visit.dart';
+
+class WizardPage extends StatefulWidget {
+  const WizardPage({super.key, required this.missionType});
+
+  final MissionType missionType;
+
+  @override
+  State<WizardPage> createState() => _WizardPageState();
+}
+
+class _WizardPageState extends State<WizardPage> {
+  int currentStep = 0;
+  late final String _missionId = createMissionIdentifier();
+
+  final List<RoomItem> selectedRooms = <RoomItem>[];
+  final StepVisitController _visitController = StepVisitController();
+  final StepSignatureController _signatureController =
+      StepSignatureController();
+  final WizardMissionData _missionData = WizardMissionData();
+  SupabaseDiscoveryAccessRepository? _discoveryRepositoryInstance;
+  DiscoveryAccessState? _discoveryAccess;
+
+  SupabaseDiscoveryAccessRepository get _discoveryRepository =>
+      _discoveryRepositoryInstance ??= SupabaseDiscoveryAccessRepository();
+
+  VisitReportSnapshot _reportSnapshot = const VisitReportSnapshot(
+    rooms: <VisitRoomReport>[],
+  );
+
+  List<String> get _steps {
+    switch (widget.missionType) {
+      case MissionType.entry:
+        return const <String>[
+          'Type de bien',
+          'Informations générales',
+          'Clés • Compteurs • Documents',
+          'Composition du bien',
+          "Visite d'entrée",
+          'Signatures',
+          "Rapport d'entrée",
+        ];
+      case MissionType.exit:
+        return const <String>[
+          'Ordre de mission et parties présentes',
+          'Éléments principaux de la mission',
+          "Composition issue de l'état des lieux d'entrée",
+          'Remarques comparatives de sortie',
+          'Calcul des indemnités',
+          'Clôture contradictoire et signatures',
+          'Rapport de sortie',
+        ];
+      case MissionType.beforeWorks:
+        return const <String>[
+          'Ordre de mission',
+          'Éléments principaux de la mission',
+          'Composition du constat',
+          'Visite avant travaux',
+          'Photos',
+          'Signatures',
+          'Rapport avant travaux',
+        ];
+      case MissionType.afterWorks:
+        return const <String>[
+          'Ordre de mission et parties présentes',
+          'Rapport avant travaux de référence',
+          'Éléments principaux de la mission',
+          'Composition reprise du rapport avant travaux',
+          'Remarques comparatives de récolement',
+          'Rapport de récolement',
+        ];
+    }
+  }
+
+  bool get _isExit => widget.missionType == MissionType.exit;
+  bool get _isBeforeWorks => widget.missionType == MissionType.beforeWorks;
+  bool get _isAfterWorks => widget.missionType == MissionType.afterWorks;
+  InspectionReportType get _reportType => _isExit
+      ? InspectionReportType.exit
+      : _isBeforeWorks
+      ? InspectionReportType.beforeWorks
+      : _isAfterWorks
+      ? InspectionReportType.afterWorks
+      : InspectionReportType.entry;
+  int get _visitStepIndex => _isExit
+      ? 3
+      : _isBeforeWorks
+      ? 3
+      : _isAfterWorks
+      ? 4
+      : 4;
+  int get _compositionStepIndex => _isExit
+      ? 2
+      : _isBeforeWorks
+      ? 2
+      : _isAfterWorks
+      ? 3
+      : 3;
+  int get _propertyStructureStepIndex => _isExit || _isBeforeWorks
+      ? 1
+      : _isAfterWorks
+      ? 2
+      : 0;
+  int get _signatureStepIndex => _isExit
+      ? 5
+      : _isBeforeWorks
+      ? 5
+      : _isAfterWorks
+      ? -1
+      : 5;
+  int get _reportStepIndex => _steps.length - 1;
+
+  bool get _isSignatureStep => currentStep == _signatureStepIndex;
+  bool get _isLastStep => currentStep == _reportStepIndex;
+
+ void _selectPropertyElement(String id) {
+  setState(() {
+    _missionData.selectedPropertyElementId = id;
+  });
+}
+
+void _selectPropertyElementAndContinue(String id) {
+  setState(() {
+    _missionData.selectedPropertyElementId = id;
+
+    // Passage automatique à l’étape suivante uniquement
+    // pour l’état des lieux d’entrée et de sortie.
+    if (!_isBeforeWorks &&
+        !_isAfterWorks &&
+        currentStep == _propertyStructureStepIndex &&
+        currentStep < _steps.length - 1) {
+      currentStep++;
+    }
+  });
+}
+
+  void _attachRoomsToDefaultElement({String name = 'Habitation principale'}) {
+    var element = _missionData.propertyElements.isEmpty
+        ? null
+        : _missionData.propertyElements.first;
+    final createdDefault = element == null;
+    if (element == null) {
+      element = PropertyElement.create(PropertyElementType.housing, name: name);
+      _missionData.propertyElements.add(element);
+    }
+    _missionData.selectedPropertyElementId ??= element.id;
+    for (final room in selectedRooms) {
+      if (createdDefault || room.propertyElementId.isEmpty) {
+        room.propertyElementId = element.id;
+      }
+    }
+  }
+
+Widget _buildPropertyStructure() {
+  final technicalMode = _isBeforeWorks || _isAfterWorks;
+
+  return StepPropertyType(
+    elements: _missionData.propertyElements,
+    selectedElementId: _missionData.selectedPropertyElementId,
+    onSelected: technicalMode
+        ? _selectPropertyElement
+        : _selectPropertyElementAndContinue,
+    onChanged: () => setState(() {}),
+    technicalMode: technicalMode,
+  );
+}
+
+  Widget _buildPropertyComposition({bool technicalMode = false}) {
+    final selectedId = _missionData.selectedPropertyElementId;
+    if (selectedId == null) {
+      return const Center(
+        child: Text('Sélectionnez d’abord un élément principal.'),
+      );
+    }
+    return StepPropertyComposition(
+      rooms: selectedRooms,
+      missionId: _missionId,
+      discoveryAccess: _discoveryAccess,
+      onDiscoveryLimitReached: _openDiscoveryPaywall,
+      propertyElements: _missionData.propertyElements,
+      selectedPropertyElementId: selectedId,
+      onPropertyElementSelected: _selectPropertyElement,
+      technicalMode: technicalMode,
+      onRoomsChanged: () => setState(() {}),
+    );
+  }
+
+  void _setPropertyElementCompleted(String id, bool completed) {
+    setState(() {
+      if (completed) {
+        _missionData.completedPropertyElementIds.add(id);
+      } else {
+        _missionData.completedPropertyElementIds.remove(id);
+      }
+    });
+  }
+
+  List<String> get _requiredPropertyElementIds => _missionData.propertyElements
+      .where(
+        (element) =>
+            selectedRooms.any((room) => room.propertyElementId == element.id),
+      )
+      .map((element) => element.id)
+      .toList(growable: false);
+
+  Widget _buildGuidedBuildingStage(
+    Widget Function(List<RoomItem> rooms, String elementId) builder,
+  ) {
+    final selectedId = _missionData.selectedPropertyElementId;
+    if (selectedId == null || _missionData.propertyElements.isEmpty) {
+      return const Center(child: Text('Aucun bâtiment sélectionné.'));
+    }
+    final rooms = selectedRooms
+        .where((room) => room.propertyElementId == selectedId)
+        .toList(growable: false);
+    return BuildingWorkflowShell(
+      elements: _missionData.propertyElements,
+      rooms: selectedRooms,
+      selectedElementId: selectedId,
+      completedElementIds: _missionData.completedPropertyElementIds,
+      onSelected: _selectPropertyElement,
+      onCompletionChanged: _setPropertyElementCompleted,
+      child: builder(rooms, selectedId),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeDiscoveryMode();
+    });
+  }
+
+  Future<void> _initializeDiscoveryMode() async {
+    if (AccessService.instance.isDemo) return;
+    try {
+      final state = await _discoveryRepository.registerMission(
+        missionId: _missionId,
+        missionType: widget.missionType.databaseValue,
+      );
+      if (!mounted) return;
+      setState(() => _discoveryAccess = state);
+      AccessService.instance.setDiscoveryAccess(state);
+      if (!state.activeMissionIds.contains(_missionId) &&
+          !state.hasPaidAccessFor(_missionId)) {
+        final unlocked = await showDiscoveryPaywall(
+          context,
+          missionId: _missionId,
+          roomsUsed: selectedRooms.length,
+          roomLimit: state.policy.maxFullyDescribedRooms,
+        );
+        if (!mounted) return;
+        if (!unlocked) {
+          Navigator.pop(context);
+          return;
+        }
+        await _refreshDiscoveryAccess(registerMission: true);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Mode Découverte hors ligne indisponible avant une première synchronisation : $error',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshDiscoveryAccess({
+    bool registerMission = false,
+    bool allowOffline = true,
+  }) async {
+    final state = registerMission
+        ? await _discoveryRepository.registerMission(
+            missionId: _missionId,
+            missionType: widget.missionType.databaseValue,
+            allowOffline: allowOffline,
+          )
+        : await _discoveryRepository.getState(forceRefresh: true);
+    if (!mounted) return;
+    setState(() => _discoveryAccess = state);
+    AccessService.instance.setDiscoveryAccess(state);
+  }
+
+  Future<bool> _openDiscoveryPaywall(int roomsUsed, int roomLimit) async {
+    try {
+      await _refreshDiscoveryAccess(registerMission: true, allowOffline: false);
+    } catch (error) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Synchronisez le brouillon avant de lancer le paiement : $error',
+          ),
+        ),
+      );
+      return false;
+    }
+    if (!mounted) return false;
+    final unlocked = await showDiscoveryPaywall(
+      context,
+      missionId: _missionId,
+      roomsUsed: roomsUsed,
+      roomLimit: roomLimit,
+    );
+    if (!mounted || !unlocked) return false;
+    await _refreshDiscoveryAccess();
+    return _discoveryAccess?.hasPaidAccessFor(_missionId) ?? false;
+  }
+
+  Future<void> _openPreviousEntryReport() async {
+    await ReferenceReportRepository.instance.load();
+    if (!mounted) return;
+    final reports = ReferenceReportRepository.instance.reports
+        .where(
+          (report) =>
+              report.source == ReferenceReportSource.constatPlus &&
+              report.missionType == 'entry',
+        )
+        .toList(growable: false);
+    if (reports.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Aucun ancien état des lieux d’entrée Constat+ n’est disponible.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final selected = await showDialog<ReferenceReport>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Ouvrir un ancien rapport Constat+'),
+        content: SizedBox(
+          width: 560,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: reports.length,
+            itemBuilder: (context, index) {
+              final report = reports[index];
+              return ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: Text(report.title),
+                subtitle: Text(
+                  '${report.createdAt.day.toString().padLeft(2, '0')}/'
+                  '${report.createdAt.month.toString().padLeft(2, '0')}/'
+                  '${report.createdAt.year}',
+                ),
+                onTap: () => Navigator.pop(dialogContext, report),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted) return;
+
+    final sourceRooms = selected.zones.isNotEmpty
+        ? selected.zones
+        : selected.snapshot.rooms
+              .map(
+                (room) => RoomItem(
+                  type: room.type,
+                  name: room.name,
+                  level: room.level,
+                  propertyElementId: room.propertyElementId,
+                ),
+              )
+              .toList(growable: false);
+    setState(() {
+      _missionData.propertyElements
+        ..clear()
+        ..addAll(selected.snapshot.propertyElements.map((item) => item.copy()));
+      _missionData.selectedPropertyElementId =
+          _missionData.propertyElements.isEmpty
+          ? null
+          : _missionData.propertyElements.first.id;
+      selectedRooms
+        ..clear()
+        ..addAll(
+          sourceRooms.map(
+            (room) => RoomItem(
+              type: room.type,
+              name: room.name,
+              level: room.level,
+              propertyElementId: room.propertyElementId,
+            ),
+          ),
+        );
+      _attachRoomsToDefaultElement();
+      _reportSnapshot = selected.snapshot;
+      _missionData.visitSnapshot = selected.snapshot;
+      currentStep = 3;
+    });
+  }
+
+  bool get _hasIncompleteExitComparison => selectedRooms.any(
+    (room) => !_missionData.comparisonRemarks.any(
+      (remark) =>
+          remark.zone == room.name && remark.afterDescription.trim().isNotEmpty,
+    ),
+  );
+
+  Future<void> _nextStep() async {
+    if (currentStep == _propertyStructureStepIndex &&
+        _missionData.propertyElements.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ajoutez au moins un élément principal.')),
+      );
+      return;
+    }
+    if (currentStep == _compositionStepIndex && selectedRooms.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ajoutez au moins une pièce avant de continuer.'),
+        ),
+      );
+      return;
+    }
+
+    if (currentStep == _visitStepIndex &&
+        _isExit &&
+        _hasIncompleteExitComparison) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Remarques comparatives incomplètes'),
+          content: const Text(
+            'Certaines pièces ne comportent pas encore de remarque comparative.\n\n'
+            'Vous pourrez toujours compléter ces remarques ultérieurement.\n\n'
+            'Souhaitez-vous poursuivre vers le calcul des indemnités ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Retour'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Continuer'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true || !mounted) return;
+    }
+
+    if (currentStep == _visitStepIndex && !_isExit) {
+      final missing = _requiredPropertyElementIds.where(
+        (id) => !_missionData.completedPropertyElementIds.contains(id),
+      );
+      if (missing.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Terminez chaque bâtiment contenant des pièces avant de continuer.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    if (currentStep == _visitStepIndex &&
+        !_isExit &&
+        !_isBeforeWorks &&
+        !_isAfterWorks) {
+      _reportSnapshot = _visitController.read();
+      _missionData.visitSnapshot = _reportSnapshot;
+    }
+
+    if (!_isLastStep) {
+      setState(() {
+        currentStep++;
+      });
+    }
+  }
+
+  void _openReportFromSignatures() {
+    if (!mounted) return;
+
+    setState(() {
+      currentStep = _reportStepIndex;
+    });
+  }
+
+  void _previousStep() {
+    if (currentStep > 0) {
+      setState(() {
+        currentStep--;
+      });
+      return;
+    }
+
+    Navigator.pop(context);
+  }
+
+  Widget _buildStepContent() {
+    if (_isExit) {
+      return _buildExitStepContent();
+    }
+    if (_isBeforeWorks) return _buildBeforeWorksStepContent();
+    if (_isAfterWorks) return _buildAfterWorksStepContent();
+
+    return _buildStandardStepContent();
+  }
+
+  Widget _buildBeforeWorksStepContent() {
+    switch (currentStep) {
+      case 0:
+        return StepBeforeWorksInfo(
+          data: _missionData.beforeWorks,
+          onChanged: () => setState(() {}),
+        );
+      case 1:
+        return _buildPropertyStructure();
+      case 2:
+        return _buildPropertyComposition(technicalMode: true);
+      case 3:
+        return _buildGuidedBuildingStage(
+          (_, elementId) => StepBeforeWorksVisit(
+            rooms: selectedRooms,
+            data: _missionData.beforeWorks,
+            propertyElements: _missionData.propertyElements,
+            activePropertyElementId: elementId,
+            onChanged: () => setState(() {}),
+          ),
+        );
+      case 4:
+        return StepBeforeWorksPhotos(
+          findings: _missionData.beforeWorks.findings,
+          areas: _missionData.beforeWorks.areas,
+        );
+      case 5:
+        return StepSignature(
+          controller: _signatureController,
+          onContinue: _openReportFromSignatures,
+          onPostpone: _openReportFromSignatures,
+        );
+      case 6:
+        return StepReport(
+          missionId: _missionId,
+          missionType: widget.missionType.databaseValue,
+          snapshot: _missionData.visitSnapshot,
+          initialReportType: _reportType,
+          rooms: selectedRooms,
+          beforeWorksData: _missionData.beforeWorks,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildAfterWorksStepContent() {
+    switch (currentStep) {
+      case 0:
+        return StepBeforeWorksInfo(
+          data: _missionData.beforeWorks,
+          afterWorks: true,
+          onChanged: () => setState(() {}),
+        );
+      case 1:
+        return StepReferenceReport(
+          selected: _missionData.referenceReport,
+          mode: _missionData.recollectionReferenceMode,
+          onSelected: _selectReference,
+          onNoReference: _selectNoReference,
+        );
+      case 2:
+        return _buildPropertyStructure();
+      case 3:
+        return _buildPropertyComposition(technicalMode: true);
+      case 4:
+        return _buildGuidedBuildingStage(
+          (rooms, _) => StepComparativeRemarks(
+            rooms: rooms,
+            remarks: _missionData.comparisonRemarks,
+            referenceFindings:
+                _missionData.referenceReport?.findings ?? const [],
+            afterWorks: true,
+            onOpenReference: _missionData.referenceReport == null
+                ? null
+                : _openReference,
+          ),
+        );
+      case 5:
+        return StepReport(
+          missionId: _missionId,
+          missionType: widget.missionType.databaseValue,
+          snapshot:
+              _missionData.referenceReport?.snapshot ??
+              const VisitReportSnapshot(rooms: <VisitRoomReport>[]),
+          initialReportType: _reportType,
+          rooms: selectedRooms,
+          referenceReport: _missionData.referenceReport,
+          comparisonRemarks: _missionData.comparisonRemarks,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  void _selectReference(ReferenceReport report) {
+    setState(() {
+      _missionData.referenceReport = report;
+      _missionData.recollectionReferenceMode = report.external
+          ? RecollectionReferenceMode.externalPdf
+          : RecollectionReferenceMode.constatPlus;
+      _missionData.recollectionAreas
+        ..clear()
+        ..addAll(
+          report.areas.map(
+            (area) => BeforeWorksArea(
+              id: area.id,
+              name: area.name,
+              type: area.type,
+              parentId: area.parentId,
+            ),
+          ),
+        );
+      _missionData.propertyElements
+        ..clear()
+        ..addAll(report.snapshot.propertyElements.map((item) => item.copy()));
+      _missionData.selectedPropertyElementId =
+          _missionData.propertyElements.isEmpty
+          ? null
+          : _missionData.propertyElements.first.id;
+      if (report.zones.isNotEmpty) {
+        selectedRooms
+          ..clear()
+          ..addAll(
+            report.zones.map(
+              (room) => RoomItem(
+                type: room.type,
+                name: room.name,
+                level: room.level,
+                propertyElementId: room.propertyElementId,
+              ),
+            ),
+          );
+      } else if (report.areas.isNotEmpty) {
+        selectedRooms
+          ..clear()
+          ..addAll(
+            report.areas
+                .where((area) => !area.type.isContainer)
+                .map(
+                  (area) => RoomItem(
+                    type: area.type.label,
+                    name: area.name,
+                    level: '',
+                  ),
+                ),
+          );
+      }
+      _attachRoomsToDefaultElement(name: 'Bâtiment de référence');
+    });
+  }
+
+  void _selectNoReference() {
+    setState(() {
+      _missionData.referenceReport = null;
+      _missionData.recollectionReferenceMode = RecollectionReferenceMode.none;
+      _missionData.recollectionAreas.clear();
+    });
+  }
+
+  void _openReference() {
+    final report = _missionData.referenceReport;
+    if (report == null) return;
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ReferencePdfViewerPage(
+          title: report.title,
+          backLabel: 'Retour au récolement',
+          pdfBytes: report.pdfBytes,
+          pdfPath: report.pdfPath,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStandardStepContent() {
+    switch (currentStep) {
+      case 0:
+        return _buildPropertyStructure();
+      case 1:
+        return const StepGeneralInfo();
+      case 2:
+        return const StepKeysMeters();
+      case 3:
+        return _buildPropertyComposition();
+      case 4:
+        return StepVisit(
+          missionId: _missionId,
+          missionType: widget.missionType.databaseValue,
+          rooms: selectedRooms,
+          propertyElements: _missionData.propertyElements,
+          onBuildingCompletionChanged: _setPropertyElementCompleted,
+          controller: _visitController,
+          initialSnapshot: _reportSnapshot,
+        );
+      case 5:
+        return StepSignature(
+          controller: _signatureController,
+          onContinue: _openReportFromSignatures,
+          onPostpone: _openReportFromSignatures,
+        );
+      case 6:
+        return StepReport(
+          missionId: _missionId,
+          missionType: widget.missionType.databaseValue,
+          snapshot: _reportSnapshot,
+          initialReportType: _reportType,
+          rooms: selectedRooms,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildExitStepContent() {
+    switch (currentStep) {
+      case 0:
+        return const StepExitMissionOrder();
+      case 1:
+        return _buildPropertyStructure();
+      case 2:
+        return _buildPropertyComposition();
+      case 3:
+        return _buildGuidedBuildingStage(
+          (rooms, _) => StepExitComparison(
+            rooms: rooms,
+            remarks: _missionData.comparisonRemarks,
+          ),
+        );
+      case 4:
+        return StepExitCalculations(
+          rooms: selectedRooms,
+          remarks: _missionData.comparisonRemarks,
+          lines: _missionData.exitDamageLines,
+          dismissedSourceIds: _missionData.dismissedExitRemarkIds,
+        );
+      case 5:
+        return StepExitClosure();
+      case 6:
+        return StepReport(
+          missionId: _missionId,
+          missionType: widget.missionType.databaseValue,
+          snapshot: _reportSnapshot,
+          initialReportType: _reportType,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildBottomNavigation() {
+    return Row(
+      children: [
+        OutlinedButton.icon(
+          onPressed: _previousStep,
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Précédent'),
+        ),
+        const Spacer(),
+        if (!_isSignatureStep && !_isLastStep)
+          FilledButton.icon(
+            onPressed: _nextStep,
+            icon: const Icon(Icons.arrow_forward),
+            label: const Text('Continuer'),
+          ),
+        if (_isExit && _isSignatureStep)
+          FilledButton.icon(
+            onPressed: _nextStep,
+            icon: const Icon(Icons.description_outlined),
+            label: const Text('Générer le rapport de sortie'),
+          ),
+        if (_isBeforeWorks && _isSignatureStep)
+          FilledButton.icon(
+            onPressed: _openReportFromSignatures,
+            icon: const Icon(Icons.description_outlined),
+            label: const Text('Ouvrir le rapport avant travaux'),
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (currentStep + 1) / _steps.length;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F8FA),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.missionType.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Text(
+                    '${widget.missionType.shortLabel} • '
+                    'Étape ${currentStep + 1} / ${_steps.length}',
+                    style: const TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                  if (widget.missionType == MissionType.entry) ...[
+                    const SizedBox(width: 16),
+                    OutlinedButton.icon(
+                      onPressed: _openPreviousEntryReport,
+                      icon: const Icon(Icons.folder_open_outlined),
+                      label: const Text('Ouvrir un ancien rapport'),
+                    ),
+                  ],
+                  if (_discoveryAccess != null &&
+                      !_discoveryAccess!.hasPaidAccessFor(_missionId)) ...[
+                    const SizedBox(width: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'Mode Découverte : ${selectedRooms.length} / ${_discoveryAccess!.policy.maxFullyDescribedRooms} pièces',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor: Colors.white,
+                  color: _isExit ? const Color(0xFFDC2626) : Colors.blue,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _steps[currentStep],
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: _isExit ? FontWeight.w700 : FontWeight.normal,
+                    color: _isExit ? const Color(0xFFB91C1C) : Colors.black54,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: _isExit
+                        ? Border.all(color: const Color(0xFFFECACA))
+                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: _buildStepContent(),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildBottomNavigation(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+import 'package:flutter/material.dart';
+
+import 'property_composition/models/property_element.dart';
+
+class StepPropertyType extends StatelessWidget {
+  const StepPropertyType({
+    super.key,
+    required this.elements,
+    required this.selectedElementId,
+    required this.onSelected,
+    required this.onChanged,
+    this.technicalMode = false,
+  });
+
+  final List<PropertyElement> elements;
+  final String? selectedElementId;
+  final ValueChanged<String> onSelected;
+  final VoidCallback onChanged;
+  final bool technicalMode;
+
+  static const _buildingTypes = <PropertyElementType>[
+    PropertyElementType.apartment,
+    PropertyElementType.duplex,
+    PropertyElementType.house,
+    PropertyElementType.villa,
+    PropertyElementType.garage,
+    PropertyElementType.warehouse,
+    PropertyElementType.hangar,
+    PropertyElementType.other,
+  ];
+
+  List<PropertyElementType> get _availableTypes => widgetTypes(technicalMode);
+
+  static List<PropertyElementType> widgetTypes(bool technicalMode) =>
+      <PropertyElementType>[
+        if (technicalMode) PropertyElementType.road,
+        ..._buildingTypes,
+      ];
+
+  Future<String?> _askCustomName(BuildContext context) async {
+    final controller = TextEditingController();
+    final customName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Autre type de bien'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nom du bien'),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: const Text('Valider'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    final value = customName?.trim();
+    if (value == null || value.isEmpty) return null;
+    return value;
+  }
+
+  Future<void> _addTechnicalElement(
+    BuildContext context,
+    PropertyElementType type,
+  ) async {
+    String? customName;
+    if (type == PropertyElementType.other) {
+      customName = await _askCustomName(context);
+      if (customName == null) return;
+    }
+
+    final sameTypeCount = elements.where((item) => item.type == type).length;
+    final defaultName = sameTypeCount == 0
+        ? type.label
+        : '${type.label} ${sameTypeCount + 1}';
+    final element = PropertyElement.create(
+      type,
+      name: customName ?? defaultName,
+    );
+    elements.add(element);
+    onChanged();
+    onSelected(element.id);
+  }
+
+  Future<void> _selectClassicType(
+    BuildContext context,
+    PropertyElementType type,
+  ) async {
+    String? customName;
+    if (type == PropertyElementType.other) {
+      customName = await _askCustomName(context);
+      if (customName == null) return;
+    }
+
+    final current = elements.isEmpty ? null : elements.first;
+    if (current != null &&
+        current.type == type &&
+        type != PropertyElementType.other) {
+      onSelected(current.id);
+      return;
+    }
+
+    final element = PropertyElement.create(
+      type,
+      name: customName ?? type.label,
+    );
+
+    elements
+      ..clear()
+      ..add(element);
+    onChanged();
+    onSelected(element.id);
+  }
+
+  IconData _icon(PropertyElementType type) => switch (type) {
+    PropertyElementType.apartment => Icons.apartment_outlined,
+    PropertyElementType.duplex => Icons.stairs_outlined,
+    PropertyElementType.house => Icons.home_outlined,
+    PropertyElementType.villa => Icons.villa_outlined,
+    PropertyElementType.hangar => Icons.factory_outlined,
+    PropertyElementType.other => Icons.more_horiz,
+    PropertyElementType.housing => Icons.home_work_outlined,
+    PropertyElementType.road => Icons.add_road_outlined,
+    PropertyElementType.annex => Icons.other_houses_outlined,
+    PropertyElementType.garage => Icons.garage_outlined,
+    PropertyElementType.warehouse => Icons.warehouse_outlined,
+    PropertyElementType.garden => Icons.yard_outlined,
+    PropertyElementType.land => Icons.landscape_outlined,
+    PropertyElementType.custom => Icons.dashboard_customize_outlined,
+  };
+
+  Widget _buildTechnicalTypeList(BuildContext context) {
+    return ListView.separated(
+      itemCount: _availableTypes.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final type = _availableTypes[index];
+        return ListTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          leading: Icon(
+            _icon(type),
+            color: const Color(0xFF1264F6),
+          ),
+          title: Text(type.label),
+          trailing: const Icon(Icons.add_circle_outline),
+          onTap: () => _addTechnicalElement(context, type),
+        );
+      },
+    );
+  }
+
+  Widget _buildClassicTypeGrid(BuildContext context) {
+    final selectedType = elements.isEmpty ? null : elements.first.type;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columnCount = constraints.maxWidth >= 720
+            ? 4
+            : constraints.maxWidth >= 520
+            ? 3
+            : 2;
+
+        return GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columnCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.12,
+          ),
+          itemCount: _buildingTypes.length,
+          itemBuilder: (context, index) {
+            final type = _buildingTypes[index];
+            final selected = selectedType == type;
+
+            return Card(
+              elevation: 0,
+              clipBehavior: Clip.antiAlias,
+              color: selected ? const Color(0xFFEAF2FF) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(
+                  color: selected
+                      ? const Color(0xFF1264F6)
+                      : const Color(0xFFDCE5F0),
+                  width: selected ? 2 : 1,
+                ),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                hoverColor: const Color(0xFFEAF2FF),
+                splashColor: const Color(0xFFDCE9FF),
+                onTap: () => _selectClassicType(context, type),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? const Color(0xFFD9E8FF)
+                                    : const Color(0xFFEAF2FF),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Icon(
+                                _icon(type),
+                                size: 29,
+                                color: const Color(0xFF1264F6),
+                              ),
+                            ),
+                            const SizedBox(height: 11),
+                            Text(
+                              type.label,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF172033),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (selected)
+                      const Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF1264F6),
+                          size: 24,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSelectedProperty() {
+    if (elements.isEmpty) {
+      return const Center(
+        child: Text('Sélectionnez un type de bien.'),
+      );
+    }
+
+    final element = elements.first;
+    return Card(
+      color: const Color(0xFFEAF2FF),
+      child: ListTile(
+        leading: Icon(
+          _icon(element.type),
+          color: const Color(0xFF1264F6),
+        ),
+        title: TextFormField(
+          key: ValueKey(element.id),
+          initialValue: element.name,
+          decoration: const InputDecoration(
+            labelText: 'Nom du bien',
+            border: InputBorder.none,
+          ),
+          onChanged: (value) {
+            element.name = value;
+            onChanged();
+          },
+        ),
+        trailing: const Icon(
+          Icons.check_circle,
+          color: Color(0xFF1264F6),
+        ),
+        onTap: () => onSelected(element.id),
+      ),
+    );
+  }
+
+  Widget _buildTechnicalComposition() {
+    return elements.isEmpty
+        ? const Center(
+            child: Text('Ajoutez au moins un élément principal.'),
+          )
+        : ListView.separated(
+            itemCount: elements.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final element = elements[index];
+              final selected = element.id == selectedElementId;
+              return Card(
+                color: selected ? const Color(0xFFEAF2FF) : null,
+                child: ListTile(
+                  leading: Icon(_icon(element.type)),
+                  title: TextFormField(
+                    key: ValueKey(element.id),
+                    initialValue: element.name,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de l’élément',
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) {
+                      element.name = value;
+                      onChanged();
+                    },
+                  ),
+                  trailing: selected
+                      ? const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF1264F6),
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: () => onSelected(element.id),
+                ),
+              );
+            },
+          );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final leftWidth = technicalMode
+            ? 390.0
+            : constraints.maxWidth >= 1450
+            ? 720.0
+            : constraints.maxWidth >= 1150
+            ? 560.0
+            : 440.0;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: leftWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    technicalMode ? 'Éléments principaux' : 'Type de bien',
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    technicalMode
+                        ? 'Ajoutez chaque bâtiment ou zone qui compose la mission.'
+                        : 'Sélectionnez un seul type de bien. Les pièces et dépendances seront ajoutées à l’étape suivante.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: technicalMode
+                        ? _buildTechnicalTypeList(context)
+                        : _buildClassicTypeGrid(context),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 28),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    technicalMode
+                        ? 'Composition de la mission (${elements.length})'
+                        : 'Bien sélectionné',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    technicalMode
+                        ? 'Renommez les éléments puis choisissez celui à composer.'
+                        : 'Vous pourrez composer le bien dans l’étape suivante.',
+                    style: const TextStyle(color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: technicalMode
+                        ? _buildTechnicalComposition()
+                        : _buildSelectedProperty(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+import 'package:flutter/material.dart';
+
+import '../commercial/domain/models/discovery_access_state.dart';
+import 'property_composition/models/property_element.dart';
+import 'property_composition/models/room_item.dart';
+import 'property_composition/services/room_reorder.dart';
+
+class StepPropertyComposition extends StatefulWidget {
+  final List<RoomItem> rooms;
+  final VoidCallback onRoomsChanged;
+  final bool technicalMode;
+  final String missionId;
+  final DiscoveryAccessState? discoveryAccess;
+  final Future<bool> Function(int roomsUsed, int roomLimit)?
+  onDiscoveryLimitReached;
+  final List<PropertyElement> propertyElements;
+  final String selectedPropertyElementId;
+  final ValueChanged<String> onPropertyElementSelected;
+
+  const StepPropertyComposition({
+    super.key,
+    required this.rooms,
+    required this.onRoomsChanged,
+    required this.missionId,
+    required this.discoveryAccess,
+    required this.onDiscoveryLimitReached,
+    required this.propertyElements,
+    required this.selectedPropertyElementId,
+    required this.onPropertyElementSelected,
+    this.technicalMode = false,
+  });
+
+  @override
+  State<StepPropertyComposition> createState() =>
+      _StepPropertyCompositionState();
+}
+
+class _StepPropertyCompositionState extends State<StepPropertyComposition> {
+  final TextEditingController _customRoomController = TextEditingController();
+
+  static const List<String> _propertyTemplates = <String>[
+    'Hall d’entrée',
+    'Hall de nuit',
+    'Dégagement',
+    'Séjour',
+    'Salon',
+    'Salle à manger',
+    'Cuisine',
+    'WC',
+    'Salle de bain',
+    'Salle de douche',
+    'Chambre',
+    'Bureau',
+    'Dressing',
+    'Buanderie',
+    'Cave',
+    'Grenier',
+    'Garage',
+    'Local technique',
+    'Terrasse',
+    'Jardin',
+    'Façade avant',
+    'Façade arrière',
+    'Façade latérale gauche',
+    'Façade latérale droite',
+  ];
+
+  static const List<String> _technicalBuildingTemplates = <String>[
+    'Hall d’entrée',
+    'Séjour',
+    'Salon',
+    'Salle à manger',
+    'Cuisine',
+    'Arrière-cuisine',
+    'Buanderie',
+    'WC',
+    'Salle de bain',
+    'Salle de douche',
+    'Hall de nuit',
+    'Chambre',
+    'Dressing',
+    'Bureau',
+    'Véranda',
+    'Garage',
+    'Cave',
+    'Grenier',
+    'Local technique',
+    'Escalier',
+    'Palier',
+    'Terrasse',
+    'Balcon',
+    'Jardin',
+    'Façade avant',
+    'Façade arrière',
+    'Façade gauche',
+    'Façade droite',
+    'Toiture',
+    'Combles',
+    'Autre',
+  ];
+
+  static const List<String> _roadTemplates = <String>[
+    'Chaussée',
+    'Trottoir',
+    'Accotement',
+    'Bordure',
+    'Avaloir',
+    'Égout',
+    'Parking',
+    'Signalisation',
+    'Marquage au sol',
+    'Espace vert',
+    'Mobilier urbain',
+    'Autre',
+  ];
+
+  List<String> get _roomTemplates {
+    if (!widget.technicalMode) return _propertyTemplates;
+    return _selectedElement?.type == PropertyElementType.road
+        ? _roadTemplates
+        : _technicalBuildingTemplates;
+  }
+
+  final List<String> _levels = const [
+    'Sous-sol',
+    'Rez-de-chaussée',
+    '1er étage',
+    '2e étage',
+    '3e étage',
+    'Combles',
+    'Extérieur',
+    'Annexe',
+  ];
+
+  List<RoomItem> get _rooms => widget.rooms
+      .where(
+        (room) => room.propertyElementId == widget.selectedPropertyElementId,
+      )
+      .toList(growable: true);
+
+  PropertyElement? get _selectedElement {
+    for (final element in widget.propertyElements) {
+      if (element.id == widget.selectedPropertyElementId) return element;
+    }
+    return null;
+  }
+
+  void _notifyChanged() {
+    widget.onRoomsChanged();
+  }
+
+  Future<void> _addRoom(String type) async {
+    setState(() {
+      widget.rooms.add(
+        RoomItem(type: type, name: type, level: _defaultLevelFor(type)),
+      );
+      widget.rooms.last.propertyElementId = widget.selectedPropertyElementId;
+    });
+
+    _notifyChanged();
+  }
+
+  String _defaultLevelFor(String type) {
+    const exteriorRooms = {
+      'Terrasse',
+      'Jardin',
+      'Façade avant',
+      'Façade arrière',
+      'Façade latérale gauche',
+      'Façade latérale droite',
+      'Façade gauche',
+      'Façade droite',
+      'Toiture',
+      'Balcon',
+      'Façade',
+      'Pignon',
+      'Mur mitoyen',
+      'Trottoir',
+      'Voirie',
+      'Clôture',
+      'Mur de soutènement',
+      'Bâtiment voisin',
+      'Chaussée',
+      'Accotement',
+      'Bordure',
+      'Avaloir',
+      'Égout',
+      'Parking',
+      'Signalisation',
+      'Marquage au sol',
+      'Espace vert',
+      'Mobilier urbain',
+    };
+
+    if (exteriorRooms.contains(type)) {
+      return 'Extérieur';
+    }
+
+    if (type == 'Cave') {
+      return 'Sous-sol';
+    }
+
+    if (type == 'Grenier') {
+      return 'Combles';
+    }
+
+    return 'Rez-de-chaussée';
+  }
+
+  Future<void> _addCustomRoom() async {
+    final name = _customRoomController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Indiquez le nom de la pièce.')),
+      );
+      return;
+    }
+
+    await _addRoom(name);
+
+    if (!mounted) {
+      return;
+    }
+
+    _customRoomController.clear();
+  }
+
+  void _removeRoom(int index) {
+    setState(() {
+      widget.rooms.remove(_rooms[index]);
+    });
+
+    _notifyChanged();
+  }
+
+  void _moveRoomUp(int index) {
+    if (index <= 0) {
+      return;
+    }
+
+    setState(() {
+      _swapScopedRooms(index, index - 1);
+    });
+
+    _notifyChanged();
+  }
+
+  void _moveRoomDown(int index) {
+    if (index >= _rooms.length - 1) {
+      return;
+    }
+
+    setState(() {
+      _swapScopedRooms(index, index + 1);
+    });
+
+    _notifyChanged();
+  }
+
+  void _swapScopedRooms(int first, int second) {
+    final scoped = _rooms;
+    final firstGlobal = widget.rooms.indexOf(scoped[first]);
+    final secondGlobal = widget.rooms.indexOf(scoped[second]);
+    final value = widget.rooms[firstGlobal];
+    widget.rooms[firstGlobal] = widget.rooms[secondGlobal];
+    widget.rooms[secondGlobal] = value;
+  }
+
+  void _reorderScopedRooms(int oldIndex, int newIndex) {
+    final reordered = _rooms;
+    reorderRooms(reordered, oldIndex, newIndex);
+    final globalIndices = <int>[
+      for (var index = 0; index < widget.rooms.length; index++)
+        if (widget.rooms[index].propertyElementId ==
+            widget.selectedPropertyElementId)
+          index,
+    ];
+    for (var index = 0; index < globalIndices.length; index++) {
+      widget.rooms[globalIndices[index]] = reordered[index];
+    }
+  }
+
+  IconData _iconForRoom(String type) {
+    switch (type) {
+      case 'Hall d’entrée':
+      case 'Hall de nuit':
+      case 'Dégagement':
+        return Icons.meeting_room_outlined;
+
+      case 'Séjour':
+      case 'Salon':
+      case 'Salle à manger':
+        return Icons.weekend_outlined;
+
+      case 'Cuisine':
+        return Icons.kitchen_outlined;
+
+      case 'WC':
+        return Icons.wc_outlined;
+
+      case 'Salle de bain':
+      case 'Salle de douche':
+        return Icons.bathtub_outlined;
+
+      case 'Chambre':
+        return Icons.bed_outlined;
+
+      case 'Bureau':
+        return Icons.business_center_outlined;
+
+      case 'Dressing':
+        return Icons.checkroom_outlined;
+
+      case 'Buanderie':
+        return Icons.local_laundry_service_outlined;
+
+      case 'Cave':
+        return Icons.inventory_2_outlined;
+
+      case 'Grenier':
+        return Icons.roofing_outlined;
+
+      case 'Garage':
+        return Icons.garage_outlined;
+
+      case 'Local technique':
+        return Icons.build_outlined;
+
+      case 'Terrasse':
+        return Icons.deck_outlined;
+
+      case 'Jardin':
+        return Icons.yard_outlined;
+
+      case 'Façade avant':
+      case 'Façade arrière':
+      case 'Façade latérale gauche':
+      case 'Façade latérale droite':
+      case 'Façade':
+      case 'Pignon':
+      case 'Mur mitoyen':
+      case 'Toiture':
+      case 'Bâtiment voisin':
+        return Icons.home_work_outlined;
+
+      case 'Trottoir':
+      case 'Voirie':
+        return Icons.add_road_outlined;
+
+      case 'Clôture':
+      case 'Mur de soutènement':
+        return Icons.fence_outlined;
+
+      default:
+        return Icons.add_home_work_outlined;
+    }
+  }
+
+  @override
+  void dispose() {
+    _customRoomController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildElementSelector(),
+        const SizedBox(height: 18),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 330, child: _buildTemplatesPanel()),
+              const SizedBox(width: 28),
+              Expanded(child: _buildCompositionPanel()),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildElementSelector() {
+    return Row(
+      children: [
+        const Text(
+          'Bâtiment ou zone :',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.propertyElements
+                .map((element) {
+                  return ChoiceChip(
+                    label: Text(element.name),
+                    selected: element.id == widget.selectedPropertyElementId,
+                    onSelected: (_) =>
+                        widget.onPropertyElementSelected(element.id),
+                  );
+                })
+                .toList(growable: false),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTemplatesPanel() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.technicalMode ? 'Zones proposées' : 'Pièces proposées',
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Cliquez plusieurs fois sur une pièce pour l’ajouter plusieurs fois.',
+          style: TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 18),
+        Expanded(
+          child: ListView.separated(
+            itemCount: _roomTemplates.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final room = _roomTemplates[index];
+
+              return Material(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => _addRoom(room),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF2FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            _iconForRoom(room),
+                            size: 21,
+                            color: const Color(0xFF1264F6),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            room,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.add_circle_outline,
+                          color: Color(0xFF1264F6),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _customRoomController,
+          decoration: InputDecoration(
+            labelText: 'Pièce personnalisée',
+            hintText: 'Exemple : Véranda',
+            prefixIcon: const Icon(Icons.edit_outlined),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          onSubmitted: (_) => _addCustomRoom(),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _addCustomRoom,
+            icon: const Icon(Icons.add),
+            label: const Text('Ajouter cette pièce'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompositionPanel() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.technicalMode
+                    ? 'Composition de ${_selectedElement?.name ?? 'la zone'}'
+                    : 'Pièces de ${_selectedElement?.name ?? 'l’élément'}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF2FF),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${_rooms.length} pièce${_rooms.length > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1264F6),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Renommez les pièces et indiquez leur niveau dans l’ordre de la visite.',
+          style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 18),
+        Expanded(
+          child: _rooms.isEmpty
+              ? _buildEmptyState()
+              : ReorderableListView.builder(
+                  buildDefaultDragHandles: false,
+                  itemCount: _rooms.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    setState(() {
+                      _reorderScopedRooms(oldIndex, newIndex);
+                    });
+
+                    _notifyChanged();
+                  },
+                  itemBuilder: (context, index) {
+                    return _buildRoomCard(room: _rooms[index], index: index);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.home_work_outlined, size: 62, color: Color(0xFF94A3B8)),
+            SizedBox(height: 16),
+            Text(
+              'Aucune pièce ajoutée',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF334155),
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Cliquez sur une pièce proposée pour commencer.',
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoomCard({required RoomItem room, required int index}) {
+    return Card(
+      key: ValueKey(room),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(
+                  Icons.drag_indicator_rounded,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: const Color(0xFFEAF2FF),
+              child: Icon(
+                _iconForRoom(room.type),
+                color: const Color(0xFF1264F6),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              flex: 3,
+              child: TextFormField(
+                initialValue: room.name,
+                decoration: const InputDecoration(
+                  labelText: 'Nom de la pièce',
+                  isDense: true,
+                ),
+                onChanged: (value) {
+                  room.name = value;
+                  _notifyChanged();
+                },
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<String>(
+                initialValue: _levels.contains(room.level)
+                    ? room.level
+                    : _levels.first,
+                decoration: const InputDecoration(
+                  labelText: 'Niveau',
+                  isDense: true,
+                ),
+                items: _levels.map((level) {
+                  return DropdownMenuItem<String>(
+                    value: level,
+                    child: Text(level),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+
+                  setState(() {
+                    room.level = value;
+                  });
+
+                  _notifyChanged();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Monter',
+              onPressed: index == 0
+                  ? null
+                  : () {
+                      _moveRoomUp(index);
+                    },
+              icon: const Icon(Icons.arrow_upward),
+            ),
+            IconButton(
+              tooltip: 'Descendre',
+              onPressed: index == _rooms.length - 1
+                  ? null
+                  : () {
+                      _moveRoomDown(index);
+                    },
+              icon: const Icon(Icons.arrow_downward),
+            ),
+            IconButton(
+              tooltip: 'Supprimer',
+              onPressed: () {
+                _removeRoom(index);
+              },
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+import 'package:flutter/material.dart';
+
+class StepGeneralInfo extends StatefulWidget {
+  const StepGeneralInfo({super.key});
+
+  @override
+  State<StepGeneralInfo> createState() => _StepGeneralInfoState();
+}
+
+class _StepGeneralInfoState extends State<StepGeneralInfo> {
+  DateTime selectedDate = DateTime.now();
+
+  bool ownerPresent = true;
+  bool tenantPresent = true;
+  bool expertPresent = true;
+  bool agentPresent = false;
+
+  final List<WitnessEntry> witnesses = [];
+
+  Future<void> _pickDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
+
+  void _addWitness() {
+    setState(() {
+      witnesses.add(WitnessEntry());
+    });
+  }
+
+  void _removeWitness(int index) {
+    setState(() {
+      witnesses.removeAt(index);
+    });
+  }
+
+  String get formattedDate {
+    return '${selectedDate.day.toString().padLeft(2, '0')}/'
+        '${selectedDate.month.toString().padLeft(2, '0')}/'
+        '${selectedDate.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Informations générales',
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Complétez les informations principales du dossier.',
+            style: TextStyle(fontSize: 17, color: Colors.black54),
+          ),
+          const SizedBox(height: 30),
+
+          const _SectionTitle(icon: Icons.location_on_outlined, title: 'Bien'),
+          const SizedBox(height: 14),
+
+          const Row(
+            children: [
+              Expanded(flex: 4, child: _InputField(label: 'Rue')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'N°')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'Boîte')),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          const Row(
+            children: [
+              Expanded(child: _InputField(label: 'Code postal')),
+              SizedBox(width: 14),
+              Expanded(flex: 3, child: _InputField(label: 'Ville')),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          const _SectionTitle(icon: Icons.person_outline, title: 'Bailleur'),
+          const SizedBox(height: 14),
+
+          const Row(
+            children: [
+              Expanded(flex: 2, child: _InputField(label: 'Nom')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'Téléphone')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'E-mail')),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          const _SectionTitle(icon: Icons.person_outline, title: 'Locataire'),
+          const SizedBox(height: 14),
+
+          const Row(
+            children: [
+              Expanded(flex: 2, child: _InputField(label: 'Nom')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'Téléphone')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'E-mail')),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          const _SectionTitle(
+            icon: Icons.calendar_today_outlined,
+            title: 'Date',
+          ),
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _pickDate,
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Date de la mission',
+                      filled: true,
+                      fillColor: const Color(0xFFF4F8FA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    child: Text(formattedDate),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(child: _InputField(label: 'Heure')),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          const _SectionTitle(icon: Icons.groups_outlined, title: 'Présences'),
+          const SizedBox(height: 10),
+
+          Wrap(
+            spacing: 18,
+            runSpacing: 8,
+            children: [
+              _PresenceCheck(
+                label: 'Bailleur présent',
+                value: ownerPresent,
+                onChanged: (value) => setState(() => ownerPresent = value),
+              ),
+              _PresenceCheck(
+                label: 'Locataire présent',
+                value: tenantPresent,
+                onChanged: (value) => setState(() => tenantPresent = value),
+              ),
+              _PresenceCheck(
+                label: 'Expert présent',
+                value: expertPresent,
+                onChanged: (value) => setState(() => expertPresent = value),
+              ),
+              _PresenceCheck(
+                label: 'Agent immobilier présent',
+                value: agentPresent,
+                onChanged: (value) => setState(() => agentPresent = value),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          Row(
+            children: [
+              const _SectionTitle(
+                icon: Icons.badge_outlined,
+                title: 'Témoins / représentants',
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: _addWitness,
+                icon: const Icon(Icons.add),
+                label: const Text('Ajouter un témoin'),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          if (witnesses.isEmpty)
+            const Text(
+              'Aucun témoin ajouté.',
+              style: TextStyle(color: Colors.black54),
+            ),
+
+          ...witnesses.asMap().entries.map((entry) {
+            final index = entry.key;
+            final witness = entry.value;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _WitnessCard(
+                witness: witness,
+                onChanged: () => setState(() {}),
+                onRemove: () => _removeWitness(index),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class WitnessEntry {
+  String represents = 'Bailleur';
+}
+
+class _WitnessCard extends StatelessWidget {
+  final WitnessEntry witness;
+  final VoidCallback onChanged;
+  final VoidCallback onRemove;
+
+  const _WitnessCard({
+    required this.witness,
+    required this.onChanged,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F8FA),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                flex: 2,
+                child: _InputField(label: 'Nom du témoin'),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: witness.represents,
+                  decoration: InputDecoration(
+                    labelText: 'Représente',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Bailleur',
+                      child: Text('Bailleur'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Locataire',
+                      child: Text('Locataire'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      witness.represents = value;
+                      onChanged();
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 14),
+              IconButton(
+                onPressed: onRemove,
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Row(
+            children: [
+              Expanded(child: _InputField(label: 'Téléphone')),
+              SizedBox(width: 14),
+              Expanded(child: _InputField(label: 'E-mail')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _SectionTitle({required this.icon, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 22),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+}
+
+class _InputField extends StatelessWidget {
+  final String label;
+
+  const _InputField({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFFF4F8FA),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+}
+
+class _PresenceCheck extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _PresenceCheck({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(label),
+      selected: value,
+      onSelected: onChanged,
+      selectedColor: const Color(0xFFEAF8EF),
+      checkmarkColor: Colors.green,
+    );
+  }
+}
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+class RecentFiles extends StatefulWidget {
+  final VoidCallback onOpenFolders;
+
+  const RecentFiles({super.key, required this.onOpenFolders});
+
+  @override
+  State<RecentFiles> createState() => _RecentFilesState();
+}
+
+class _RecentFilesState extends State<RecentFiles> {
+  final List<_InspectionAdvice> _advices = const [
+    _InspectionAdvice(
+      image: 'assets/images/gianni_point.png',
+      icon: Icons.stairs_rounded,
+      title: 'Commencez par la pièce la plus haute',
+      message:
+          'Commencez la visite par le dernier étage, puis descendez progressivement jusqu’au rez-de-chaussée et aux extérieurs.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_tablet.png',
+      icon: Icons.route_rounded,
+      title: 'Suivez toujours le même ordre',
+      message:
+          'Dans chaque pièce, décrivez les éléments dans un ordre constant : plafond, murs, sol, portes, fenêtres, chauffage, électricité et équipements.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_camera.png',
+      icon: Icons.kitchen_rounded,
+      title: 'Photographiez l’intérieur des meubles',
+      message:
+          'Ouvrez les armoires, placards et meubles de cuisine. Photographiez les tablettes, charnières, fonds et éventuelles traces d’humidité.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_camera.png',
+      icon: Icons.photo_camera_back_rounded,
+      title: 'Prenez des vues générales et détaillées',
+      message:
+          'Commencez par une vue générale de la pièce, puis photographiez chaque défaut de près avec suffisamment de recul pour pouvoir le localiser.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_point.png',
+      icon: Icons.countertops_rounded,
+      title: 'Contrôlez le bac évier',
+      message:
+          'Photographiez le bac évier, la robinetterie, les joints, la bonde et le dessous du meuble afin de repérer les impacts, fuites ou traces d’humidité.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_tablet.png',
+      icon: Icons.format_paint_rounded,
+      title: 'Notez les références de peinture',
+      message:
+          'Lorsque l’information est disponible, notez la marque, la teinte, la finition et la référence exacte de la peinture utilisée.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_thinking.png',
+      icon: Icons.electrical_services_rounded,
+      title: 'Testez les équipements',
+      message:
+          'Vérifiez les points lumineux, prises, interrupteurs, volets, appareils électroménagers, thermostats et commandes.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_camera.png',
+      icon: Icons.water_drop_rounded,
+      title: 'Photographiez les compteurs',
+      message:
+          'Prenez une photo lisible du numéro et de l’index de chaque compteur : eau, gaz, électricité et calorimètres.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_point.png',
+      icon: Icons.door_front_door_rounded,
+      title: 'Contrôlez les menuiseries',
+      message:
+          'Ouvrez et fermez les portes, fenêtres, volets et portails. Vérifiez les poignées, serrures, vitrages, joints et mécanismes.',
+    ),
+    _InspectionAdvice(
+      image: 'assets/images/gianni_happy.png',
+      icon: Icons.inventory_2_rounded,
+      title: 'Vérifiez les éléments remis',
+      message:
+          'Comptabilisez les clés, badges et télécommandes. Photographiez aussi les manuels, attestations et documents d’entretien.',
+    ),
+  ];
+
+  int _currentAdvice = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _timer = Timer.periodic(
+      const Duration(seconds: 8),
+      (_) => _showNextAdvice(),
+    );
+  }
+
+  void _showNextAdvice() {
+    if (!mounted) return;
+
+    setState(() {
+      _currentAdvice = (_currentAdvice + 1) % _advices.length;
+    });
+  }
+
+  void _showPreviousAdvice() {
+    setState(() {
+      _currentAdvice = (_currentAdvice - 1 + _advices.length) % _advices.length;
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final advice = _advices[_currentAdvice];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF2FF),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Color(0xFF1264F6),
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Les conseils de Gianni',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Les bonnes pratiques d’un Géomètre-Expert de terrain',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton.icon(
+                onPressed: widget.onOpenFolders,
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Mes dossiers'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: Container(
+              key: ValueKey(_currentAdvice),
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 260),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 190,
+                    height: 230,
+                    child: Image.asset(
+                      advice.image,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.bottomCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(
+                            Icons.person_rounded,
+                            size: 100,
+                            color: Color(0xFF1264F6),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 28),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF2FF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      advice.icon,
+                      size: 34,
+                      color: const Color(0xFF1264F6),
+                    ),
+                  ),
+                  const SizedBox(width: 22),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          advice.title,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          advice.message,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.55,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              IconButton.outlined(
+                tooltip: 'Conseil précédent',
+                onPressed: _showPreviousAdvice,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filled(
+                tooltip: 'Conseil suivant',
+                onPressed: _showNextAdvice,
+                icon: const Icon(Icons.chevron_right),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Row(
+                  children: List.generate(_advices.length, (index) {
+                    final selected = index == _currentAdvice;
+
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      width: selected ? 24 : 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(right: 7),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? const Color(0xFF1264F6)
+                            : const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              Text(
+                '${_currentAdvice + 1} / ${_advices.length}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InspectionAdvice {
+  final String image;
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _InspectionAdvice({
+    required this.image,
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+}

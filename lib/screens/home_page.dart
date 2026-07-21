@@ -4,13 +4,13 @@ import '../core/access/access_service.dart';
 import '../core/auth/auth_service.dart';
 import '../core/models/mission_type.dart';
 import '../features/admin/admin_dashboard_page.dart';
+import '../features/commercial/presentation/pages/professional_profile_page.dart';
 import '../features/folders/folders_page.dart';
 import '../features/home/widgets/hero_section.dart';
 import '../features/home/widgets/recent_files.dart';
 import '../features/home/widgets/top_bar.dart';
 import '../features/layout/main_layout.dart';
 import '../features/pricing/pricing_page.dart';
-import '../features/commercial/presentation/pages/professional_profile_page.dart';
 import '../features/settings/report_settings_page.dart';
 import '../features/wizard/wizard_page.dart';
 
@@ -53,6 +53,7 @@ class HomePage extends StatelessWidget {
       );
       return;
     }
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ProfessionalProfilePage()),
@@ -72,9 +73,17 @@ class HomePage extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     final demo = AccessService.instance.isDemo;
+
     AccessService.instance.signOut();
-    if (!demo) await AuthService.signOut();
-    if (!context.mounted) return;
+
+    if (!demo) {
+      await AuthService.signOut();
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
@@ -82,9 +91,54 @@ class HomePage extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
+  Widget _worksButtons(BuildContext context, {required bool isMobile}) {
+    final beforeButton = OutlinedButton.icon(
+      onPressed: () => _openMission(context, MissionType.beforeWorks),
+      icon: const Icon(Icons.construction_rounded),
+      label: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 14),
+        child: Text(
+          'Créer un constat avant travaux',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+
+    final afterButton = OutlinedButton.icon(
+      onPressed: () => _openMission(context, MissionType.afterWorks),
+      icon: const Icon(Icons.fact_check_outlined),
+      label: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 14),
+        child: Text(
+          'Créer un récolement après travaux',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+
+    if (isMobile) {
+      return Column(
+        children: [
+          SizedBox(width: double.infinity, child: beforeButton),
+          const SizedBox(height: 10),
+          SizedBox(width: double.infinity, child: afterButton),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: beforeButton),
+        const SizedBox(width: 12),
+        Expanded(child: afterButton),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final access = AccessService.instance;
+
     return MainLayout(
       onEntry: () => _openMission(context, MissionType.entry),
       onExit: () => _openMission(context, MissionType.exit),
@@ -92,66 +146,50 @@ class HomePage extends StatelessWidget {
       onAfterWorks: () => _openMission(context, MissionType.afterWorks),
       onFolders: () => _openFolders(context),
       onSettings: () => _openSettings(context),
-      onAdmin: (access.isAdmin || access.isController)
+      onAdmin: access.isAdmin || access.isController
           ? () => _openAdmin(context)
           : null,
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          children: [
-            HomeTopBar(
-              onPricing: () => _openPricing(context),
-              onDemo: () =>
-                  _message(context, 'Vidéo démo prévue prochainement.'),
-              onProfile: () => _openProfile(context),
-              onLogin: () async => _logout(context),
-            ),
-            const SizedBox(height: 28),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    HeroSection(
-                      onEntry: () => _openMission(context, MissionType.entry),
-                      onExit: () => _openMission(context, MissionType.exit),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () =>
-                                _openMission(context, MissionType.beforeWorks),
-                            icon: const Icon(Icons.construction_rounded),
-                            label: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 14),
-                              child: Text('Créer un constat avant travaux'),
-                            ),
-                          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 760;
+
+          return Padding(
+            padding: EdgeInsets.all(isMobile ? 14 : 28),
+            child: Column(
+              children: [
+                HomeTopBar(
+                  onPricing: () => _openPricing(context),
+                  onDemo: () =>
+                      _message(context, 'Vidéo démo prévue prochainement.'),
+                  onProfile: () => _openProfile(context),
+                  onLogin: () async => _logout(context),
+                ),
+                SizedBox(height: isMobile ? 18 : 28),
+                Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        HeroSection(
+                          onEntry: () =>
+                              _openMission(context, MissionType.entry),
+                          onExit: () => _openMission(context, MissionType.exit),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () =>
-                                _openMission(context, MissionType.afterWorks),
-                            icon: const Icon(Icons.fact_check_outlined),
-                            label: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 14),
-                              child: Text('Créer un récolement après travaux'),
-                            ),
-                          ),
-                        ),
+                        SizedBox(height: isMobile ? 12 : 18),
+                        _worksButtons(context, isMobile: isMobile),
+                        SizedBox(height: isMobile ? 24 : 32),
+                        RecentFiles(onOpenFolders: () => _openFolders(context)),
+                        SizedBox(height: isMobile ? 20 : 32),
                       ],
                     ),
-                    const SizedBox(height: 32),
-                    RecentFiles(onOpenFolders: () => _openFolders(context)),
-                    const SizedBox(height: 32),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

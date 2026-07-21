@@ -146,9 +146,26 @@ class _WizardPageState extends State<WizardPage> {
   bool get _isSignatureStep => currentStep == _signatureStepIndex;
   bool get _isLastStep => currentStep == _reportStepIndex;
 
-  void _selectPropertyElement(String id) {
-    setState(() => _missionData.selectedPropertyElementId = id);
-  }
+ void _selectPropertyElement(String id) {
+  setState(() {
+    _missionData.selectedPropertyElementId = id;
+  });
+}
+
+void _selectPropertyElementAndContinue(String id) {
+  setState(() {
+    _missionData.selectedPropertyElementId = id;
+
+    // Passage automatique à l’étape suivante uniquement
+    // pour l’état des lieux d’entrée et de sortie.
+    if (!_isBeforeWorks &&
+        !_isAfterWorks &&
+        currentStep == _propertyStructureStepIndex &&
+        currentStep < _steps.length - 1) {
+      currentStep++;
+    }
+  });
+}
 
   void _attachRoomsToDefaultElement({String name = 'Habitation principale'}) {
     var element = _missionData.propertyElements.isEmpty
@@ -167,15 +184,19 @@ class _WizardPageState extends State<WizardPage> {
     }
   }
 
-  Widget _buildPropertyStructure() {
-    return StepPropertyType(
-      elements: _missionData.propertyElements,
-      selectedElementId: _missionData.selectedPropertyElementId,
-      onSelected: _selectPropertyElement,
-      onChanged: () => setState(() {}),
-      technicalMode: _isBeforeWorks || _isAfterWorks,
-    );
-  }
+Widget _buildPropertyStructure() {
+  final technicalMode = _isBeforeWorks || _isAfterWorks;
+
+  return StepPropertyType(
+    elements: _missionData.propertyElements,
+    selectedElementId: _missionData.selectedPropertyElementId,
+    onSelected: technicalMode
+        ? _selectPropertyElement
+        : _selectPropertyElementAndContinue,
+    onChanged: () => setState(() {}),
+    technicalMode: technicalMode,
+  );
+}
 
   Widget _buildPropertyComposition({bool technicalMode = false}) {
     final selectedId = _missionData.selectedPropertyElementId;
