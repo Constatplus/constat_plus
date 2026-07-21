@@ -233,6 +233,143 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
     );
   }
 
+  Widget _buildPropertyTypeSelector() {
+    const propertyTypes = <MapEntry<String, IconData>>[
+      MapEntry('Appartement', Icons.apartment_outlined),
+      MapEntry('Duplex', Icons.layers_outlined),
+      MapEntry('Maison', Icons.home_outlined),
+      MapEntry('Villa', Icons.villa_outlined),
+      MapEntry('Garage', Icons.garage_outlined),
+      MapEntry('Entrepôt', Icons.warehouse_outlined),
+      MapEntry('Hangar', Icons.factory_outlined),
+      MapEntry('Autre', Icons.add_home_work_outlined),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Type de bien',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 760
+                ? 4
+                : constraints.maxWidth >= 520
+                    ? 3
+                    : 2;
+
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: propertyTypes.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: columns == 2 ? 1.45 : 1.35,
+              ),
+              itemBuilder: (context, index) {
+                final propertyType = propertyTypes[index];
+                final selected = _data.propertyType == propertyType.key;
+                final colorScheme = Theme.of(context).colorScheme;
+
+                return Semantics(
+                  button: true,
+                  selected: selected,
+                  label: 'Type de bien ${propertyType.key}',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        setState(() => _data.propertyType = propertyType.key);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? colorScheme.primaryContainer
+                              : colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: selected
+                                ? colorScheme.primary
+                                : const Color(0xFFD0D5DD),
+                            width: selected ? 2 : 1,
+                          ),
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    propertyType.value,
+                                    size: 31,
+                                    color: selected
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    propertyType.key,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: selected
+                                              ? colorScheme.onPrimaryContainer
+                                              : colorScheme.onSurface,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (selected)
+                              Align(
+                                alignment: Alignment.topRight,
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 21,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildMissionStep() {
     return _pageShell(
       Form(
@@ -252,27 +389,8 @@ class _EntryMissionPageState extends State<EntryMissionPage> {
                     : null,
                 onChanged: (value) => _data.propertyAddress = value,
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _data.propertyType,
-                decoration: const InputDecoration(
-                  labelText: 'Type de bien',
-                  prefixIcon: Icon(Icons.home_work_outlined),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Appartement',
-                    child: Text('Appartement'),
-                  ),
-                  DropdownMenuItem(value: 'Maison', child: Text('Maison')),
-                  DropdownMenuItem(value: 'Studio', child: Text('Studio')),
-                  DropdownMenuItem(value: 'Commerce', child: Text('Commerce')),
-                  DropdownMenuItem(value: 'Bureau', child: Text('Bureau')),
-                ],
-                onChanged: (value) {
-                  if (value != null) _data.propertyType = value;
-                },
-              ),
+              const SizedBox(height: 20),
+              _buildPropertyTypeSelector(),
               const SizedBox(height: 16),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
