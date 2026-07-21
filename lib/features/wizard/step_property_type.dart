@@ -100,112 +100,208 @@ class StepPropertyType extends StatelessWidget {
     PropertyElementType.custom => Icons.dashboard_customize_outlined,
   };
 
+  Widget _buildTechnicalTypeList(BuildContext context) {
+    return ListView.separated(
+      itemCount: _availableTypes.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final type = _availableTypes[index];
+        return ListTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          leading: Icon(
+            _icon(type),
+            color: const Color(0xFF1264F6),
+          ),
+          title: Text(type.label),
+          trailing: const Icon(Icons.add_circle_outline),
+          onTap: () => _addElement(context, type),
+        );
+      },
+    );
+  }
+
+  Widget _buildClassicTypeGrid(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columnCount = constraints.maxWidth >= 720
+            ? 4
+            : constraints.maxWidth >= 520
+            ? 3
+            : 2;
+
+        return GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columnCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.12,
+          ),
+          itemCount: _buildingTypes.length,
+          itemBuilder: (context, index) {
+            final type = _buildingTypes[index];
+            return Card(
+              elevation: 0,
+              clipBehavior: Clip.antiAlias,
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: const BorderSide(color: Color(0xFFDCE5F0)),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                hoverColor: const Color(0xFFEAF2FF),
+                splashColor: const Color(0xFFDCE9FF),
+                onTap: () => _addElement(context, type),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAF2FF),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(
+                          _icon(type),
+                          size: 29,
+                          color: const Color(0xFF1264F6),
+                        ),
+                      ),
+                      const SizedBox(height: 11),
+                      Text(
+                        type.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF172033),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 390,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Éléments principaux',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final leftWidth = technicalMode
+            ? 390.0
+            : constraints.maxWidth >= 1450
+            ? 720.0
+            : constraints.maxWidth >= 1150
+            ? 560.0
+            : 440.0;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: leftWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Éléments principaux',
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Ajoutez chaque bâtiment ou zone qui compose la mission.',
+                    style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: technicalMode
+                        ? _buildTechnicalTypeList(context)
+                        : _buildClassicTypeGrid(context),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Ajoutez chaque bâtiment ou zone qui compose la mission.',
-                style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: _availableTypes.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final type = _availableTypes[index];
-                    return ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      leading: Icon(
-                        _icon(type),
-                        color: const Color(0xFF1264F6),
-                      ),
-                      title: Text(type.label),
-                      trailing: const Icon(Icons.add_circle_outline),
-                      onTap: () => _addElement(context, type),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 28),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Composition de la mission (${elements.length})',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Renommez les éléments puis choisissez celui à composer.',
-                style: TextStyle(color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 18),
-              Expanded(
-                child: elements.isEmpty
-                    ? const Center(
-                        child: Text('Ajoutez au moins un élément principal.'),
-                      )
-                    : ListView.separated(
-                        itemCount: elements.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final element = elements[index];
-                          final selected = element.id == selectedElementId;
-                          return Card(
-                            color: selected ? const Color(0xFFEAF2FF) : null,
-                            child: ListTile(
-                              leading: Icon(_icon(element.type)),
-                              title: TextFormField(
-                                key: ValueKey(element.id),
-                                initialValue: element.name,
-                                decoration: const InputDecoration(
-                                  labelText: 'Nom de l’élément',
-                                  border: InputBorder.none,
-                                ),
-                                onChanged: (value) {
-                                  element.name = value;
-                                  onChanged();
-                                },
-                              ),
-                              trailing: selected
-                                  ? const Icon(
-                                      Icons.check_circle,
-                                      color: Color(0xFF1264F6),
-                                    )
-                                  : const Icon(Icons.chevron_right),
-                              onTap: () => onSelected(element.id),
+            ),
+            const SizedBox(width: 28),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Composition de la mission (${elements.length})',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Renommez les éléments puis choisissez celui à composer.',
+                    style: TextStyle(color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: elements.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Ajoutez au moins un élément principal.',
                             ),
-                          );
-                        },
-                      ),
+                          )
+                        : ListView.separated(
+                            itemCount: elements.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final element = elements[index];
+                              final selected = element.id == selectedElementId;
+                              return Card(
+                                color: selected
+                                    ? const Color(0xFFEAF2FF)
+                                    : null,
+                                child: ListTile(
+                                  leading: Icon(_icon(element.type)),
+                                  title: TextFormField(
+                                    key: ValueKey(element.id),
+                                    initialValue: element.name,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nom de l’élément',
+                                      border: InputBorder.none,
+                                    ),
+                                    onChanged: (value) {
+                                      element.name = value;
+                                      onChanged();
+                                    },
+                                  ),
+                                  trailing: selected
+                                      ? const Icon(
+                                          Icons.check_circle,
+                                          color: Color(0xFF1264F6),
+                                        )
+                                      : const Icon(Icons.chevron_right),
+                                  onTap: () => onSelected(element.id),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
