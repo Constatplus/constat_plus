@@ -37,37 +37,45 @@ class StepPropertyType extends StatelessWidget {
         ..._buildingTypes,
       ];
 
-  Future<void> _addElement(
+  Future<String?> _askCustomName(BuildContext context) async {
+    final controller = TextEditingController();
+    final customName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Autre type de bien'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nom du bien'),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: const Text('Valider'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    final value = customName?.trim();
+    if (value == null || value.isEmpty) return null;
+    return value;
+  }
+
+  Future<void> _addTechnicalElement(
     BuildContext context,
     PropertyElementType type,
   ) async {
     String? customName;
     if (type == PropertyElementType.other) {
-      final controller = TextEditingController();
-      customName = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Ajouter un autre bien'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nom du bien'),
-            onSubmitted: (value) => Navigator.pop(dialogContext, value),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, controller.text),
-              child: const Text('Ajouter'),
-            ),
-          ],
-        ),
-      );
-      controller.dispose();
-      if (customName == null || customName.trim().isEmpty) return;
+      customName = await _askCustomName(context);
+      if (customName == null) return;
     }
 
     final sameTypeCount = elements.where((item) => item.type == type).length;
@@ -79,6 +87,36 @@ class StepPropertyType extends StatelessWidget {
       name: customName ?? defaultName,
     );
     elements.add(element);
+    onChanged();
+    onSelected(element.id);
+  }
+
+  Future<void> _selectClassicType(
+    BuildContext context,
+    PropertyElementType type,
+  ) async {
+    String? customName;
+    if (type == PropertyElementType.other) {
+      customName = await _askCustomName(context);
+      if (customName == null) return;
+    }
+
+    final current = elements.isEmpty ? null : elements.first;
+    if (current != null &&
+        current.type == type &&
+        type != PropertyElementType.other) {
+      onSelected(current.id);
+      return;
+    }
+
+    final element = PropertyElement.create(
+      type,
+      name: customName ?? type.label,
+    );
+
+    elements
+      ..clear()
+      ..add(element);
     onChanged();
     onSelected(element.id);
   }
@@ -117,13 +155,15 @@ class StepPropertyType extends StatelessWidget {
           ),
           title: Text(type.label),
           trailing: const Icon(Icons.add_circle_outline),
-          onTap: () => _addElement(context, type),
+          onTap: () => _addTechnicalElement(context, type),
         );
       },
     );
   }
 
   Widget _buildClassicTypeGrid(BuildContext context) {
+    final selectedType = elements.isEmpty ? null : elements.first.type;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final columnCount = constraints.maxWidth >= 720
@@ -142,51 +182,76 @@ class StepPropertyType extends StatelessWidget {
           itemCount: _buildingTypes.length,
           itemBuilder: (context, index) {
             final type = _buildingTypes[index];
+            final selected = selectedType == type;
+
             return Card(
               elevation: 0,
               clipBehavior: Clip.antiAlias,
-              color: Colors.white,
+              color: selected ? const Color(0xFFEAF2FF) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
-                side: const BorderSide(color: Color(0xFFDCE5F0)),
+                side: BorderSide(
+                  color: selected
+                      ? const Color(0xFF1264F6)
+                      : const Color(0xFFDCE5F0),
+                  width: selected ? 2 : 1,
+                ),
               ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(18),
                 hoverColor: const Color(0xFFEAF2FF),
                 splashColor: const Color(0xFFDCE9FF),
-                onTap: () => _addElement(context, type),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEAF2FF),
-                          borderRadius: BorderRadius.circular(15),
+                onTap: () => _selectClassicType(context, type),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? const Color(0xFFD9E8FF)
+                                    : const Color(0xFFEAF2FF),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Icon(
+                                _icon(type),
+                                size: 29,
+                                color: const Color(0xFF1264F6),
+                              ),
+                            ),
+                            const SizedBox(height: 11),
+                            Text(
+                              type.label,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF172033),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                    ),
+                    if (selected)
+                      const Positioned(
+                        top: 10,
+                        right: 10,
                         child: Icon(
-                          _icon(type),
-                          size: 29,
-                          color: const Color(0xFF1264F6),
+                          Icons.check_circle,
+                          color: Color(0xFF1264F6),
+                          size: 24,
                         ),
                       ),
-                      const SizedBox(height: 11),
-                      Text(
-                        type.label,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF172033),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             );
@@ -194,6 +259,82 @@ class StepPropertyType extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildSelectedProperty() {
+    if (elements.isEmpty) {
+      return const Center(
+        child: Text('Sélectionnez un type de bien.'),
+      );
+    }
+
+    final element = elements.first;
+    return Card(
+      color: const Color(0xFFEAF2FF),
+      child: ListTile(
+        leading: Icon(
+          _icon(element.type),
+          color: const Color(0xFF1264F6),
+        ),
+        title: TextFormField(
+          key: ValueKey(element.id),
+          initialValue: element.name,
+          decoration: const InputDecoration(
+            labelText: 'Nom du bien',
+            border: InputBorder.none,
+          ),
+          onChanged: (value) {
+            element.name = value;
+            onChanged();
+          },
+        ),
+        trailing: const Icon(
+          Icons.check_circle,
+          color: Color(0xFF1264F6),
+        ),
+        onTap: () => onSelected(element.id),
+      ),
+    );
+  }
+
+  Widget _buildTechnicalComposition() {
+    return elements.isEmpty
+        ? const Center(
+            child: Text('Ajoutez au moins un élément principal.'),
+          )
+        : ListView.separated(
+            itemCount: elements.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final element = elements[index];
+              final selected = element.id == selectedElementId;
+              return Card(
+                color: selected ? const Color(0xFFEAF2FF) : null,
+                child: ListTile(
+                  leading: Icon(_icon(element.type)),
+                  title: TextFormField(
+                    key: ValueKey(element.id),
+                    initialValue: element.name,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de l’élément',
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) {
+                      element.name = value;
+                      onChanged();
+                    },
+                  ),
+                  trailing: selected
+                      ? const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF1264F6),
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: () => onSelected(element.id),
+                ),
+              );
+            },
+          );
   }
 
   @override
@@ -216,14 +357,22 @@ class StepPropertyType extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Éléments principaux',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  Text(
+                    technicalMode ? 'Éléments principaux' : 'Type de bien',
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Ajoutez chaque bâtiment ou zone qui compose la mission.',
-                    style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+                  Text(
+                    technicalMode
+                        ? 'Ajoutez chaque bâtiment ou zone qui compose la mission.'
+                        : 'Sélectionnez un seul type de bien. Les pièces et dépendances seront ajoutées à l’étape suivante.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Expanded(
@@ -240,61 +389,26 @@ class StepPropertyType extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Composition de la mission (${elements.length})',
+                    technicalMode
+                        ? 'Composition de la mission (${elements.length})'
+                        : 'Bien sélectionné',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Renommez les éléments puis choisissez celui à composer.',
-                    style: TextStyle(color: Color(0xFF64748B)),
+                  Text(
+                    technicalMode
+                        ? 'Renommez les éléments puis choisissez celui à composer.'
+                        : 'Vous pourrez composer le bien dans l’étape suivante.',
+                    style: const TextStyle(color: Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 18),
                   Expanded(
-                    child: elements.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'Ajoutez au moins un élément principal.',
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: elements.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final element = elements[index];
-                              final selected = element.id == selectedElementId;
-                              return Card(
-                                color: selected
-                                    ? const Color(0xFFEAF2FF)
-                                    : null,
-                                child: ListTile(
-                                  leading: Icon(_icon(element.type)),
-                                  title: TextFormField(
-                                    key: ValueKey(element.id),
-                                    initialValue: element.name,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Nom de l’élément',
-                                      border: InputBorder.none,
-                                    ),
-                                    onChanged: (value) {
-                                      element.name = value;
-                                      onChanged();
-                                    },
-                                  ),
-                                  trailing: selected
-                                      ? const Icon(
-                                          Icons.check_circle,
-                                          color: Color(0xFF1264F6),
-                                        )
-                                      : const Icon(Icons.chevron_right),
-                                  onTap: () => onSelected(element.id),
-                                ),
-                              );
-                            },
-                          ),
+                    child: technicalMode
+                        ? _buildTechnicalComposition()
+                        : _buildSelectedProperty(),
                   ),
                 ],
               ),
