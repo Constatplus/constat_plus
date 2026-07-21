@@ -46,16 +46,20 @@ class AppShell extends StatelessWidget {
           );
         }
 
+        final railIsExtended = constraints.maxWidth >= 1180;
+
         return Scaffold(
           body: Row(
             children: [
               NavigationRail(
-                extended: constraints.maxWidth >= 1180,
+                extended: railIsExtended,
+                minWidth: 76,
+                minExtendedWidth: 220,
                 selectedIndex: selectedIndex,
                 onDestinationSelected: onDestinationSelected,
-                leading: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: _Brand(),
+                leading: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: _Brand(compact: !railIsExtended),
                 ),
                 destinations: const [
                   NavigationRailDestination(
@@ -86,24 +90,37 @@ class AppShell extends StatelessWidget {
 }
 
 class _Brand extends StatelessWidget {
-  const _Brand();
+  const _Brand({required this.compact});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final logo = Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: const Icon(Icons.fact_check_outlined, color: Colors.white),
+    );
+
+    if (compact) {
+      return Tooltip(message: 'Constat+', child: logo);
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: const Icon(Icons.fact_check_outlined, color: Colors.white),
-        ),
+        logo,
         const SizedBox(width: 10),
-        Text('Constat+', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'Constat+',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
       ],
     );
   }
