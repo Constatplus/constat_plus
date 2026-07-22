@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/mission_handover_data.dart';
 import '../widgets/photo_picker_section.dart';
 
 class KeysTab extends StatefulWidget {
-  const KeysTab({super.key});
+  const KeysTab({super.key, required this.data});
+
+  final MissionHandoverData data;
 
   @override
   State<KeysTab> createState() => _KeysTabState();
@@ -27,7 +30,7 @@ class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
     'Autre',
   ];
 
-  final List<_KeyItem> selectedKeys = [];
+  List<KeyHandoverItem> get selectedKeys => widget.data.keys;
 
   @override
   bool get wantKeepAlive => true;
@@ -35,10 +38,9 @@ class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
   void _addKey(String name) {
     setState(() {
       selectedKeys.add(
-        _KeyItem(
+        KeyHandoverItem(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           name: name,
-          quantity: 1,
         ),
       );
     });
@@ -144,6 +146,7 @@ class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: TextFormField(
+                                          key: ValueKey('key-name-${item.id}'),
                                           initialValue: item.name,
                                           decoration: const InputDecoration(
                                             labelText: 'Nom',
@@ -173,7 +176,6 @@ class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
                                           }),
                                           onChanged: (value) {
                                             if (value == null) return;
-
                                             item.quantity = value;
                                           },
                                         ),
@@ -188,6 +190,7 @@ class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
                                   ),
                                   const SizedBox(height: 14),
                                   TextFormField(
+                                    key: ValueKey('key-note-${item.id}'),
                                     initialValue: item.observation,
                                     decoration: const InputDecoration(
                                       labelText: 'Observation',
@@ -215,15 +218,4 @@ class _KeysTabState extends State<KeysTab> with AutomaticKeepAliveClientMixin {
       ],
     );
   }
-}
-
-class _KeyItem {
-  final String id;
-
-  String name;
-  int quantity;
-  String observation;
-
-  _KeyItem({required this.id, required this.name, required this.quantity})
-    : observation = '';
 }
