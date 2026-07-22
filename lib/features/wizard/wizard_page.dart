@@ -736,7 +736,7 @@ class _WizardPageState extends State<WizardPage> {
       case 1:
         return const StepGeneralInfo();
       case 2:
-        return const StepKeysMeters();
+        return StepKeysMeters(data: _missionData.handover);
       case 3:
         return _buildPropertyComposition();
       case 4:
