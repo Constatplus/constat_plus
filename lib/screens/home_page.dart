@@ -324,9 +324,9 @@ class _WelcomePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 760),
-            child: Text(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: const Text(
               'Lancez une nouvelle mission, retrouvez vos dossiers et préparez vos rapports professionnels sans quitter Constat+.',
               style: TextStyle(
                 color: Color(0xFFCBD5E1),
