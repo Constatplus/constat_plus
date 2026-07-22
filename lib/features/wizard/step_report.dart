@@ -29,6 +29,7 @@ class StepReport extends StatefulWidget {
   final BeforeWorksData? beforeWorksData;
   final ReferenceReport? referenceReport;
   final List<ComparisonRemark> comparisonRemarks;
+  final Map<String, String> generalities;
 
   const StepReport({
     super.key,
@@ -40,6 +41,7 @@ class StepReport extends StatefulWidget {
     this.beforeWorksData,
     this.referenceReport,
     this.comparisonRemarks = const <ComparisonRemark>[],
+    this.generalities = const <String, String>{},
   });
 
   @override
@@ -180,7 +182,9 @@ class _StepReportState extends State<StepReport> {
       maintenance: _lines(_maintenanceController),
       manuals: _lines(_manualsController),
       documents: _lines(_documentsController),
-      generalities: defaults.generalities,
+      generalities: widget.generalities.isEmpty
+          ? defaults.generalities
+          : Map<String, String>.from(widget.generalities),
     );
   }
 

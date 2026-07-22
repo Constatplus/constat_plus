@@ -11,6 +11,7 @@ import 'before_works/models/before_works_data.dart';
 import 'before_works/step_before_works_photos.dart';
 import 'before_works/step_before_works_visit.dart';
 import 'comparison/step_comparative_remarks.dart';
+import 'generalities/step_generalities.dart';
 import 'models/wizard_mission_data.dart';
 import 'property_composition/models/property_element.dart';
 import 'property_composition/models/room_item.dart';
@@ -70,6 +71,7 @@ class _WizardPageState extends State<WizardPage> {
           'Informations générales',
           'Clés • Compteurs • Documents',
           'Composition du bien',
+          'Généralités',
           "Visite d'entrée",
           'Signatures',
           "Rapport d'entrée",
@@ -122,7 +124,7 @@ class _WizardPageState extends State<WizardPage> {
       ? 3
       : _isAfterWorks
       ? 4
-      : 4;
+      : 5;
   int get _compositionStepIndex => _isExit
       ? 2
       : _isBeforeWorks
@@ -141,7 +143,7 @@ class _WizardPageState extends State<WizardPage> {
       ? 5
       : _isAfterWorks
       ? -1
-      : 5;
+      : 6;
   int get _reportStepIndex => _steps.length - 1;
 
   bool get _isSignatureStep => currentStep == _signatureStepIndex;
@@ -590,6 +592,7 @@ class _WizardPageState extends State<WizardPage> {
           initialReportType: _reportType,
           rooms: selectedRooms,
           beforeWorksData: _missionData.beforeWorks,
+          generalities: _missionData.generalities,
         );
       default:
         return const SizedBox.shrink();
@@ -639,6 +642,7 @@ class _WizardPageState extends State<WizardPage> {
           rooms: selectedRooms,
           referenceReport: _missionData.referenceReport,
           comparisonRemarks: _missionData.comparisonRemarks,
+          generalities: _missionData.generalities,
         );
       default:
         return const SizedBox.shrink();
@@ -736,27 +740,34 @@ class _WizardPageState extends State<WizardPage> {
       case 3:
         return _buildPropertyComposition();
       case 4:
+        return StepGeneralities(
+          values: _missionData.generalities,
+          onChanged: () => setState(() {}),
+        );
+      case 5:
         return StepVisit(
           missionId: _missionId,
           missionType: widget.missionType.databaseValue,
           rooms: selectedRooms,
           propertyElements: _missionData.propertyElements,
+          generalities: _missionData.generalities,
           onBuildingCompletionChanged: _setPropertyElementCompleted,
           controller: _visitController,
           initialSnapshot: _reportSnapshot,
         );
-      case 5:
+      case 6:
         return StepSignature(
           controller: _signatureController,
           onContinue: _openReportFromSignatures,
           onPostpone: _openReportFromSignatures,
         );
-      case 6:
+      case 7:
         return StepReport(
           missionId: _missionId,
           missionType: widget.missionType.databaseValue,
           snapshot: _reportSnapshot,
           initialReportType: _reportType,
+          generalities: _missionData.generalities,
           rooms: selectedRooms,
         );
       default:
@@ -794,6 +805,7 @@ class _WizardPageState extends State<WizardPage> {
           missionType: widget.missionType.databaseValue,
           snapshot: _reportSnapshot,
           initialReportType: _reportType,
+          generalities: _missionData.generalities,
         );
       default:
         return const SizedBox.shrink();

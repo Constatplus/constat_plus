@@ -52,6 +52,7 @@ class StepVisit extends StatefulWidget {
   final String missionType;
   final List<RoomItem> rooms;
   final List<PropertyElement> propertyElements;
+  final Map<String, String> generalities;
   final StepVisitController controller;
   final VisitReportSnapshot initialSnapshot;
   final void Function(String elementId, bool completed)?
@@ -64,6 +65,7 @@ class StepVisit extends StatefulWidget {
     required this.rooms,
     required this.controller,
     this.propertyElements = const <PropertyElement>[],
+    this.generalities = const <String, String>{},
     this.onBuildingCompletionChanged,
     this.initialSnapshot = const VisitReportSnapshot(
       rooms: <VisitRoomReport>[],
@@ -259,7 +261,8 @@ class _StepVisitState extends State<StepVisit> {
 
       for (final entry in report.sections.entries) {
         _controllerFor(roomIndex, entry.key).text = entry.value;
-        if (entry.value.trim() == 'Conforme aux généralités.') {
+        if (entry.value.trim() == 'Conforme aux généralités.' ||
+            entry.value.trim() == _generalityFor(entry.key)) {
           _conformToGeneralities[_sectionKey(roomIndex, entry.key)] = true;
         }
       }
@@ -650,17 +653,37 @@ class _StepVisitState extends State<StepVisit> {
     final key = _sectionKey(_selectedRoomIndex, _currentSection);
 
     final controller = _controllerFor(_selectedRoomIndex, _currentSection);
+    final generality = _generalityFor(_currentSection);
 
     setState(() {
       _conformToGeneralities[key] = value;
 
-      if (value && controller.text.trim().isEmpty) {
-        controller.text = 'Conforme aux généralités.';
+      if (value) {
+        controller.text = generality.isEmpty
+            ? 'Conforme aux généralités.'
+            : generality;
+        controller.selection = TextSelection.collapsed(
+          offset: controller.text.length,
+        );
       } else if (!value &&
-          controller.text.trim() == 'Conforme aux généralités.') {
+          (controller.text.trim() == 'Conforme aux généralités.' ||
+              controller.text.trim() == generality)) {
         controller.clear();
       }
     });
+  }
+
+  String _generalityFor(String section) {
+    final candidates = <String>[
+      section,
+      if (section == 'Mur' || _walls.contains(section)) 'Mur',
+      if (section == 'Mur' || _walls.contains(section)) 'Murs',
+    ];
+    for (final candidate in candidates) {
+      final value = widget.generalities[candidate]?.trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+    return '';
   }
 
   Future<void> _openVocabularyHelp() async {

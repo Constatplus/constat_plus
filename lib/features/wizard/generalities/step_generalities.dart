@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class StepGeneralities extends StatefulWidget {
-  const StepGeneralities({
+  StepGeneralities({
     super.key,
     Map<String, String>? values,
     required this.onChanged,
