@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'generalities/step_generalities.dart';
+
 class StepGeneralInfo extends StatefulWidget {
   const StepGeneralInfo({super.key});
 
@@ -223,6 +225,14 @@ class _StepGeneralInfoState extends State<StepGeneralInfo> {
               ),
             );
           }),
+
+          const SizedBox(height: 38),
+          const Divider(),
+          const SizedBox(height: 24),
+          StepGeneralities(
+            values: StepGeneralities.sharedValues,
+            onChanged: () => setState(() {}),
+          ),
         ],
       ),
     );
