@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/mission_handover_data.dart';
 import '../widgets/photo_picker_section.dart';
 
 class MaintenanceTab extends StatefulWidget {
-  const MaintenanceTab({super.key});
+  const MaintenanceTab({super.key, required this.data});
+
+  final MissionHandoverData data;
 
   @override
   State<MaintenanceTab> createState() => _MaintenanceTabState();
@@ -11,32 +14,44 @@ class MaintenanceTab extends StatefulWidget {
 
 class _MaintenanceTabState extends State<MaintenanceTab>
     with AutomaticKeepAliveClientMixin {
-  final List<_MaintenanceItem> maintenanceItems = [
-    _MaintenanceItem('Entretien chaudière'),
-    _MaintenanceItem('Ramonage chaudière'),
-    _MaintenanceItem('Ramonage feu ouvert'),
-    _MaintenanceItem('Ramonage poêle'),
-    _MaintenanceItem('Boiler'),
-    _MaintenanceItem('Pompe à chaleur'),
-    _MaintenanceItem('Adoucisseur'),
-    _MaintenanceItem('VMC'),
-    _MaintenanceItem('Ventilation'),
-    _MaintenanceItem('Climatisation'),
-    _MaintenanceItem('Alarme'),
-    _MaintenanceItem('Extincteur'),
-    _MaintenanceItem('Détecteurs incendie'),
-    _MaintenanceItem('Panneaux photovoltaïques'),
-    _MaintenanceItem('Batterie domestique'),
-    _MaintenanceItem('Portail'),
-    _MaintenanceItem('Porte de garage'),
-    _MaintenanceItem('Ascenseur'),
-    _MaintenanceItem('Autre'),
+  static const List<String> _defaultMaintenanceItems = <String>[
+    'Entretien chaudière',
+    'Ramonage chaudière',
+    'Ramonage feu ouvert',
+    'Ramonage poêle',
+    'Boiler',
+    'Pompe à chaleur',
+    'Adoucisseur',
+    'VMC',
+    'Ventilation',
+    'Climatisation',
+    'Alarme',
+    'Extincteur',
+    'Détecteurs incendie',
+    'Panneaux photovoltaïques',
+    'Batterie domestique',
+    'Portail',
+    'Porte de garage',
+    'Ascenseur',
+    'Autre',
   ];
+
+  List<MaintenanceHandoverItem> get maintenanceItems => widget.data.maintenance;
+
+  @override
+  void initState() {
+    super.initState();
+    if (maintenanceItems.isEmpty) {
+      maintenanceItems.addAll(
+        _defaultMaintenanceItems.map(MaintenanceHandoverItem.new),
+      );
+    }
+  }
 
   @override
   bool get wantKeepAlive => true;
 
-  Future<void> _selectDate(_MaintenanceItem item) async {
+  Future<void> _selectDate(MaintenanceHandoverItem item) async {
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: item.date ?? DateTime.now(),
@@ -66,9 +81,7 @@ class _MaintenanceTabState extends State<MaintenanceTab>
 
     return ListView.separated(
       itemCount: maintenanceItems.length,
-      separatorBuilder: (context, index) {
-        return const SizedBox(height: 10);
-      },
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final item = maintenanceItems[index];
 
@@ -117,29 +130,27 @@ class _MaintenanceTabState extends State<MaintenanceTab>
                       const SizedBox(width: 14),
                       Expanded(
                         child: TextFormField(
+                          key: ValueKey('maintenance-company-${item.id}'),
                           initialValue: item.company,
                           decoration: const InputDecoration(
                             labelText: 'Entreprise',
                             prefixIcon: Icon(Icons.business_outlined),
                           ),
-                          onChanged: (value) {
-                            item.company = value;
-                          },
+                          onChanged: (value) => item.company = value,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 14),
                   TextFormField(
+                    key: ValueKey('maintenance-observation-${item.id}'),
                     initialValue: item.observation,
                     maxLines: 2,
                     decoration: const InputDecoration(
                       labelText: 'Observation',
                       prefixIcon: Icon(Icons.notes_rounded),
                     ),
-                    onChanged: (value) {
-                      item.observation = value;
-                    },
+                    onChanged: (value) => item.observation = value,
                   ),
                   const SizedBox(height: 14),
                   PhotoPickerSection(
@@ -154,21 +165,4 @@ class _MaintenanceTabState extends State<MaintenanceTab>
       },
     );
   }
-}
-
-class _MaintenanceItem {
-  final String id;
-  final String name;
-
-  bool selected;
-  DateTime? date;
-  String company;
-  String observation;
-
-  _MaintenanceItem(this.name)
-    : selected = false,
-      date = null,
-      company = '',
-      observation = '',
-      id = '${DateTime.now().microsecondsSinceEpoch}-$name';
 }
