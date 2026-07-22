@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class StepGeneralities extends StatefulWidget {
   const StepGeneralities({
     super.key,
-    required this.values,
+    Map<String, String>? values,
     required this.onChanged,
     this.includeFurniture = true,
     this.technicalMode = false,
-  });
+  }) : values = values ?? sharedValues;
+
+  static final Map<String, String> sharedValues = <String, String>{};
 
   final Map<String, String> values;
   final VoidCallback onChanged;
