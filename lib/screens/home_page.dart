@@ -17,9 +17,7 @@ class HomePage extends StatelessWidget {
 
   void _openMission(BuildContext context, MissionType type) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => WizardPage(missionType: type),
-      ),
+      MaterialPageRoute<void>(builder: (_) => WizardPage(missionType: type)),
     );
   }
 
@@ -43,9 +41,12 @@ class HomePage extends StatelessWidget {
 
   void _openProfile(BuildContext context) {
     if (AccessService.instance.isDemo) {
-      _message(
-        context,
-        'Le profil professionnel est indisponible en démonstration locale.',
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Le profil professionnel est indisponible en démonstration locale.',
+          ),
+        ),
       );
       return;
     }
@@ -70,19 +71,9 @@ class HomePage extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     final demo = AccessService.instance.isDemo;
     AccessService.instance.signOut();
-
-    if (!demo) {
-      await AuthService.signOut();
-    }
-
+    if (!demo) await AuthService.signOut();
     if (!context.mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
-  }
-
-  void _message(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
   }
 
   @override
@@ -102,12 +93,10 @@ class HomePage extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 850;
-          final pagePadding = compact ? 16.0 : 28.0;
-
           return ColoredBox(
             color: const Color(0xFFF4F7FB),
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(pagePadding),
+              padding: EdgeInsets.all(compact ? 16 : 28),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
@@ -115,30 +104,36 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _DashboardHeader(
+                      _Header(
                         compact: compact,
                         onPricing: () => _openPricing(context),
                         onProfile: () => _openProfile(context),
                         onLogout: () => _logout(context),
                       ),
                       const SizedBox(height: 24),
-                      _WelcomePanel(
+                      _Hero(
                         compact: compact,
                         onEntry: () => _openMission(context, MissionType.entry),
                         onFolders: () => _openFolders(context),
                       ),
                       const SizedBox(height: 28),
-                      const _SectionTitle(
-                        title: 'Créer une nouvelle mission',
-                        subtitle:
-                            'Choisissez le parcours adapté à votre intervention.',
+                      const Text(
+                        'Créer une nouvelle mission',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Choisissez le parcours adapté à votre intervention.',
+                        style: TextStyle(color: Color(0xFF64748B)),
                       ),
                       const SizedBox(height: 16),
                       _MissionGrid(
-                        onEntry: () =>
-                            _openMission(context, MissionType.entry),
-                        onExit: () =>
-                            _openMission(context, MissionType.exit),
+                        onEntry: () => _openMission(context, MissionType.entry),
+                        onExit: () => _openMission(context, MissionType.exit),
                         onBeforeWorks: () =>
                             _openMission(context, MissionType.beforeWorks),
                         onAfterWorks: () =>
@@ -149,19 +144,18 @@ class HomePage extends StatelessWidget {
                         compact: compact,
                         onFolders: () => _openFolders(context),
                         onSettings: () => _openSettings(context),
-                        onAssistant: () => _message(
-                          context,
-                          'Le module Assistant IA sera relié à l’analyse photo.',
-                        ),
                       ),
                       const SizedBox(height: 30),
                       Row(
                         children: [
                           const Expanded(
-                            child: _SectionTitle(
-                              title: 'Dossiers récents',
-                              subtitle:
-                                  'Retrouvez rapidement vos dernières missions.',
+                            child: Text(
+                              'Dossiers récents',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
                           ),
                           TextButton.icon(
@@ -172,9 +166,7 @@ class HomePage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      RecentFiles(
-                        onOpenFolders: () => _openFolders(context),
-                      ),
+                      RecentFiles(onOpenFolders: () => _openFolders(context)),
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -188,8 +180,8 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader({
+class _Header extends StatelessWidget {
+  const _Header({
     required this.compact,
     required this.onPricing,
     required this.onProfile,
@@ -217,10 +209,7 @@ class _DashboardHeader extends StatelessWidget {
         const SizedBox(height: 5),
         const Text(
           'Bienvenue dans votre espace professionnel Constat+.',
-          style: TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 15,
-          ),
+          style: TextStyle(color: Color(0xFF64748B), fontSize: 15),
         ),
       ],
     );
@@ -254,17 +243,12 @@ class _DashboardHeader extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: [
-        Expanded(child: title),
-        actions,
-      ],
-    );
+    return Row(children: [Expanded(child: title), actions]);
   }
 }
 
-class _WelcomePanel extends StatelessWidget {
-  const _WelcomePanel({
+class _Hero extends StatelessWidget {
+  const _Hero({
     required this.compact,
     required this.onEntry,
     required this.onFolders,
@@ -282,38 +266,12 @@ class _WelcomePanel extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F172A), Color(0xFF143E8F), Color(0xFF1264F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1264F6).withValues(alpha: .18),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Text(
-              'TABLEAU DE BORD',
-              style: TextStyle(
-                color: Color(0xFFDBEAFE),
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                letterSpacing: .8,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
           Text(
             'Créez, suivez et finalisez vos constats depuis un seul espace.',
             style: TextStyle(
@@ -324,16 +282,9 @@ class _WelcomePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: const Text(
-              'Lancez une nouvelle mission, retrouvez vos dossiers et préparez vos rapports professionnels sans quitter Constat+.',
-              style: TextStyle(
-                color: Color(0xFFCBD5E1),
-                fontSize: 16,
-                height: 1.5,
-              ),
-            ),
+          const Text(
+            'Lancez une nouvelle mission, retrouvez vos dossiers et préparez vos rapports professionnels.',
+            style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 16),
           ),
           const SizedBox(height: 22),
           Wrap(
@@ -396,7 +347,7 @@ class _MissionGrid extends StatelessWidget {
             : constraints.maxWidth >= 760
                 ? 2
                 : 1;
-        final width =
+        final cardWidth =
             (constraints.maxWidth - ((columns - 1) * 16)) / columns;
 
         return Wrap(
@@ -404,38 +355,34 @@ class _MissionGrid extends StatelessWidget {
           runSpacing: 16,
           children: [
             _MissionCard(
-              width: width,
+              width: cardWidth,
               icon: Icons.login_rounded,
               title: "État des lieux d'entrée",
-              description:
-                  'Préparez la composition du bien, les pièces, les compteurs et les signatures.',
+              description: 'Préparez le bien, les pièces et les signatures.',
               accent: const Color(0xFF1264F6),
               onTap: onEntry,
             ),
             _MissionCard(
-              width: width,
+              width: cardWidth,
               icon: Icons.logout_rounded,
               title: 'État des lieux de sortie',
-              description:
-                  'Comparez les états, relevez les dégâts et préparez le décompte final.',
+              description: 'Comparez les états et relevez les dégâts.',
               accent: const Color(0xFFDC2626),
               onTap: onExit,
             ),
             _MissionCard(
-              width: width,
+              width: cardWidth,
               icon: Icons.construction_rounded,
               title: 'Constat avant travaux',
-              description:
-                  'Documentez les façades, voiries, abords et zones sensibles avant chantier.',
+              description: 'Documentez les lieux avant le chantier.',
               accent: const Color(0xFFF59E0B),
               onTap: onBeforeWorks,
             ),
             _MissionCard(
-              width: width,
+              width: cardWidth,
               icon: Icons.fact_check_outlined,
               title: 'Récolement après travaux',
-              description:
-                  'Contrôlez les changements et clôturez proprement votre intervention.',
+              description: 'Contrôlez les changements après intervention.',
               accent: const Color(0xFF7C3AED),
               onTap: onAfterWorks,
             ),
@@ -467,6 +414,7 @@ class _MissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
+      height: 225,
       child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
@@ -474,7 +422,6 @@ class _MissionCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Container(
-            constraints: const BoxConstraints(minHeight: 220),
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFFE2E8F0)),
@@ -492,37 +439,26 @@ class _MissionCard extends StatelessWidget {
                   ),
                   child: Icon(icon, color: accent),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 19,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 9),
+                const SizedBox(height: 8),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    height: 1.45,
-                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Color(0xFF64748B)),
                 ),
-                const Spacer(),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(
-                      'Commencer',
-                      style: TextStyle(
-                        color: accent,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(Icons.arrow_forward_rounded, color: accent, size: 19),
-                  ],
+                const SizedBox(height: 14),
+                Text(
+                  'Commencer →',
+                  style: TextStyle(color: accent, fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -538,63 +474,52 @@ class _QuickActions extends StatelessWidget {
     required this.compact,
     required this.onFolders,
     required this.onSettings,
-    required this.onAssistant,
   });
 
   final bool compact;
   final VoidCallback onFolders;
   final VoidCallback onSettings;
-  final VoidCallback onAssistant;
 
   @override
   Widget build(BuildContext context) {
-    final children = [
-      Expanded(
-        child: _QuickActionCard(
-          icon: Icons.folder_copy_outlined,
-          title: 'Mes dossiers',
-          subtitle: 'Ouvrir, reprendre ou exporter une mission.',
-          onTap: onFolders,
-        ),
+    final cards = <Widget>[
+      _QuickCard(
+        icon: Icons.folder_copy_outlined,
+        title: 'Mes dossiers',
+        subtitle: 'Ouvrir, reprendre ou exporter une mission.',
+        onTap: onFolders,
       ),
-      const SizedBox(width: 16, height: 16),
-      Expanded(
-        child: _QuickActionCard(
-          icon: Icons.tune_rounded,
-          title: 'Réglages du rapport',
-          subtitle: 'Adapter les informations et la présentation.',
-          onTap: onSettings,
-        ),
-      ),
-      const SizedBox(width: 16, height: 16),
-      Expanded(
-        child: _QuickActionCard(
-          icon: Icons.auto_awesome_rounded,
-          title: 'Assistant IA',
-          subtitle: 'Analyse photo et relecture prochainement.',
-          onTap: onAssistant,
-        ),
+      _QuickCard(
+        icon: Icons.tune_rounded,
+        title: 'Réglages du rapport',
+        subtitle: 'Adapter les informations et la présentation.',
+        onTap: onSettings,
       ),
     ];
 
     if (compact) {
       return Column(
         children: [
-          for (final child in children)
-            if (child is! SizedBox) ...[
-              SizedBox(width: double.infinity, child: child),
-              const SizedBox(height: 12),
-            ],
+          for (final card in cards) ...[
+            SizedBox(width: double.infinity, child: card),
+            const SizedBox(height: 12),
+          ],
         ],
       );
     }
 
-    return Row(children: children);
+    return Row(
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 16),
+        Expanded(child: cards[1]),
+      ],
+    );
   }
 }
 
-class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({
+class _QuickCard extends StatelessWidget {
+  const _QuickCard({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -659,38 +584,6 @@ class _QuickActionCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 14,
-          ),
-        ),
-      ],
     );
   }
 }
