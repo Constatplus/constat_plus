@@ -9,6 +9,11 @@ class WizardMissionData {
   final List<PropertyElement> propertyElements = <PropertyElement>[];
   String? selectedPropertyElementId;
   final Set<String> completedPropertyElementIds = <String>{};
+
+  /// Descriptions communes utilisées par la case
+  /// « Conforme aux généralités » pendant la visite.
+  final Map<String, String> generalities = <String, String>{};
+
   final BeforeWorksData beforeWorks = BeforeWorksData();
   final List<ComparisonRemark> comparisonRemarks = <ComparisonRemark>[];
   final List<ExitDamageLine> exitDamageLines = <ExitDamageLine>[];
