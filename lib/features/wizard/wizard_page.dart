@@ -768,6 +768,7 @@ class _WizardPageState extends State<WizardPage> {
           snapshot: _reportSnapshot,
           initialReportType: _reportType,
           generalities: _missionData.generalities,
+          handover: _missionData.handover,
           rooms: selectedRooms,
         );
       default:

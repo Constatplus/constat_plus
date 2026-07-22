@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/mission_handover_data.dart';
 import '../widgets/photo_picker_section.dart';
 
 class DocumentsTab extends StatefulWidget {
-  const DocumentsTab({super.key});
+  const DocumentsTab({super.key, required this.data});
+
+  final MissionHandoverData data;
 
   @override
   State<DocumentsTab> createState() => _DocumentsTabState();
@@ -11,32 +14,44 @@ class DocumentsTab extends StatefulWidget {
 
 class _DocumentsTabState extends State<DocumentsTab>
     with AutomaticKeepAliveClientMixin {
-  final List<_DocumentItem> documents = [
-    _DocumentItem('Chaudière'),
-    _DocumentItem('Thermostat'),
-    _DocumentItem('Boiler'),
-    _DocumentItem('Pompe à chaleur'),
-    _DocumentItem('Adoucisseur'),
-    _DocumentItem('VMC'),
-    _DocumentItem('Ventilation'),
-    _DocumentItem('Hotte'),
-    _DocumentItem('Four'),
-    _DocumentItem('Plaque de cuisson'),
-    _DocumentItem('Lave-vaisselle'),
-    _DocumentItem('Réfrigérateur'),
-    _DocumentItem('Congélateur'),
-    _DocumentItem('Machine à laver'),
-    _DocumentItem('Sèche-linge'),
-    _DocumentItem('Alarme'),
-    _DocumentItem('Portail'),
-    _DocumentItem('Porte de garage'),
-    _DocumentItem('Panneaux photovoltaïques'),
-    _DocumentItem('Batterie domestique'),
-    _DocumentItem('Certificat PEB'),
-    _DocumentItem('Contrôle électrique'),
-    _DocumentItem('Contrôle gaz'),
-    _DocumentItem('Autre'),
+  static const List<String> _defaultDocuments = <String>[
+    'Chaudière',
+    'Thermostat',
+    'Boiler',
+    'Pompe à chaleur',
+    'Adoucisseur',
+    'VMC',
+    'Ventilation',
+    'Hotte',
+    'Four',
+    'Plaque de cuisson',
+    'Lave-vaisselle',
+    'Réfrigérateur',
+    'Congélateur',
+    'Machine à laver',
+    'Sèche-linge',
+    'Alarme',
+    'Portail',
+    'Porte de garage',
+    'Panneaux photovoltaïques',
+    'Batterie domestique',
+    'Certificat PEB',
+    'Contrôle électrique',
+    'Contrôle gaz',
+    'Autre',
   ];
+
+  List<DocumentHandoverItem> get documents => widget.data.documents;
+
+  @override
+  void initState() {
+    super.initState();
+    if (documents.isEmpty) {
+      documents.addAll(
+        _defaultDocuments.map(DocumentHandoverItem.new),
+      );
+    }
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -47,9 +62,7 @@ class _DocumentsTabState extends State<DocumentsTab>
 
     return ListView.separated(
       itemCount: documents.length,
-      separatorBuilder: (context, index) {
-        return const SizedBox(height: 10);
-      },
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final item = documents[index];
 
@@ -87,15 +100,14 @@ class _DocumentsTabState extends State<DocumentsTab>
                 if (item.selected) ...[
                   const SizedBox(height: 10),
                   TextFormField(
+                    key: ValueKey('document-observation-${item.id}'),
                     initialValue: item.observation,
                     maxLines: 2,
                     decoration: const InputDecoration(
                       labelText: 'Observation',
                       prefixIcon: Icon(Icons.notes_rounded),
                     ),
-                    onChanged: (value) {
-                      item.observation = value;
-                    },
+                    onChanged: (value) => item.observation = value,
                   ),
                   const SizedBox(height: 14),
                   PhotoPickerSection(
@@ -110,17 +122,4 @@ class _DocumentsTabState extends State<DocumentsTab>
       },
     );
   }
-}
-
-class _DocumentItem {
-  final String id;
-  final String name;
-
-  bool selected;
-  String observation;
-
-  _DocumentItem(this.name)
-    : selected = false,
-      observation = '',
-      id = '${DateTime.now().microsecondsSinceEpoch}-$name';
 }

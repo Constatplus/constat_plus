@@ -1,6 +1,7 @@
 import '../before_works/models/before_works_data.dart';
 import '../comparison/models/comparison_remark.dart';
 import '../exit/models/exit_damage_line.dart';
+import '../keys_meters/models/mission_handover_data.dart';
 import '../property_composition/models/property_element.dart';
 import '../reference/models/reference_report.dart';
 import '../report/models/visit_report_snapshot.dart';
@@ -13,6 +14,10 @@ class WizardMissionData {
   /// Descriptions communes utilisées par la case
   /// « Conforme aux généralités » pendant la visite.
   final Map<String, String> generalities = <String, String>{};
+
+  /// Clés, documents et entretiens remis avec le bien.
+  /// Cette instance unique est partagée par les écrans de saisie et le rapport.
+  final MissionHandoverData handover = MissionHandoverData();
 
   final BeforeWorksData beforeWorks = BeforeWorksData();
   final List<ComparisonRemark> comparisonRemarks = <ComparisonRemark>[];
