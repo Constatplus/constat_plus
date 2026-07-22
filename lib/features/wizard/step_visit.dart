@@ -17,7 +17,6 @@ import 'visit/widgets/electrical_panel.dart';
 import 'visit/widgets/vocabulary_help_dialog.dart';
 import 'report/models/visit_report_snapshot.dart';
 
-
 class _AnalysisSelection {
   final Set<String> sections;
   final bool kitchenGeneral;
@@ -936,7 +935,8 @@ class _StepVisitState extends State<StepVisit> {
 
       if (!analysis.hasKitchen) return;
 
-      final hasKitchenSelection = selection.kitchenGeneral ||
+      final hasKitchenSelection =
+          selection.kitchenGeneral ||
           selection.worktop ||
           selection.worktopEquipment.isNotEmpty ||
           selection.upperUnits ||
@@ -1067,17 +1067,22 @@ class _StepVisitState extends State<StepVisit> {
                           if (analysis.sections.entries.any(
                             (entry) => entry.value.trim().isNotEmpty,
                           )) ...[
-                            const _ProposalSectionTitle('Descriptions proposées'),
+                            const _ProposalSectionTitle(
+                              'Descriptions proposées',
+                            ),
                             ...analysis.sections.entries
                                 .where((entry) => entry.value.trim().isNotEmpty)
                                 .map(
                                   (entry) => CheckboxListTile(
                                     value: selectedSections.contains(entry.key),
                                     contentPadding: EdgeInsets.zero,
-                                    controlAffinity: ListTileControlAffinity.leading,
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
                                     title: Text(
                                       entry.key,
-                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                     subtitle: Text(entry.value.trim()),
                                     onChanged: (value) {
@@ -1094,12 +1099,15 @@ class _StepVisitState extends State<StepVisit> {
                           ],
                           if (analysis.hasKitchen) ...[
                             const SizedBox(height: 10),
-                            const _ProposalSectionTitle('Cuisine et équipements'),
+                            const _ProposalSectionTitle(
+                              'Cuisine et équipements',
+                            ),
                             if (analysis.kitchenGeneral.trim().isNotEmpty)
                               CheckboxListTile(
                                 value: kitchenGeneral,
                                 contentPadding: EdgeInsets.zero,
-                                controlAffinity: ListTileControlAffinity.leading,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
                                 title: const Text(
                                   'Cuisine équipée',
                                   style: TextStyle(fontWeight: FontWeight.w700),
@@ -1113,7 +1121,8 @@ class _StepVisitState extends State<StepVisit> {
                               CheckboxListTile(
                                 value: worktop,
                                 contentPadding: EdgeInsets.zero,
-                                controlAffinity: ListTileControlAffinity.leading,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
                                 title: const Text(
                                   'Plan de travail',
                                   style: TextStyle(fontWeight: FontWeight.w700),
@@ -1127,12 +1136,17 @@ class _StepVisitState extends State<StepVisit> {
                                 .where((entry) => entry.value.trim().isNotEmpty)
                                 .map(
                                   (entry) => CheckboxListTile(
-                                    value: selectedEquipment.contains(entry.key),
+                                    value: selectedEquipment.contains(
+                                      entry.key,
+                                    ),
                                     contentPadding: EdgeInsets.zero,
-                                    controlAffinity: ListTileControlAffinity.leading,
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
                                     title: Text(
                                       entry.key,
-                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                     subtitle: Text(entry.value.trim()),
                                     onChanged: (value) {
@@ -1150,10 +1164,13 @@ class _StepVisitState extends State<StepVisit> {
                               CheckboxListTile(
                                 value: upperUnits,
                                 contentPadding: EdgeInsets.zero,
-                                controlAffinity: ListTileControlAffinity.leading,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
                                 title: Text(
                                   'Meubles hauts (${analysis.upperUnits.length})',
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 subtitle: Text(
                                   analysis.upperUnits
@@ -1168,10 +1185,13 @@ class _StepVisitState extends State<StepVisit> {
                               CheckboxListTile(
                                 value: lowerUnits,
                                 contentPadding: EdgeInsets.zero,
-                                controlAffinity: ListTileControlAffinity.leading,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
                                 title: Text(
                                   'Meubles bas (${analysis.lowerUnits.length})',
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 subtitle: Text(
                                   analysis.lowerUnits
@@ -1328,9 +1348,7 @@ class _StepVisitState extends State<StepVisit> {
             final photos = _prefillPhotosForRoom(_selectedRoomIndex);
 
             return AlertDialog(
-              title: Text(
-                'Analyser rapidement « ${_currentRoom.name} »',
-              ),
+              title: Text('Analyser rapidement « ${_currentRoom.name} »'),
               content: SizedBox(
                 width: Responsive.isMobile(context)
                     ? MediaQuery.sizeOf(context).width - 64
@@ -1381,7 +1399,9 @@ class _StepVisitState extends State<StepVisit> {
                           : GridView.builder(
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: Responsive.isMobile(context) ? 2 : 4,
+                                    crossAxisCount: Responsive.isMobile(context)
+                                        ? 2
+                                        : 4,
                                     crossAxisSpacing: 12,
                                     mainAxisSpacing: 12,
                                   ),
@@ -1780,7 +1800,10 @@ class _StepVisitState extends State<StepVisit> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(width: sectionListWidth, child: _buildSectionList()),
+                    SizedBox(
+                      width: sectionListWidth,
+                      child: _buildSectionList(),
+                    ),
                     SizedBox(width: Responsive.spacingMd(context)),
                     Expanded(child: _buildEditor()),
                   ],
@@ -1808,9 +1831,7 @@ class _StepVisitState extends State<StepVisit> {
         const SizedBox(height: 10),
         _buildMobileSectionStrip(),
         const SizedBox(height: 12),
-        Expanded(
-          child: _buildEditor(),
-        ),
+        Expanded(child: _buildEditor()),
         const SizedBox(height: 10),
         _buildNavigation(),
       ],
@@ -1832,17 +1853,21 @@ class _StepVisitState extends State<StepVisit> {
               border: OutlineInputBorder(),
               isDense: true,
             ),
-            items: visibleRoomIndices.map((roomIndex) {
-              final item = widget.rooms[roomIndex];
-              final completed = _completedRooms.contains(_roomKey(roomIndex));
-              return DropdownMenuItem<int>(
-                value: roomIndex,
-                child: Text(
-                  '${completed ? '✓ ' : ''}${item.name}',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).toList(growable: false),
+            items: visibleRoomIndices
+                .map((roomIndex) {
+                  final item = widget.rooms[roomIndex];
+                  final completed = _completedRooms.contains(
+                    _roomKey(roomIndex),
+                  );
+                  return DropdownMenuItem<int>(
+                    value: roomIndex,
+                    child: Text(
+                      '${completed ? '✓ ' : ''}${item.name}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                })
+                .toList(growable: false),
             onChanged: (roomIndex) {
               if (roomIndex != null) _selectRoom(roomIndex);
             },
@@ -2190,17 +2215,9 @@ class _StepVisitState extends State<StepVisit> {
         if (mobile) ...[
           title,
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: prefillButton),
-            ],
-          ),
+          Row(children: [Expanded(child: prefillButton)]),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: completionButton),
-            ],
-          ),
+          Row(children: [Expanded(child: completionButton)]),
         ] else
           Row(
             children: [
@@ -3068,17 +3085,9 @@ class _StepVisitState extends State<StepVisit> {
       );
     }
 
-    return Row(
-      children: [
-        previousButton,
-        const Spacer(),
-        nextButton,
-      ],
-    );
+    return Row(children: [previousButton, const Spacer(), nextButton]);
   }
-
 }
-
 
 class _ProposalSectionTitle extends StatelessWidget {
   final String text;
@@ -3100,4 +3109,3 @@ class _ProposalSectionTitle extends StatelessWidget {
     );
   }
 }
-

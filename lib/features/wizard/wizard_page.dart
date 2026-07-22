@@ -147,26 +147,26 @@ class _WizardPageState extends State<WizardPage> {
   bool get _isSignatureStep => currentStep == _signatureStepIndex;
   bool get _isLastStep => currentStep == _reportStepIndex;
 
- void _selectPropertyElement(String id) {
-  setState(() {
-    _missionData.selectedPropertyElementId = id;
-  });
-}
+  void _selectPropertyElement(String id) {
+    setState(() {
+      _missionData.selectedPropertyElementId = id;
+    });
+  }
 
-void _selectPropertyElementAndContinue(String id) {
-  setState(() {
-    _missionData.selectedPropertyElementId = id;
+  void _selectPropertyElementAndContinue(String id) {
+    setState(() {
+      _missionData.selectedPropertyElementId = id;
 
-    // Passage automatique à l’étape suivante uniquement
-    // pour l’état des lieux d’entrée et de sortie.
-    if (!_isBeforeWorks &&
-        !_isAfterWorks &&
-        currentStep == _propertyStructureStepIndex &&
-        currentStep < _steps.length - 1) {
-      currentStep++;
-    }
-  });
-}
+      // Passage automatique à l’étape suivante uniquement
+      // pour l’état des lieux d’entrée et de sortie.
+      if (!_isBeforeWorks &&
+          !_isAfterWorks &&
+          currentStep == _propertyStructureStepIndex &&
+          currentStep < _steps.length - 1) {
+        currentStep++;
+      }
+    });
+  }
 
   void _attachRoomsToDefaultElement({String name = 'Habitation principale'}) {
     var element = _missionData.propertyElements.isEmpty
@@ -185,19 +185,19 @@ void _selectPropertyElementAndContinue(String id) {
     }
   }
 
-Widget _buildPropertyStructure() {
-  final technicalMode = _isBeforeWorks || _isAfterWorks;
+  Widget _buildPropertyStructure() {
+    final technicalMode = _isBeforeWorks || _isAfterWorks;
 
-  return StepPropertyType(
-    elements: _missionData.propertyElements,
-    selectedElementId: _missionData.selectedPropertyElementId,
-    onSelected: technicalMode
-        ? _selectPropertyElement
-        : _selectPropertyElementAndContinue,
-    onChanged: () => setState(() {}),
-    technicalMode: technicalMode,
-  );
-}
+    return StepPropertyType(
+      elements: _missionData.propertyElements,
+      selectedElementId: _missionData.selectedPropertyElementId,
+      onSelected: technicalMode
+          ? _selectPropertyElement
+          : _selectPropertyElementAndContinue,
+      onChanged: () => setState(() {}),
+      technicalMode: technicalMode,
+    );
+  }
 
   Widget _buildPropertyComposition({bool technicalMode = false}) {
     final selectedId = _missionData.selectedPropertyElementId;
@@ -834,8 +834,7 @@ Widget _buildPropertyStructure() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (actionButton != null)
-            SizedBox(height: 48, child: actionButton),
+          if (actionButton != null) SizedBox(height: 48, child: actionButton),
           if (actionButton != null) const SizedBox(height: 10),
           SizedBox(height: 48, child: previousButton),
         ],
@@ -891,11 +890,14 @@ Widget _buildPropertyStructure() {
         ? OutlinedButton.icon(
             onPressed: _openPreviousEntryReport,
             icon: const Icon(Icons.folder_open_outlined),
-            label: Text(isMobile ? 'Ancien rapport' : 'Ouvrir un ancien rapport'),
+            label: Text(
+              isMobile ? 'Ancien rapport' : 'Ouvrir un ancien rapport',
+            ),
           )
         : null;
 
-    final discoveryBadge = _discoveryAccess != null &&
+    final discoveryBadge =
+        _discoveryAccess != null &&
             !_discoveryAccess!.hasPaidAccessFor(_missionId)
         ? Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -949,9 +951,7 @@ Widget _buildPropertyStructure() {
         runSpacing: 12,
         children: [
           ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isTablet ? 440 : 620,
-            ),
+            constraints: BoxConstraints(maxWidth: isTablet ? 440 : 620),
             child: Text(
               widget.missionType.label,
               maxLines: 2,
@@ -1009,8 +1009,7 @@ Widget _buildPropertyStructure() {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: isMobile ? 16 : 18,
-                        fontWeight:
-                            _isExit ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight: _isExit ? FontWeight.w700 : FontWeight.w600,
                         color: _isExit
                             ? const Color(0xFFB91C1C)
                             : Colors.black54,

@@ -136,14 +136,21 @@ class _StepGeneralitiesState extends State<StepGeneralities> {
   }
 
   String _hintFor(String section) => switch (section) {
-    'Plafond' => 'Ex. : plafonds enduits et recouverts d’une peinture blanche mate...',
-    'Murs' => 'Ex. : murs enduits, peints, propres et exempts de dégradation apparente...',
-    'Menuiserie intérieure' => 'Ex. : portes planes peintes, quincailleries métalliques...',
-    'Menuiserie extérieure' => 'Ex. : châssis en PVC double vitrage, tablettes et joints...',
-    'Électricité' => 'Ex. : appareillage encastré, prises et interrupteurs de teinte blanche...',
-    'Chauffage' => 'Ex. : radiateurs métalliques peints, vannes thermostatiques...',
+    'Plafond' =>
+      'Ex. : plafonds enduits et recouverts d’une peinture blanche mate...',
+    'Murs' =>
+      'Ex. : murs enduits, peints, propres et exempts de dégradation apparente...',
+    'Menuiserie intérieure' =>
+      'Ex. : portes planes peintes, quincailleries métalliques...',
+    'Menuiserie extérieure' =>
+      'Ex. : châssis en PVC double vitrage, tablettes et joints...',
+    'Électricité' =>
+      'Ex. : appareillage encastré, prises et interrupteurs de teinte blanche...',
+    'Chauffage' =>
+      'Ex. : radiateurs métalliques peints, vannes thermostatiques...',
     'Sol' => 'Ex. : revêtement carrelé, parquet, plinthes assorties...',
-    'Mobilier' => 'Ex. : mobilier présent, état général et mode de description commun...',
+    'Mobilier' =>
+      'Ex. : mobilier présent, état général et mode de description commun...',
     _ => 'Décrivez les caractéristiques générales de ce poste.',
   };
 }
