@@ -59,8 +59,8 @@ class _StepKeysMetersState extends State<StepKeysMeters> {
               children: [
                 KeysTab(data: _data),
                 const MetersTab(),
-                const DocumentsTab(),
-                const MaintenanceTab(),
+                DocumentsTab(data: _data),
+                MaintenanceTab(data: _data),
               ],
             ),
           ),
