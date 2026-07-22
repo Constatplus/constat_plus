@@ -75,10 +75,6 @@ class _StepReportState extends State<StepReport> {
   final TextEditingController _emailController = TextEditingController(
     text: 'info@capital-immo.expert',
   );
-  final TextEditingController _keysController = TextEditingController();
-  final TextEditingController _maintenanceController = TextEditingController();
-  final TextEditingController _manualsController = TextEditingController();
-  final TextEditingController _documentsController = TextEditingController();
 
   bool _includeExpertSignature = true;
   bool _isExporting = false;
@@ -90,18 +86,7 @@ class _StepReportState extends State<StepReport> {
     super.initState();
     _reportType = widget.initialReportType;
     _titleController = TextEditingController(text: _reportType.label);
-    _prefillHandoverData();
     _loadSavedPreferences();
-  }
-
-  void _prefillHandoverData() {
-    final handover = widget.handover;
-    if (handover == null) return;
-
-    _keysController.text = handover.keyReportLines.join('\n');
-    _maintenanceController.text = handover.maintenanceReportLines.join('\n');
-    _manualsController.text = handover.manualReportLines.join('\n');
-    _documentsController.text = handover.documentReportLines.join('\n');
   }
 
   Future<void> _loadSavedPreferences() async {
@@ -126,10 +111,6 @@ class _StepReportState extends State<StepReport> {
     _expertController.dispose();
     _registrationController.dispose();
     _emailController.dispose();
-    _keysController.dispose();
-    _maintenanceController.dispose();
-    _manualsController.dispose();
-    _documentsController.dispose();
     super.dispose();
   }
 
@@ -139,14 +120,6 @@ class _StepReportState extends State<StepReport> {
       _reportType = value;
       _titleController.text = value.label;
     });
-  }
-
-  List<String> _lines(TextEditingController controller) {
-    return controller.text
-        .split(RegExp(r'\r?\n'))
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
   }
 
   List<String> _notesForType(
@@ -170,6 +143,7 @@ class _StepReportState extends State<StepReport> {
 
   ReportSettings _settings() {
     final defaults = ReportSettings.defaults(_reportType);
+    final handover = widget.handover;
     return ReportSettings(
       reportType: _reportType,
       companyName: _companyController.text.trim(),
@@ -189,10 +163,10 @@ class _StepReportState extends State<StepReport> {
       preliminaryNotes: _savedPreferences == null
           ? defaults.preliminaryNotes
           : _notesForType(_savedPreferences!, _reportType),
-      keys: _lines(_keysController),
-      maintenance: _lines(_maintenanceController),
-      manuals: _lines(_manualsController),
-      documents: _lines(_documentsController),
+      keys: handover?.keyReportLines ?? const <String>[],
+      maintenance: handover?.maintenanceReportLines ?? const <String>[],
+      manuals: handover?.manualReportLines ?? const <String>[],
+      documents: handover?.documentReportLines ?? const <String>[],
       generalities: defaults.generalities,
     );
   }
@@ -480,18 +454,40 @@ class _StepReportState extends State<StepReport> {
         ),
         const SizedBox(height: 18),
         const Text(
-          'Clés, entretiens, manuels et documents',
+          'Données de remise reprises dans le rapport',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
+        const Text(
+          'Ces informations proviennent de l’étape « Clés • Compteurs • Documents ». Revenez à cette étape pour les modifier.',
+          style: TextStyle(color: Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 16,
           runSpacing: 16,
           children: [
-            _multiLineField(_keysController, 'Clés / badges / télécommandes'),
-            _multiLineField(_maintenanceController, 'Entretiens'),
-            _multiLineField(_manualsController, 'Manuels / modes d’emploi'),
-            _multiLineField(_documentsController, 'Documents remis'),
+            _handoverSection(
+              title: 'Clés / badges / télécommandes',
+              icon: Icons.key_outlined,
+              lines: widget.handover?.keyReportLines ?? const <String>[],
+            ),
+            _handoverSection(
+              title: 'Entretiens',
+              icon: Icons.build_outlined,
+              lines:
+                  widget.handover?.maintenanceReportLines ?? const <String>[],
+            ),
+            _handoverSection(
+              title: 'Manuels / modes d’emploi',
+              icon: Icons.menu_book_outlined,
+              lines: widget.handover?.manualReportLines ?? const <String>[],
+            ),
+            _handoverSection(
+              title: 'Documents remis',
+              icon: Icons.description_outlined,
+              lines: widget.handover?.documentReportLines ?? const <String>[],
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -569,14 +565,49 @@ class _StepReportState extends State<StepReport> {
     );
   }
 
-  Widget _multiLineField(TextEditingController controller, String label) {
-    return SizedBox(
+  Widget _handoverSection({
+    required String title,
+    required IconData icon,
+    required List<String> lines,
+  }) {
+    return Container(
       width: 420,
-      child: TextField(
-        controller: controller,
-        minLines: 4,
-        maxLines: 8,
-        decoration: _decoration('$label - une ligne par élément'),
+      constraints: const BoxConstraints(minHeight: 140),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: const Color(0xFF2563EB)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (lines.isEmpty)
+            const Text(
+              'Aucun élément renseigné.',
+              style: TextStyle(color: Color(0xFF94A3B8)),
+            )
+          else
+            ...lines.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('• $line'),
+              ),
+            ),
+        ],
       ),
     );
   }
