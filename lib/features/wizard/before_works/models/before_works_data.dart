@@ -82,6 +82,8 @@ class BeforeWorksData {
   final List<TechnicalFinding> findings = <TechnicalFinding>[];
   final Map<String, String> propertyElementAreaIds = <String, String>{};
 
+  int _idSequence = 0;
+
   String areaPath(BeforeWorksArea area) {
     final parents = areas.where((item) => item.id == area.parentId);
     return parents.isEmpty ? area.name : '${parents.first.name} › ${area.name}';
@@ -177,7 +179,17 @@ class BeforeWorksData {
       );
       changed = ids.length != before;
     }
-    return areas.where((area) => ids.contains(area.id)).toList(growable: false);
+
+    // A legacy draft may already contain duplicate IDs. DropdownButton requires
+    // exactly one item for its selected value, so keep only the first area for
+    // each ID while preserving the original display order.
+    final uniqueAreas = <String, BeforeWorksArea>{};
+    for (final area in areas) {
+      if (ids.contains(area.id)) {
+        uniqueAreas.putIfAbsent(area.id, () => area);
+      }
+    }
+    return uniqueAreas.values.toList(growable: false);
   }
 
   void _attachLegacyFindings() {
@@ -191,6 +203,13 @@ class BeforeWorksData {
     }
   }
 
-  static String _newId(String prefix) =>
-      '$prefix-${DateTime.now().microsecondsSinceEpoch}';
+  String _newId(String prefix) {
+    String candidate;
+    do {
+      _idSequence++;
+      candidate =
+          '$prefix-${DateTime.now().microsecondsSinceEpoch}-$_idSequence';
+    } while (areas.any((area) => area.id == candidate));
+    return candidate;
+  }
 }

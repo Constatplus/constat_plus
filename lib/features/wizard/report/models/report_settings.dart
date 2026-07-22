@@ -68,7 +68,7 @@ class ReportSettings {
       documents: const <String>[],
       generalities: const <String, String>{
         'Plafond': '',
-        'Mur': '',
+        'Murs': '',
         'Menuiserie intérieure': '',
         'Menuiserie extérieure': '',
         'Électricité': '',
