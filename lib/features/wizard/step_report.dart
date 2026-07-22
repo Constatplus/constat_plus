@@ -8,6 +8,7 @@ import '../pricing/pricing_page.dart';
 import 'before_works/models/before_works_data.dart';
 import 'before_works/models/technical_finding.dart';
 import 'comparison/models/comparison_remark.dart';
+import 'keys_meters/models/mission_handover_data.dart';
 import 'property_composition/models/room_item.dart';
 import 'reference/models/reference_report.dart';
 import 'reference/reference_pdf_viewer_page.dart';
@@ -28,6 +29,7 @@ class StepReport extends StatefulWidget {
   final BeforeWorksData? beforeWorksData;
   final ReferenceReport? referenceReport;
   final List<ComparisonRemark> comparisonRemarks;
+  final MissionHandoverData? handover;
 
   const StepReport({
     super.key,
@@ -39,6 +41,7 @@ class StepReport extends StatefulWidget {
     this.beforeWorksData,
     this.referenceReport,
     this.comparisonRemarks = const <ComparisonRemark>[],
+    this.handover,
   });
 
   @override
@@ -87,7 +90,18 @@ class _StepReportState extends State<StepReport> {
     super.initState();
     _reportType = widget.initialReportType;
     _titleController = TextEditingController(text: _reportType.label);
+    _prefillHandoverData();
     _loadSavedPreferences();
+  }
+
+  void _prefillHandoverData() {
+    final handover = widget.handover;
+    if (handover == null) return;
+
+    _keysController.text = handover.keyReportLines.join('\n');
+    _maintenanceController.text = handover.maintenanceReportLines.join('\n');
+    _manualsController.text = handover.manualReportLines.join('\n');
+    _documentsController.text = handover.documentReportLines.join('\n');
   }
 
   Future<void> _loadSavedPreferences() async {
