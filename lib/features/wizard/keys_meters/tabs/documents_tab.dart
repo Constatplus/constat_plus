@@ -46,9 +46,10 @@ class _DocumentsTabState extends State<DocumentsTab>
   @override
   void initState() {
     super.initState();
+
     if (documents.isEmpty) {
       documents.addAll(
-        _defaultDocuments.map(DocumentHandoverItem.new),
+        _defaultDocuments.map((name) => DocumentHandoverItem(name: name)),
       );
     }
   }

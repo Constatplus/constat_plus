@@ -41,10 +41,13 @@ class _MaintenanceTabState extends State<MaintenanceTab>
   @override
   void initState() {
     super.initState();
+    
     if (maintenanceItems.isEmpty) {
       maintenanceItems.addAll(
-        _defaultMaintenanceItems.map(MaintenanceHandoverItem.new),
-      );
+  _defaultMaintenanceItems.map(
+    (name) => MaintenanceHandoverItem(name: name),
+  ),
+);
     }
   }
 

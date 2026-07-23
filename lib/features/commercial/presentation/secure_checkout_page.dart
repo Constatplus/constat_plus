@@ -35,7 +35,10 @@ class _SecureCheckoutPageState extends State<SecureCheckoutPage> {
 
   bool get _isSubscription {
     final planName = widget.planName.toLowerCase();
-    return planName.contains('solo') || planName.contains('pro');
+    return planName.contains('solo') ||
+        planName.contains('pro') ||
+        planName.contains('agence') ||
+        planName.contains('agency');
   }
 
   String get _checkoutButtonLabel {

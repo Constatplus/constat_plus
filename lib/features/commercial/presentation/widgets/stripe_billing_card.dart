@@ -155,6 +155,9 @@ class _StripeBillingCardState extends State<StripeBillingCard> {
   }
 
   String _billingLabel() {
+    if (widget.plan.code.endsWith('_annual')) {
+      return '/ an';
+    }
     final planName = widget.plan.name.toLowerCase();
 
     if (planName.contains('solo') || planName.contains('pro')) {

@@ -1,5 +1,8 @@
+import 'dart:ui' show Size;
+
 import 'package:flutter_app/app/app.dart';
 import 'package:flutter_app/features/commercial/domain/models/commercial_enums.dart';
+import 'package:flutter_app/features/commercial/domain/models/official_pricing_catalog.dart';
 import 'package:flutter_app/features/commercial/domain/models/subscription_plan.dart';
 import 'package:flutter_app/features/commercial/domain/models/subscription_overview.dart';
 import 'package:flutter_app/features/commercial/domain/models/usage_period.dart';
@@ -75,11 +78,65 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Solo'), findsOneWidget);
-    expect(find.textContaining('99 €'), findsOneWidget);
+    expect(find.text('Solo'), findsWidgets);
+    expect(find.textContaining('69 €'), findsOneWidget);
     expect(find.textContaining('HTVA'), findsWidgets);
-    expect(find.textContaining('5 états des lieux'), findsOneWidget);
-    expect(find.textContaining('20 € HTVA'), findsOneWidget);
+    expect(find.text('Jusqu’à 5 états des lieux par mois'), findsOneWidget);
+    expect(find.textContaining('7 € HTVA'), findsWidgets);
+  });
+
+  test('le tarif annuel professionnel correspond à dix mensualités', () {
+    final solo = OfficialPricingCatalog.offers.singleWhere(
+      (offer) => offer.code == 'solo',
+    );
+
+    expect(solo.priceMinor(PricingPeriod.monthly), 6900);
+    expect(solo.priceMinor(PricingPeriod.annual), 69000);
+    expect(solo.checkoutCode(PricingPeriod.annual), 'solo_annual');
+  });
+
+  testWidgets('le sélecteur affiche les offres Particulier', (tester) async {
+    final repository = _FakeCatalogRepository([_plan(now)]);
+    await tester.pumpWidget(
+      ProjectGeoApp(home: OffersPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Particulier'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Découverte'), findsWidgets);
+    expect(find.text('État des lieux IA'), findsWidgets);
+    expect(find.textContaining('39 € TVAC'), findsOneWidget);
+  });
+
+  testWidgets('l’action de souscription Solo est disponible', (tester) async {
+    final repository = _FakeCatalogRepository([_plan(now)]);
+    await tester.pumpWidget(
+      ProjectGeoApp(home: OffersPage(repository: repository)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Souscrire à Solo'), findsOneWidget);
+  });
+
+  testWidgets('la grille reste sans overflow aux largeurs principales', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.devicePixelRatio = 1;
+
+    for (final width in [360.0, 800.0, 1440.0]) {
+      tester.view.physicalSize = Size(width, 1000);
+      await tester.pumpWidget(
+        ProjectGeoApp(
+          home: OffersPage(repository: _FakeCatalogRepository([_plan(now)])),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'largeur $width px');
+    }
   });
 }
 

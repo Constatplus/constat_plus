@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/access/access_service.dart';
 import '../../../../core/auth/auth_service.dart';
 import '../../../auth/login_page.dart';
+import '../../../auth/register_page.dart';
+import '../../domain/models/official_pricing_catalog.dart';
 import '../../domain/models/subscription_plan.dart';
 import '../../domain/repositories/commercial_repositories.dart';
 import '../../infrastructure/repositories/supabase_product_catalog_repository.dart';
-import '../widgets/plan_card.dart';
+import '../commercial_formatters.dart';
 import 'offer_details_page.dart';
 import 'subscription_page.dart';
 
@@ -21,65 +24,123 @@ class OffersPage extends StatefulWidget {
 
 class _OffersPageState extends State<OffersPage> {
   late final ProductCatalogRepository _repository;
-  late Future<List<SubscriptionPlan>> _plans;
+  PricingAudience _audience = PricingAudience.professional;
+  PricingPeriod _period = PricingPeriod.monthly;
+  bool _openingOffer = false;
 
   @override
   void initState() {
     super.initState();
     _repository = widget.repository ?? SupabaseProductCatalogRepository();
-    _plans = _repository.getActivePlans();
   }
 
-  void _retry() {
-    setState(() => _plans = _repository.getActivePlans());
-  }
-
-  void _openDetails(SubscriptionPlan plan) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => OfferDetailsPage(plan: plan)),
-    );
-  }
-
-  void _showComingSoon(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  void _openSubscription() {
-    if (AccessService.instance.isDemo) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Connectez-vous avec un compte réel pour consulter un abonnement.',
-          ),
-        ),
-      );
+  Future<void> _openSubscription() async {
+    if (AccessService.instance.isDemo || AuthService.currentUser == null) {
+      await Navigator.of(
+        context,
+      ).push<void>(MaterialPageRoute<void>(builder: (_) => const LoginPage()));
       return;
     }
-
-    if (AuthService.currentUser == null) {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const LoginPage()),
-      );
-      return;
-    }
-
-    Navigator.of(context).push(
+    if (!mounted) return;
+    await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(builder: (_) => const SubscriptionPage()),
     );
   }
 
+  Future<void> _selectOffer(PricingOffer offer) async {
+    if (_openingOffer) return;
+    if (offer.customQuote) {
+      await _showContactForm();
+      return;
+    }
+    if (offer.free) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => const RegisterPage()),
+      );
+      return;
+    }
+
+    if (AccessService.instance.isDemo || AuthService.currentUser == null) {
+      await Navigator.of(
+        context,
+      ).push<void>(MaterialPageRoute<void>(builder: (_) => const LoginPage()));
+      if (!mounted || AuthService.currentUser == null) return;
+    }
+
+    setState(() => _openingOffer = true);
+    try {
+      // La lecture confirme que le catalogue backend est joignable. Le prix et
+      // les droits restent validés par le backend au moment du paiement.
+      await _repository.getPlan(offer.checkoutCode(_period));
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              OfferDetailsPage(plan: offer.toSubscriptionPlan(_period)),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Impossible de charger le paiement sécurisé pour le moment : $error',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _openingOffer = false);
+    }
+  }
+
+  Future<void> _showDetails(PricingOffer offer) async {
+    final compact = MediaQuery.sizeOf(context).width < 620;
+    final content = _OfferDetails(
+      offer: offer,
+      period: _period,
+      onSubscribe: () {
+        Navigator.of(context).pop();
+        _selectOffer(offer);
+      },
+    );
+    if (compact) {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (_) => FractionallySizedBox(heightFactor: .94, child: content),
+      );
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => Dialog(
+          insetPadding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720, maxHeight: 780),
+            child: content,
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showContactForm() => showDialog<void>(
+    context: context,
+    builder: (_) => const _EnterpriseContactDialog(),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 620;
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 620;
+    final offers = OfficialPricingCatalog.forAudience(_audience);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
       appBar: AppBar(
         title: const Text('Offres et tarifs'),
         actions: [
-          if (mobile)
+          if (compact)
             IconButton(
               tooltip: 'Mon abonnement',
               onPressed: _openSubscription,
@@ -91,932 +152,532 @@ class _OffersPageState extends State<OffersPage> {
               icon: const Icon(Icons.workspace_premium_outlined),
               label: const Text('Mon abonnement'),
             ),
-          SizedBox(width: mobile ? 4 : 12),
+          const SizedBox(width: 8),
         ],
       ),
-      body: FutureBuilder<List<SubscriptionPlan>>(
-        future: _plans,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return _CatalogError(error: snapshot.error, onRetry: _retry);
-          }
-
-          final plans = snapshot.data ?? const [];
-          if (plans.isEmpty) {
-            return _CatalogError(
-              error: 'Aucune offre active pour le moment.',
-              onRetry: _retry,
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              mobile ? 14 : 28,
-              mobile ? 14 : 24,
-              mobile ? 14 : 28,
-              42,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1160),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _Hero(
-                      compact: mobile,
-                      onSubscription: _openSubscription,
-                    ),
-                    SizedBox(height: mobile ? 28 : 38),
-                    const _SectionTitle(
-                      eyebrow: 'NOS FORMULES',
-                      title: 'Une formule claire pour chaque rythme de mission',
-                      subtitle:
-                          'Choisissez l’offre adaptée à votre activité. Les prix, quotas et fonctionnalités sont chargés depuis le catalogue sécurisé Constat+.',
-                    ),
-                    SizedBox(height: mobile ? 22 : 30),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final cardWidth = constraints.maxWidth < 620
-                            ? constraints.maxWidth
-                            : constraints.maxWidth < 980
-                                ? (constraints.maxWidth - 18) / 2
-                                : (constraints.maxWidth - 36) / 3;
-
-                        return Wrap(
-                          spacing: 18,
-                          runSpacing: 22,
-                          alignment: WrapAlignment.center,
-                          children: plans
-                              .map(
-                                (plan) => SizedBox(
-                                  width: cardWidth,
-                                  child: PlanCard(
-                                    plan: plan,
-                                    highlighted: plan.code == 'pro',
-                                    onDetails: () => _openDetails(plan),
-                                  ),
-                                ),
-                              )
-                              .toList(growable: false),
-                        );
-                      },
-                    ),
-                    SizedBox(height: mobile ? 28 : 38),
-                    _EnterpriseOffer(
-                      onContact: () => _showComingSoon(
-                        'Le formulaire de demande Entreprise sera relié au service commercial lors de l’activation des paiements.',
-                      ),
-                    ),
-                    SizedBox(height: mobile ? 30 : 42),
-                    _AddOnServices(
-                      onReview: () => _showComingSoon(
-                        'La commande de relecture professionnelle sera activée avec le module de paiement.',
-                      ),
-                      onCredits: () => _showComingSoon(
-                        'L’achat de crédits IA sera activé avec le module de paiement sécurisé.',
-                      ),
-                    ),
-                    SizedBox(height: mobile ? 30 : 42),
-                    const _Benefits(),
-                    SizedBox(height: mobile ? 26 : 36),
-                    const _TrustStrip(),
-                    SizedBox(height: mobile ? 28 : 38),
-                    const _Faq(),
-                  ],
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 14 : 28,
+          20,
+          compact ? 14 : 28,
+          48,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1440),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Hero(compact: compact),
+                const SizedBox(height: 26),
+                _Selectors(
+                  audience: _audience,
+                  period: _period,
+                  onAudience: (value) => setState(() => _audience = value),
+                  onPeriod: (value) => setState(() => _period = value),
                 ),
-              ),
+                if (OfficialPricingCatalog.launchOfferEnabled &&
+                    _audience == PricingAudience.professional) ...[
+                  const SizedBox(height: 20),
+                  const _LaunchBanner(),
+                ],
+                const SizedBox(height: 26),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = constraints.maxWidth < 620
+                        ? 1
+                        : constraints.maxWidth < 1050
+                        ? 2
+                        : 4;
+                    final cardWidth =
+                        (constraints.maxWidth - ((columns - 1) * 18)) / columns;
+                    return Wrap(
+                      spacing: 18,
+                      runSpacing: 20,
+                      children: [
+                        for (final offer in offers)
+                          SizedBox(
+                            width: cardWidth,
+                            child: _OfferCard(
+                              offer: offer,
+                              period: _period,
+                              busy: _openingOffer,
+                              onDetails: () => _showDetails(offer),
+                              onSubscribe: () => _selectOffer(offer),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                if (_audience == PricingAudience.professional) ...[
+                  const SizedBox(height: 34),
+                  const _ExtraUsage(),
+                  const SizedBox(height: 28),
+                  const _ProfessionalServices(),
+                ],
+                const SizedBox(height: 36),
+                _Comparison(audience: _audience),
+                const SizedBox(height: 36),
+                const _Faq(),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.compact, required this.onSubscription});
+  const _Hero({required this.compact});
 
   final bool compact;
-  final VoidCallback onSubscription;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 22 : 38,
-        vertical: compact ? 28 : 42,
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.all(compact ? 24 : 36),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF0B1220), Color(0xFF15326D), Color(0xFF2563EB)],
       ),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0B1220),
-            Color(0xFF15326D),
-            Color(0xFF2563EB),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(compact ? 26 : 32),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: .16),
-            blurRadius: 32,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final copy = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: .16),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.workspace_premium_rounded,
-                      size: 17,
-                      color: Color(0xFFBFDBFE),
-                    ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'DES OFFRES PENSÉES POUR VOTRE ACTIVITÉ',
-                        style: TextStyle(
-                          color: Color(0xFFDBEAFE),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: .7,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Choisissez la formule qui vous correspond',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: compact ? 32 : 43,
-                  height: 1.08,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: compact ? -1 : -1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Du constat occasionnel au cabinet réalisant plusieurs missions chaque semaine, Constat+ évolue avec votre activité.',
-                style: TextStyle(
-                  color: const Color(0xFFD6E4FF),
-                  fontSize: compact ? 15.5 : 17,
-                  height: 1.55,
-                ),
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: compact ? double.infinity : null,
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF1D4ED8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                  onPressed: onSubscription,
-                  icon: const Icon(Icons.workspace_premium_outlined),
-                  label: const Text('Consulter mon abonnement'),
-                ),
-              ),
-            ],
-          );
-
-          if (constraints.maxWidth < 820) return copy;
-
-          return Row(
-            children: [
-              Expanded(flex: 6, child: copy),
-              const SizedBox(width: 34),
-              const Expanded(flex: 4, child: _HeroHighlights()),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _HeroHighlights extends StatelessWidget {
-  const _HeroHighlights();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .10),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: .16)),
-      ),
-      child: const Column(
-        children: [
-          _Highlight(Icons.fact_check_outlined, 'Rapports structurés'),
-          SizedBox(height: 16),
-          _Highlight(Icons.auto_awesome_outlined, 'Assistant IA'),
-          SizedBox(height: 16),
-          _Highlight(Icons.devices_rounded, 'Multi-support'),
-        ],
-      ),
-    );
-  }
-}
-
-class _Highlight extends StatelessWidget {
-  const _Highlight(this.icon, this.label);
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .12),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: Colors.white),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.eyebrow,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final String eyebrow;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 620;
-
-    return Column(
+      borderRadius: BorderRadius.circular(compact ? 24 : 30),
+    ),
+    child: Column(
       children: [
         Text(
-          eyebrow,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF2563EB),
-            fontWeight: FontWeight.w900,
-            letterSpacing: .9,
-          ),
-        ),
-        const SizedBox(height: 9),
-        Text(
-          title,
+          'Choisissez la formule qui vous correspond',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: mobile ? 28 : 35,
-            height: 1.15,
+            color: Colors.white,
+            fontSize: compact ? 29 : 39,
+            height: 1.12,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFF0F172A),
           ),
         ),
         const SizedBox(height: 12),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: mobile ? 15 : 16,
-              height: 1.55,
-              color: const Color(0xFF64748B),
-            ),
+        const Text(
+          'Une tarification claire pour les particuliers, les indépendants et les équipes.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFFD6E4FF),
+            fontSize: 16,
+            height: 1.45,
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
 }
 
-
-class _EnterpriseOffer extends StatelessWidget {
-  const _EnterpriseOffer({required this.onContact});
-
-  final VoidCallback onContact;
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 700;
-
-    return Container(
-      padding: EdgeInsets.all(mobile ? 22 : 30),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final content = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  'ENTREPRISE • SUR DEVIS',
-                  style: TextStyle(
-                    color: Color(0xFFBFDBFE),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: .7,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Pilotez les états des lieux de toute votre équipe',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: mobile ? 28 : 36,
-                  height: 1.12,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Une formule conçue pour les agences, cabinets d’expertise, réseaux et équipes disposant de plusieurs collaborateurs.',
-                style: TextStyle(
-                  color: Color(0xFFCBD5E1),
-                  height: 1.5,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 22),
-              FilledButton.icon(
-                onPressed: onContact,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF1D4ED8),
-                  minimumSize: Size(mobile ? double.infinity : 0, 52),
-                ),
-                icon: const Icon(Icons.business_center_outlined),
-                label: const Text('Demander une démonstration'),
-              ),
-            ],
-          );
-
-          final features = const _EnterpriseFeatures();
-
-          if (constraints.maxWidth < 850) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [content, const SizedBox(height: 24), features],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(flex: 5, child: content),
-              const SizedBox(width: 34),
-              const Expanded(flex: 4, child: _EnterpriseFeatures()),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _EnterpriseFeatures extends StatelessWidget {
-  const _EnterpriseFeatures();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .09),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: .14)),
-      ),
-      child: const Column(
-        children: [
-          _EnterpriseFeature(Icons.dashboard_customize_outlined, 'Tableau de bord de contrôle'),
-          _EnterpriseFeature(Icons.assignment_ind_outlined, 'Affectation d’un expert par état des lieux'),
-          _EnterpriseFeature(Icons.groups_2_outlined, 'Gestion des collaborateurs et des rôles'),
-          _EnterpriseFeature(Icons.fact_check_outlined, 'Validation et contrôle qualité des rapports'),
-          _EnterpriseFeature(Icons.monitor_heart_outlined, 'Suivi des dossiers, délais et taux de complétude'),
-          _EnterpriseFeature(Icons.auto_awesome_outlined, 'Crédits IA mutualisés pour l’entreprise'),
-        ],
-      ),
-    );
-  }
-}
-
-class _EnterpriseFeature extends StatelessWidget {
-  const _EnterpriseFeature(this.icon, this.label);
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF93C5FD), size: 21),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddOnServices extends StatelessWidget {
-  const _AddOnServices({required this.onReview, required this.onCredits});
-
-  final VoidCallback onReview;
-  final VoidCallback onCredits;
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 620;
-
-    return Column(
-      children: [
-        const _SectionTitle(
-          eyebrow: 'SERVICES COMPLÉMENTAIRES',
-          title: 'Achetez uniquement ce dont vous avez besoin',
-          subtitle:
-              'Ajoutez une relecture professionnelle ou rechargez vos analyses IA sans devoir changer immédiatement de formule.',
-        ),
-        SizedBox(height: mobile ? 22 : 28),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth < 800
-                ? constraints.maxWidth
-                : (constraints.maxWidth - 18) / 2;
-
-            return Wrap(
-              spacing: 18,
-              runSpacing: 18,
-              children: [
-                SizedBox(
-                  width: width,
-                  child: _ServiceCard(
-                    icon: Icons.rate_review_outlined,
-                    title: 'Relecture professionnelle',
-                    price: '99 € HTVA',
-                    subtitle: 'par état des lieux',
-                    features: const [
-                      'Contrôle de cohérence du rapport',
-                      'Vérification des oublis et contradictions',
-                      'Observations et recommandations professionnelles',
-                      'Retour structuré avant remise au client',
-                    ],
-                    buttonLabel: 'Commander une relecture',
-                    onPressed: onReview,
-                  ),
-                ),
-                SizedBox(
-                  width: width,
-                  child: _AiCreditsCard(onPressed: onCredits),
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _ServiceCard extends StatelessWidget {
-  const _ServiceCard({
-    required this.icon,
-    required this.title,
-    required this.price,
-    required this.subtitle,
-    required this.features,
-    required this.buttonLabel,
-    required this.onPressed,
+class _Selectors extends StatelessWidget {
+  const _Selectors({
+    required this.audience,
+    required this.period,
+    required this.onAudience,
+    required this.onPeriod,
   });
 
-  final IconData icon;
-  final String title;
-  final String price;
-  final String subtitle;
-  final List<String> features;
-  final String buttonLabel;
-  final VoidCallback onPressed;
+  final PricingAudience audience;
+  final PricingPeriod period;
+  final ValueChanged<PricingAudience> onAudience;
+  final ValueChanged<PricingPeriod> onPeriod;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(icon, color: const Color(0xFF2563EB)),
+  Widget build(BuildContext context) => Wrap(
+    spacing: 16,
+    runSpacing: 12,
+    alignment: WrapAlignment.center,
+    children: [
+      SegmentedButton<PricingAudience>(
+        segments: const [
+          ButtonSegment(
+            value: PricingAudience.individual,
+            label: Text('Particulier'),
+            icon: Icon(Icons.person_outline),
           ),
-          const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(price, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(subtitle, style: const TextStyle(color: Color(0xFF64748B))),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ...features.map((feature) => _CheckLine(feature)),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: onPressed,
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-            child: Text(buttonLabel),
+          ButtonSegment(
+            value: PricingAudience.professional,
+            label: Text('Professionnel'),
+            icon: Icon(Icons.business_center_outlined),
           ),
         ],
+        selected: {audience},
+        onSelectionChanged: (values) => onAudience(values.first),
       ),
-    );
-  }
+      SegmentedButton<PricingPeriod>(
+        segments: const [
+          ButtonSegment(value: PricingPeriod.monthly, label: Text('Mensuel')),
+          ButtonSegment(
+            value: PricingPeriod.annual,
+            label: Text('Annuel – 2 mois offerts'),
+          ),
+        ],
+        selected: {period},
+        onSelectionChanged: (values) => onPeriod(values.first),
+      ),
+    ],
+  );
 }
 
-class _AiCreditsCard extends StatelessWidget {
-  const _AiCreditsCard({required this.onPressed});
-
-  final VoidCallback onPressed;
+class _LaunchBanner extends StatelessWidget {
+  const _LaunchBanner();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF8FAFC), Color(0xFFEFF6FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEFF6FF),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFF93C5FD)),
+    ),
+    child: const Column(
+      children: [
+        Text(
+          'Offre de lancement : Solo à 49 € HTVA/mois et Pro à 99 € HTVA/mois pendant les 6 premiers mois. Tarif garanti pendant la période promotionnelle.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF1E3A8A),
+            height: 1.4,
+          ),
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.auto_awesome, color: Color(0xFF2563EB)),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text('Crédits d’analyse IA', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          const Text(
-            'Rechargez votre compte lorsque le quota mensuel est atteint. Les gros volumes bénéficient d’un prix unitaire réduit.',
-            style: TextStyle(color: Color(0xFF64748B), height: 1.45),
-          ),
-          const SizedBox(height: 18),
-          const _CreditPack('Pack Découverte', '25 analyses', '19 € HTVA', '0,76 € / analyse'),
-          const _CreditPack('Pack Pro', '100 analyses', '69 € HTVA', '0,69 € / analyse'),
-          const _CreditPack('Pack Volume', '500 analyses', '299 € HTVA', '0,60 € / analyse'),
-          const _CreditPack('Entreprise', 'Volume personnalisé', 'Sur devis', 'Crédits mutualisés'),
-          const SizedBox(height: 16),
-          const Text(
-            'Une analyse correspond à une série de photos traitée ensemble. Le nombre maximal de photos et le coût définitif seront fixés après les tests réels de consommation API.',
-            style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B), height: 1.4),
-          ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: onPressed,
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-            icon: const Icon(Icons.add_card_outlined),
-            label: const Text('Acheter des crédits IA'),
-          ),
-        ],
-      ),
-    );
-  }
+        SizedBox(height: 6),
+        Text(
+          'Premier rapport d’essai gratuit, sans carte bancaire.',
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
+  );
 }
 
-class _CreditPack extends StatelessWidget {
-  const _CreditPack(this.name, this.quantity, this.price, this.unit);
+class _OfferCard extends StatelessWidget {
+  const _OfferCard({
+    required this.offer,
+    required this.period,
+    required this.busy,
+    required this.onDetails,
+    required this.onSubscribe,
+  });
 
-  final String name;
-  final String quantity;
-  final String price;
-  final String unit;
+  final PricingOffer offer;
+  final PricingPeriod period;
+  final bool busy;
+  final VoidCallback onDetails;
+  final VoidCallback onSubscribe;
+
+  String get _price {
+    if (offer.free) return 'Gratuit';
+    if (offer.customQuote) return 'Sur devis';
+    final money = CommercialFormatters.money(offer.priceMinor(period), 'EUR');
+    if (offer.oneTime) {
+      return '$money ${offer.taxDisplay.label} / état des lieux';
+    }
+    return period == PricingPeriod.annual
+        ? '$money ${offer.taxDisplay.label} / an'
+        : '$money ${offer.taxDisplay.label} / mois';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 9),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .82),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w900)),
-                const SizedBox(height: 2),
-                Text(quantity, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(price, style: const TextStyle(fontWeight: FontWeight.w900)),
-              const SizedBox(height: 2),
-              Text(unit, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CheckLine extends StatelessWidget {
-  const _CheckLine(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
-          const SizedBox(width: 9),
-          Expanded(child: Text(text, style: const TextStyle(height: 1.35))),
-        ],
-      ),
-    );
-  }
-}
-
-class _Benefits extends StatelessWidget {
-  const _Benefits();
-
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 620;
-
-    return Container(
-      padding: EdgeInsets.all(mobile ? 20 : 28),
-      decoration: BoxDecoration(
+    final highlighted = offer.badge != null;
+    final compact = MediaQuery.sizeOf(context).width < 620;
+    final desktopHeight = offer.audience == PricingAudience.professional
+        ? 980.0
+        : 950.0;
+    return SizedBox(
+      height: compact ? null : desktopHeight,
+      child: Card(
+        elevation: highlighted ? 7 : 2,
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        children: [
-          const _SectionTitle(
-            eyebrow: 'INCLUS DANS CONSTAT+',
-            title: 'Les outils essentiels pour vos missions',
-            subtitle:
-                'Chaque formule donne accès à une base professionnelle commune. Les quotas et options avancées varient selon l’abonnement.',
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: highlighted
+                ? const Color(0xFF2563EB)
+                : const Color(0xFFE2E8F0),
+            width: highlighted ? 2 : 1,
           ),
-          const SizedBox(height: 26),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth < 620
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - 18) / 2;
-
-              return Wrap(
-                spacing: 18,
-                runSpacing: 14,
-                children: [
-                  SizedBox(
-                    width: width,
-                    child: const _Benefit(
-                      Icons.description_outlined,
-                      'Rapports structurés',
-                      'Des documents organisés pour faciliter la relecture et la remise au client.',
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: const _Benefit(
-                      Icons.photo_camera_back_outlined,
-                      'Gestion des photos',
-                      'Ajoutez et classez les photographies directement dans vos dossiers.',
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: const _Benefit(
-                      Icons.auto_awesome_outlined,
-                      'Assistance intelligente',
-                      'Profitez des outils IA disponibles selon les limites de votre formule.',
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: const _Benefit(
-                      Icons.devices_rounded,
-                      'Utilisation multi-support',
-                      'Travaillez sur ordinateur, tablette ou téléphone selon votre situation.',
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Benefit extends StatelessWidget {
-  const _Benefit(this.icon, this.title, this.text);
-
-  final IconData icon;
-  final String title;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(icon, color: const Color(0xFF2563EB)),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (offer.badge case final badge?)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    label: Text(badge),
+                    avatar: const Icon(Icons.star_rounded, size: 18),
                   ),
                 ),
-                const SizedBox(height: 5),
+              Text(
+                offer.name,
+                style: const TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                _price,
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1D4ED8),
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                offer.description,
+                style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
+              ),
+              const Divider(height: 30),
+              for (final feature in offer.features)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_outline,
+                        size: 19,
+                        color: Color(0xFF15803D),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          feature,
+                          style: const TextStyle(height: 1.35),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (offer.disclaimer case final disclaimer?) ...[
+                const SizedBox(height: 4),
                 Text(
-                  text,
+                  disclaimer,
                   style: const TextStyle(
+                    fontSize: 11.5,
                     color: Color(0xFF64748B),
-                    height: 1.45,
+                    height: 1.35,
                   ),
                 ),
               ],
-            ),
+              if (compact) const SizedBox(height: 18) else const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onDetails,
+                  child: const Text('Plus d’informations'),
+                ),
+              ),
+              const SizedBox(height: 9),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: busy ? null : onSubscribe,
+                  child: Text(offer.actionLabel, textAlign: TextAlign.center),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExtraUsage extends StatelessWidget {
+  const _ExtraUsage();
+
+  @override
+  Widget build(BuildContext context) => const _InfoSection(
+    title: 'Besoin de plus ?',
+    lines: [
+      'État des lieux supplémentaire : 7 € HTVA',
+      'Analyse IA supplémentaire : 5 € HTVA',
+      'Utilisateur supplémentaire : 12 € HTVA / mois',
+      'Stockage longue durée : disponible en option',
+      'Signature électronique à distance : selon la formule ou le coût du prestataire',
+    ],
+    footer:
+        'Les crédits non utilisés peuvent être reportés pendant 3 mois maximum.',
+  );
+}
+
+class _ProfessionalServices extends StatelessWidget {
+  const _ProfessionalServices();
+
+  @override
+  Widget build(BuildContext context) => const _InfoSection(
+    title: 'Faites vérifier votre rapport par un professionnel',
+    lines: [
+      'Relecture humaine simple : 89 € HTVA par rapport',
+      'Relecture avec corrections détaillées : 129 € HTVA par rapport',
+      'Récolement et calcul des dégâts locatifs : à partir de 175 € HTVA',
+      'Intervention supplémentaire : 70 € HTVA / heure',
+      'Traitement urgent sous 24 heures : supplément de 30 %',
+    ],
+    footer:
+        'Les prestations sont réalisées à distance sur la base des informations, photographies et documents transmis. Un devis complémentaire peut être proposé lorsque le dossier nécessite un travail plus important.',
+  );
+}
+
+class _InfoSection extends StatelessWidget {
+  const _InfoSection({
+    required this.title,
+    required this.lines,
+    required this.footer,
+  });
+
+  final String title;
+  final List<String> lines;
+  final String footer;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 18,
+            runSpacing: 10,
+            children: [
+              for (final line in lines)
+                SizedBox(width: 390, child: Text('• $line')),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            footer,
+            style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _TrustStrip extends StatelessWidget {
-  const _TrustStrip();
+class _Comparison extends StatelessWidget {
+  const _Comparison({required this.audience});
+
+  final PricingAudience audience;
+
+  static const labels = [
+    'Nombre d’états des lieux',
+    'Nombre d’utilisateurs',
+    'Analyses IA',
+    'Rapports PDF',
+    'Photographies',
+    'Signatures',
+    'Comparaison entrée-sortie',
+    'Inventaire des biens meublés',
+    'Personnalisation avec logo',
+    'Tableau de bord d’équipe',
+    'Rôle contrôleur',
+    'Assistance prioritaire',
+  ];
+
+  String _value(PricingOffer offer, int index) => switch (index) {
+    0 => offer.customQuote ? 'Sur mesure' : '${offer.missionQuota}',
+    1 => offer.customQuote ? 'Sur mesure' : '${offer.maximumUsers}',
+    2 =>
+      offer.aiQuota == 0
+          ? (offer.customQuote ? 'Sur mesure' : '—')
+          : '${offer.aiQuota}',
+    3 || 4 || 5 => offer.free ? '—' : '✓',
+    6 =>
+      offer.code == 'solo' ||
+              offer.code == 'pro' ||
+              offer.code == 'agency' ||
+              offer.customQuote
+          ? '✓'
+          : '—',
+    7 || 8 || 9 =>
+      offer.code == 'pro' || offer.code == 'agency' || offer.customQuote
+          ? '✓'
+          : '—',
+    10 => offer.code == 'agency' || offer.customQuote ? '✓' : '—',
+    11 =>
+      offer.code == 'pro' || offer.code == 'agency' || offer.customQuote
+          ? '✓'
+          : '—',
+    _ => '—',
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
-      ),
-      child: const Wrap(
-        spacing: 24,
-        runSpacing: 16,
-        alignment: WrapAlignment.center,
-        children: [
-          _TrustItem(Icons.verified_user_outlined, 'Validation serveur sécurisée'),
-          _TrustItem(Icons.receipt_long_outlined, 'Catalogue Supabase'),
-          _TrustItem(Icons.swap_horiz_rounded, 'Formules évolutives'),
-          _TrustItem(Icons.support_agent_outlined, 'Assistance Constat+'),
-        ],
-      ),
-    );
-  }
-}
-
-class _TrustItem extends StatelessWidget {
-  const _TrustItem(this.icon, this.label);
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 250),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: const Color(0xFF2563EB)),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF334155),
-                fontWeight: FontWeight.w800,
+    final offers = OfficialPricingCatalog.forAudience(audience);
+    final compact = MediaQuery.sizeOf(context).width < 700;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Comparatif des fonctionnalités',
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 18),
+        if (compact)
+          for (final offer in offers)
+            Card(
+              child: ExpansionTile(
+                title: Text(
+                  offer.name,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                children: [
+                  for (var i = 0; i < labels.length; i++)
+                    ListTile(
+                      dense: true,
+                      title: Text(labels[i]),
+                      trailing: Text(
+                        _value(offer, i),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                ],
+              ),
+            )
+        else
+          Card(
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: [
+                    const DataColumn(label: Text('Fonctionnalité')),
+                    for (final offer in offers)
+                      DataColumn(label: Text(offer.name)),
+                  ],
+                  rows: [
+                    for (var i = 0; i < labels.length; i++)
+                      DataRow(
+                        cells: [
+                          DataCell(Text(labels[i])),
+                          for (final offer in offers)
+                            DataCell(Text(_value(offer, i))),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -1024,135 +685,320 @@ class _TrustItem extends StatelessWidget {
 class _Faq extends StatelessWidget {
   const _Faq();
 
-  @override
-  Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width < 620;
-
-    return Container(
-      padding: EdgeInsets.all(mobile ? 18 : 26),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: const Column(
-        children: [
-          _SectionTitle(
-            eyebrow: 'QUESTIONS FRÉQUENTES',
-            title: 'Avant de choisir votre formule',
-            subtitle:
-                'Les conditions exactes restent celles affichées dans le détail de chaque offre et au moment de la souscription.',
-          ),
-          SizedBox(height: 18),
-          _FaqTile(
-            'Puis-je consulter le détail avant de choisir ?',
-            'Oui. Utilisez le bouton de détail de chaque carte pour consulter les caractéristiques et limites de la formule.',
-          ),
-          _FaqTile(
-            'Le paiement est-il déjà actif ?',
-            'Les achats ne sont activés qu’après validation serveur des fournisseurs de paiement.',
-          ),
-          _FaqTile(
-            'Puis-je accéder aux offres en mode démonstration ?',
-            'Vous pouvez consulter le catalogue. La gestion d’un abonnement réel nécessite toutefois un compte connecté.',
-          ),
-          _FaqTile(
-            'Pourquoi l’offre Pro est-elle mise en avant ?',
-            'La carte Pro est recommandée visuellement, mais le meilleur choix dépend toujours de votre volume réel de missions.',
-          ),
-          _FaqTile(
-            'Puis-je acheter des analyses IA supplémentaires ?',
-            'Oui. Des packs de crédits permettent de continuer à analyser des séries de photos lorsque le quota mensuel est épuisé.',
-          ),
-          _FaqTile(
-            'Que comprend la formule Entreprise ?',
-            'Elle comprend notamment le tableau de bord d’équipe, l’affectation des missions, la gestion des rôles, le contrôle qualité et des crédits IA mutualisés.',
-          ),
-          _FaqTile(
-            'Puis-je faire relire un rapport ?',
-            'Oui. Une relecture professionnelle peut être commandée au prix de 99 € HTVA par état des lieux.',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FaqTile extends StatelessWidget {
-  const _FaqTile(this.question, this.answer);
-
-  final String question;
-  final String answer;
+  static const items = <(String, String)>[
+    (
+      'Que se passe-t-il si je dépasse mon nombre d’états des lieux ?',
+      'Vous pouvez acheter des unités supplémentaires au tarif indiqué ou changer de formule.',
+    ),
+    (
+      'Une analyse IA est-elle obligatoire ?',
+      'Non. Elle reste une assistance facultative.',
+    ),
+    (
+      'Puis-je modifier le rapport généré par l’IA ?',
+      'Oui, le contenu reste modifiable avant finalisation.',
+    ),
+    (
+      'Les crédits non utilisés sont-ils reportés ?',
+      'Oui, pendant 3 mois maximum pour les offres professionnelles.',
+    ),
+    (
+      'Quelle est la différence entre l’abonnement et la relecture professionnelle ?',
+      'L’abonnement donne accès à l’application ; la relecture est une prestation humaine optionnelle.',
+    ),
+    (
+      'Puis-je changer de formule ?',
+      'Oui, selon les conditions de facturation et de prise d’effet indiquées dans les CGV.',
+    ),
+    (
+      'Les prix sont-ils HTVA ou TVAC ?',
+      'Les prix particuliers sont TVAC et les prix professionnels sont HTVA.',
+    ),
+    (
+      'Mes rapports et mes photographies sont-ils sauvegardés ?',
+      'Oui, selon la durée d’archivage de la formule choisie.',
+    ),
+    (
+      'L’état des lieux peut-il être signé par plusieurs parties ?',
+      'Oui, les formules comprenant la signature permettent la signature des parties concernées.',
+    ),
+  ];
 
   @override
-  Widget build(BuildContext context) {
-    return ExpansionTile(
-      tilePadding: const EdgeInsets.symmetric(horizontal: 4),
-      childrenPadding: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-      title: Text(
-        question,
-        style: const TextStyle(
-          fontWeight: FontWeight.w900,
-          color: Color(0xFF0F172A),
-        ),
+  Widget build(BuildContext context) => Column(
+    children: [
+      const Text(
+        'Questions fréquentes',
+        style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
       ),
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            answer,
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CatalogError extends StatelessWidget {
-  final Object? error;
-  final VoidCallback onRetry;
-
-  const _CatalogError({required this.error, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 520),
-          padding: const EdgeInsets.all(26),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      const SizedBox(height: 14),
+      for (final item in items)
+        Card(
+          child: ExpansionTile(
+            title: Text(item.$1),
             children: [
-              const Icon(Icons.cloud_off_outlined, size: 52),
-              const SizedBox(height: 14),
-              const Text(
-                'Catalogue indisponible',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 10),
-              SelectableText(error.toString(), textAlign: TextAlign.center),
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Réessayer'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(item.$2, style: const TextStyle(height: 1.45)),
+                ),
               ),
             ],
           ),
         ),
+    ],
+  );
+}
+
+class _OfferDetails extends StatelessWidget {
+  const _OfferDetails({
+    required this.offer,
+    required this.period,
+    required this.onSubscribe,
+  });
+
+  final PricingOffer offer;
+  final PricingPeriod period;
+  final VoidCallback onSubscribe;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    child: Column(
+      children: [
+        ListTile(
+          title: Text(
+            offer.name,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          subtitle: Text(offer.targetAudience),
+          trailing: IconButton(
+            tooltip: 'Fermer',
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close),
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _DetailGroup(
+                  title: 'Fonctionnalités incluses',
+                  lines: offer.features,
+                ),
+                _DetailGroup(title: 'Non inclus', lines: offer.exclusions),
+                _DetailGroup(title: 'Analyses IA', lines: [offer.aiDetails]),
+                if (offer.audience == PricingAudience.professional)
+                  const _DetailGroup(
+                    title: 'Dépassements',
+                    lines: [
+                      '7 € HTVA par état des lieux, 5 € HTVA par analyse IA et 12 € HTVA/mois par utilisateur.',
+                    ],
+                  ),
+                _DetailGroup(title: 'Archivage', lines: [offer.archiveDetails]),
+                _DetailGroup(
+                  title: 'Assistance',
+                  lines: [offer.supportDetails],
+                ),
+                _DetailGroup(
+                  title: 'Changement ou résiliation',
+                  lines: [offer.changeDetails],
+                ),
+                Text(
+                  'Prix affiché ${offer.taxDisplay.label}.',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: onSubscribe,
+                  child: Text(offer.actionLabel),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _DetailGroup extends StatelessWidget {
+  const _DetailGroup({required this.title, required this.lines});
+  final String title;
+  final List<String> lines;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 18),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 7),
+        for (final line in lines)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Text('• $line'),
+          ),
+      ],
+    ),
+  );
+}
+
+class _EnterpriseContactDialog extends StatefulWidget {
+  const _EnterpriseContactDialog();
+
+  @override
+  State<_EnterpriseContactDialog> createState() =>
+      _EnterpriseContactDialogState();
+}
+
+class _EnterpriseContactDialogState extends State<_EnterpriseContactDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _controllers = List.generate(8, (_) => TextEditingController());
+  bool _consent = false;
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    if (!_formKey.currentState!.validate() || !_consent || _sending) {
+      if (!_consent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Veuillez accepter d’être recontacté.')),
+        );
+      }
+      return;
+    }
+    setState(() => _sending = true);
+    final labels = [
+      'Nom',
+      'Entreprise',
+      'TVA',
+      'E-mail',
+      'Téléphone',
+      'Utilisateurs',
+      'Missions/mois',
+      'Besoins',
+    ];
+    final body = List.generate(
+      labels.length,
+      (i) => '${labels[i]} : ${_controllers[i].text}',
+    ).join('\n');
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'contact@constatplus.be',
+      queryParameters: {
+        'subject': 'Demande d’offre Entreprise Constat+',
+        'body': body,
+      },
+    );
+    final launched = await launchUrl(uri);
+    if (!mounted) return;
+    setState(() => _sending = false);
+    if (launched) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Votre messagerie a été ouverte avec la demande préremplie.',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aucune messagerie n’est disponible sur cet appareil.'),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = [
+      'Nom et prénom',
+      'Entreprise',
+      'Numéro de TVA',
+      'Adresse e-mail',
+      'Téléphone',
+      'Nombre d’utilisateurs',
+      'Nombre estimé d’états des lieux par mois',
+      'Besoins particuliers',
+    ];
+    return AlertDialog(
+      title: const Text('Demander une offre Entreprise'),
+      content: SizedBox(
+        width: 620,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (var i = 0; i < labels.length; i++) ...[
+                  TextFormField(
+                    controller: _controllers[i],
+                    minLines: i == 7 ? 3 : 1,
+                    maxLines: i == 7 ? 5 : 1,
+                    keyboardType: i == 3
+                        ? TextInputType.emailAddress
+                        : (i == 5 || i == 6
+                              ? TextInputType.number
+                              : TextInputType.text),
+                    decoration: InputDecoration(labelText: labels[i]),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Champ obligatoire';
+                      }
+                      if (i == 3 && !value.contains('@')) {
+                        return 'Adresse e-mail invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _consent,
+                  onChanged: (value) =>
+                      setState(() => _consent = value ?? false),
+                  title: const Text('J’accepte d’être recontacté.'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: _sending ? null : () => Navigator.of(context).pop(),
+          child: const Text('Annuler'),
+        ),
+        FilledButton.icon(
+          onPressed: _sending ? null : _send,
+          icon: _sending
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.send_outlined),
+          label: const Text('Envoyer la demande'),
+        ),
+      ],
     );
   }
 }
