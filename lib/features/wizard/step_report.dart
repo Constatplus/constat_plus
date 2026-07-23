@@ -1,10 +1,14 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/access/access_service.dart';
 import '../commercial/application/commercial_access_controller.dart';
 import '../commercial/presentation/commercial_access_messages.dart';
 import '../pricing/pricing_page.dart';
+import '../settings/models/report_preferences.dart';
+import '../settings/services/report_preferences_service.dart';
 import 'before_works/models/before_works_data.dart';
 import 'before_works/models/technical_finding.dart';
 import 'comparison/models/comparison_remark.dart';
@@ -13,25 +17,12 @@ import 'property_composition/models/room_item.dart';
 import 'reference/models/reference_report.dart';
 import 'reference/reference_pdf_viewer_page.dart';
 import 'reference/reference_report_repository.dart';
-import '../settings/models/report_preferences.dart';
-import '../settings/services/report_preferences_service.dart';
 import 'report/models/report_settings.dart';
 import 'report/models/visit_report_snapshot.dart';
-import 'report/services/word_report_service.dart';
 import 'report/services/pdf_report_service.dart';
+import 'report/services/word_report_service.dart';
 
 class StepReport extends StatefulWidget {
-  final Map<String, String> generalities;
-  final String missionId;
-  final String missionType;
-  final VisitReportSnapshot snapshot;
-  final InspectionReportType initialReportType;
-  final List<RoomItem> rooms;
-  final BeforeWorksData? beforeWorksData;
-  final ReferenceReport? referenceReport;
-  final List<ComparisonRemark> comparisonRemarks;
-  final MissionHandoverData? handover;
-
   const StepReport({
     super.key,
     required this.missionId,
@@ -46,6 +37,17 @@ class StepReport extends StatefulWidget {
     this.generalities = const <String, String>{},
   });
 
+  final Map<String, String> generalities;
+  final String missionId;
+  final String missionType;
+  final VisitReportSnapshot snapshot;
+  final InspectionReportType initialReportType;
+  final List<RoomItem> rooms;
+  final BeforeWorksData? beforeWorksData;
+  final ReferenceReport? referenceReport;
+  final List<ComparisonRemark> comparisonRemarks;
+  final MissionHandoverData? handover;
+
   @override
   State<StepReport> createState() => _StepReportState();
 }
@@ -57,26 +59,22 @@ class _StepReportState extends State<StepReport> {
   final PdfReportService _pdfService = PdfReportService();
   final ReportPreferencesService _preferencesService =
       ReportPreferencesService();
-  ReportPreferences? _savedPreferences;
 
+  ReportPreferences? _savedPreferences;
   late InspectionReportType _reportType;
   late final TextEditingController _titleController;
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _companyController = TextEditingController(
-    text: 'Constat+',
-  );
+  final TextEditingController _companyController =
+      TextEditingController(text: 'Constat+');
   final TextEditingController _ownerController = TextEditingController();
   final TextEditingController _tenantController = TextEditingController();
-  final TextEditingController _expertController = TextEditingController(
-    text: 'Di Pasquale Gianni',
-  );
-  final TextEditingController _registrationController = TextEditingController(
-    text: 'GEO20/1523',
-  );
-  final TextEditingController _emailController = TextEditingController(
-    text: 'info@capital-immo.expert',
-  );
+  final TextEditingController _expertController =
+      TextEditingController(text: 'Di Pasquale Gianni');
+  final TextEditingController _registrationController =
+      TextEditingController(text: 'GEO20/1523');
+  final TextEditingController _emailController =
+      TextEditingController(text: 'info@capital-immo.expert');
   final TextEditingController _keysController = TextEditingController();
   final TextEditingController _maintenanceController = TextEditingController();
   final TextEditingController _manualsController = TextEditingController();
@@ -99,7 +97,6 @@ class _StepReportState extends State<StepReport> {
   void _prefillHandoverData() {
     final handover = widget.handover;
     if (handover == null) return;
-
     _keysController.text = handover.keyReportLines.join('\n');
     _maintenanceController.text = handover.maintenanceReportLines.join('\n');
     _manualsController.text = handover.manualReportLines.join('\n');
@@ -135,21 +132,11 @@ class _StepReportState extends State<StepReport> {
     super.dispose();
   }
 
-  void _changeReportType(InspectionReportType? value) {
-    if (value == null) return;
-    setState(() {
-      _reportType = value;
-      _titleController.text = value.label;
-    });
-  }
-
-  List<String> _lines(TextEditingController controller) {
-    return controller.text
-        .split(RegExp(r'\r?\n'))
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
-  }
+  List<String> _lines(TextEditingController controller) => controller.text
+      .split(RegExp(r'\r?\n'))
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList();
 
   List<String> _notesForType(
     ReportPreferences preferences,
@@ -160,8 +147,7 @@ class _StepReportState extends State<StepReport> {
       InspectionReportType.exit => preferences.exitPreliminaryNotes,
       InspectionReportType.beforeWorks =>
         preferences.beforeWorksPreliminaryNotes,
-      InspectionReportType.afterWorks =>
-        preferences.beforeWorksPreliminaryNotes,
+      InspectionReportType.afterWorks => preferences.afterWorksPreliminaryNotes,
     };
     return text
         .split(RegExp(r'\n\s*\n|\r?\n'))
@@ -195,120 +181,84 @@ class _StepReportState extends State<StepReport> {
       maintenance: _lines(_maintenanceController),
       manuals: _lines(_manualsController),
       documents: _lines(_documentsController),
-      generalities: defaults.generalities,
+      generalities:
+          widget.generalities.isEmpty ? defaults.generalities : widget.generalities,
     );
   }
 
-  Future<void> _exportPdf() async {
+  String _safeName(String value) {
+    final cleaned = value
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    return cleaned.isEmpty ? 'rapport_constat_plus' : cleaned;
+  }
+
+  Future<String?> _choosePdfPath(String suggestedName) async {
+    final location = await getSaveLocation(
+      suggestedName: suggestedName,
+      acceptedTypeGroups: const <XTypeGroup>[
+        XTypeGroup(label: 'Document PDF', extensions: <String>['pdf']),
+      ],
+    );
+    if (location == null) return null;
+    return location.path.toLowerCase().endsWith('.pdf')
+        ? location.path
+        : '${location.path}.pdf';
+  }
+
+  Future<void> _writePdf(String path, List<int> bytes) async {
+    final file = File(path);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(bytes, flush: true);
+    if (!await file.exists() || await file.length() == 0) {
+      throw StateError('Le fichier PDF n\'a pas pu être écrit sur le disque.');
+    }
+  }
+
+  Future<void> _exportPdf({required bool provisional}) async {
     setState(() => _isExporting = true);
     try {
       final settings = _settings();
-      final location = await getSaveLocation(
-        suggestedName:
-            '${settings.reportTitle.replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_')}.pdf',
-        acceptedTypeGroups: const <XTypeGroup>[
-          XTypeGroup(label: 'Document PDF', extensions: <String>['pdf']),
-        ],
+      if (!provisional && !await _authorizeExport()) return;
+
+      final suffix = provisional ? '_PROVISOIRE' : '';
+      final path = await _choosePdfPath(
+        '${_safeName(settings.reportTitle)}$suffix.pdf',
       );
-      if (location == null) return;
-      if (!await _authorizeExport()) return;
+      if (path == null) return;
+
       final bytes = await _pdfService.generate(
         settings: settings,
         rooms: widget.rooms,
         beforeWorksData: widget.beforeWorksData,
         referenceReport: widget.referenceReport,
         comparisonRemarks: widget.comparisonRemarks,
+        preview: provisional,
       );
-      if (_reportType == InspectionReportType.entry ||
-          (_reportType == InspectionReportType.beforeWorks &&
-              widget.beforeWorksData != null)) {
-        final id = DateTime.now().microsecondsSinceEpoch.toString();
-        final beforeWorks = widget.beforeWorksData;
-        await ReferenceReportRepository.instance.save(
-          ReferenceReport(
-            id: id,
-            title: settings.reportTitle,
-            createdAt: DateTime.now(),
-            zones: widget.rooms
-                .map(
-                  (room) => RoomItem(
-                    type: room.type,
-                    name: room.name,
-                    level: room.level,
-                  ),
-                )
-                .toList(),
-            snapshot: widget.snapshot,
-            findings: beforeWorks?.findings ?? <TechnicalFinding>[],
-            areas: (beforeWorks?.areas ?? <BeforeWorksArea>[])
-                .map(
-                  (area) => BeforeWorksArea(
-                    id: area.id,
-                    name: area.name,
-                    type: area.type,
-                    parentId: area.parentId,
-                  ),
-                )
-                .toList(growable: false),
-            source: ReferenceReportSource.constatPlus,
-            missionType: _reportType == InspectionReportType.entry
-                ? 'entry'
-                : 'before_works',
-          ),
-          bytes,
-        );
+      await _writePdf(path, bytes);
+
+      if (!provisional) {
+        await _saveReferenceIfNeeded(settings, bytes);
       }
-      final file = XFile.fromData(
-        bytes,
-        mimeType: 'application/pdf',
-        name: location.path.split(RegExp(r'[/\\]')).last,
-      );
-      await file.saveTo(location.path);
+
       if (!mounted) return;
-      setState(() => _lastPdfPath = location.path);
+      setState(() => _lastPdfPath = path);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le rapport PDF a été généré.')),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Export PDF impossible : $error')));
-    } finally {
-      if (mounted) setState(() => _isExporting = false);
-    }
-  }
-
-  Future<void> _exportWord() async {
-    if (widget.snapshot.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aucune donnée de visite à exporter.')),
-      );
-      return;
-    }
-
-    setState(() => _isExporting = true);
-
-    try {
-      if (!await _authorizeWordExport()) return;
-      final settings = _settings();
-
-      final path = await _wordService.export(
-        snapshot: widget.snapshot,
-        settings: settings,
-      );
-
-      if (!mounted || path == null) return;
-      setState(() => _lastExportPath = path);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le rapport Word a été généré.')),
+        SnackBar(
+          content: Text(
+            provisional
+                ? 'Le rapport provisoire a été enregistré.'
+                : 'Le rapport PDF définitif a été enregistré.',
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Export impossible'),
+          title: const Text('Enregistrement PDF impossible'),
           content: SelectableText(error.toString()),
           actions: [
             FilledButton(
@@ -321,6 +271,52 @@ class _StepReportState extends State<StepReport> {
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }
+  }
+
+  Future<void> _saveReferenceIfNeeded(
+    ReportSettings settings,
+    List<int> bytes,
+  ) async {
+    if (_reportType != InspectionReportType.entry &&
+        !(_reportType == InspectionReportType.beforeWorks &&
+            widget.beforeWorksData != null)) {
+      return;
+    }
+
+    final beforeWorks = widget.beforeWorksData;
+    await ReferenceReportRepository.instance.save(
+      ReferenceReport(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        title: settings.reportTitle,
+        createdAt: DateTime.now(),
+        zones: widget.rooms
+            .map(
+              (room) => RoomItem(
+                type: room.type,
+                name: room.name,
+                level: room.level,
+              ),
+            )
+            .toList(),
+        snapshot: widget.snapshot,
+        findings: beforeWorks?.findings ?? <TechnicalFinding>[],
+        areas: (beforeWorks?.areas ?? <BeforeWorksArea>[])
+            .map(
+              (area) => BeforeWorksArea(
+                id: area.id,
+                name: area.name,
+                type: area.type,
+                parentId: area.parentId,
+              ),
+            )
+            .toList(growable: false),
+        source: ReferenceReportSource.constatPlus,
+        missionType: _reportType == InspectionReportType.entry
+            ? 'entry'
+            : 'before_works',
+      ),
+      bytes,
+    );
   }
 
   Future<void> _previewPdf() async {
@@ -339,7 +335,7 @@ class _StepReportState extends State<StepReport> {
       await Navigator.of(context).push<void>(
         MaterialPageRoute<void>(
           builder: (_) => ReferencePdfViewerPage(
-            title: 'Aperçu — ${settings.reportTitle}',
+            title: 'Aperçu - ${settings.reportTitle}',
             backLabel: 'Retour au brouillon',
             pdfBytes: bytes,
           ),
@@ -347,9 +343,48 @@ class _StepReportState extends State<StepReport> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Aperçu indisponible : $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Aperçu indisponible : $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<void> _exportWord() async {
+    if (widget.snapshot.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune donnée de visite à exporter.')),
+      );
+      return;
+    }
+    setState(() => _isExporting = true);
+    try {
+      if (!await _authorizeWordExport()) return;
+      final path = await _wordService.export(
+        snapshot: widget.snapshot,
+        settings: _settings(),
+      );
+      if (!mounted || path == null) return;
+      setState(() => _lastExportPath = path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Le rapport Word a été généré.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Export Word impossible'),
+          content: SelectableText(error.toString()),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }
@@ -361,7 +396,6 @@ class _StepReportState extends State<StepReport> {
       missionType: widget.missionType,
     );
     if (result.allowed || !mounted) return result.allowed;
-
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -397,7 +431,7 @@ class _StepReportState extends State<StepReport> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Export Word indisponible'),
         content: const Text(
-          'Le Mode Découverte permet uniquement de consulter un aperçu. Choisissez une mission ou un abonnement pour obtenir un export exploitable.',
+          'Le Mode Découverte permet uniquement de consulter ou d\'enregistrer un rapport provisoire.',
         ),
         actions: [
           TextButton(
@@ -421,13 +455,12 @@ class _StepReportState extends State<StepReport> {
 
   @override
   Widget build(BuildContext context) {
-    final standardReport =
-        _reportType == InspectionReportType.entry ||
+    final standardReport = _reportType == InspectionReportType.entry ||
         _reportType == InspectionReportType.exit;
-    final commercialAccess = AccessService.instance;
-    final previewEnabled =
-        commercialAccess.hasPaidAccessFor(widget.missionId) ||
-        (commercialAccess.discoveryAccess?.policy.previewEnabled ?? false);
+    final access = AccessService.instance;
+    final previewEnabled = access.hasPaidAccessFor(widget.missionId) ||
+        (access.discoveryAccess?.policy.previewEnabled ?? false);
+
     return ListView(
       children: [
         const Text(
@@ -457,7 +490,15 @@ class _StepReportState extends State<StepReport> {
                       ),
                     )
                     .toList(),
-                onChanged: standardReport ? _changeReportType : null,
+                onChanged: standardReport
+                    ? (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _reportType = value;
+                          _titleController.text = value.label;
+                        });
+                      }
+                    : null,
               ),
             ),
             _field(_titleController, 'Titre du rapport', 360),
@@ -476,9 +517,8 @@ class _StepReportState extends State<StepReport> {
           contentPadding: EdgeInsets.zero,
           value: _includeExpertSignature,
           title: const Text('Afficher la signature de l’expert'),
-          onChanged: (value) {
-            setState(() => _includeExpertSignature = value);
-          },
+          onChanged: (value) =>
+              setState(() => _includeExpertSignature = value),
         ),
         const SizedBox(height: 18),
         const Text(
@@ -497,59 +537,47 @@ class _StepReportState extends State<StepReport> {
           ],
         ),
         const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: const Text(
-            'Le document comprend : page de garde, table des matières limitée aux pièces, notes liminaires, parties, clés/entretiens/manuels/documents, généralités, pièces avec photos, conclusion et signatures.',
-          ),
-        ),
-        const SizedBox(height: 24),
-        if (previewEnabled)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: _isExporting ? null : _previewPdf,
-              icon: const Icon(Icons.preview_outlined),
-              label: const Text('Consulter l’aperçu du rapport'),
-            ),
-          ),
-        const SizedBox(height: 12),
-        if (standardReport)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              onPressed: _isExporting ? null : _exportWord,
-              icon: _isExporting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.description_outlined),
-              label: Text(
-                _isExporting ? 'Génération en cours...' : 'Exporter en Word',
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            if (previewEnabled)
+              OutlinedButton.icon(
+                onPressed: _isExporting ? null : _previewPdf,
+                icon: const Icon(Icons.preview_outlined),
+                label: const Text('Consulter l’aperçu'),
               ),
+            OutlinedButton.icon(
+              onPressed: _isExporting
+                  ? null
+                  : () => _exportPdf(provisional: true),
+              icon: const Icon(Icons.draft_outlined),
+              label: const Text('Enregistrer le rapport provisoire'),
             ),
-          ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: FilledButton.icon(
-            onPressed: _isExporting ? null : _exportPdf,
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            label: const Text('Exporter en PDF'),
-          ),
+            if (standardReport)
+              FilledButton.icon(
+                onPressed: _isExporting ? null : _exportWord,
+                icon: const Icon(Icons.description_outlined),
+                label: const Text('Exporter en Word'),
+              ),
+            FilledButton.icon(
+              onPressed: _isExporting
+                  ? null
+                  : () => _exportPdf(provisional: false),
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('Exporter le PDF définitif'),
+            ),
+          ],
         ),
+        if (_isExporting) ...[
+          const SizedBox(height: 16),
+          const LinearProgressIndicator(),
+        ],
         if (_lastExportPath != null) ...[
           const SizedBox(height: 16),
-          SelectableText('Dernier fichier : $_lastExportPath'),
+          SelectableText('Dernier Word : $_lastExportPath'),
         ],
-        if (_lastPdfPath != null) ...<Widget>[
+        if (_lastPdfPath != null) ...[
           const SizedBox(height: 8),
           SelectableText('Dernier PDF : $_lastPdfPath'),
         ],
@@ -557,29 +585,32 @@ class _StepReportState extends State<StepReport> {
     );
   }
 
-  InputDecoration _decoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-    );
-  }
+  InputDecoration _decoration(String label) => InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      );
 
-  Widget _field(TextEditingController controller, String label, double width) {
-    return SizedBox(
-      width: width,
-      child: TextField(controller: controller, decoration: _decoration(label)),
-    );
-  }
+  Widget _field(
+    TextEditingController controller,
+    String label,
+    double width,
+  ) =>
+      SizedBox(
+        width: width,
+        child: TextField(controller: controller, decoration: _decoration(label)),
+      );
 
-  Widget _multiLineField(TextEditingController controller, String label) {
-    return SizedBox(
-      width: 420,
-      child: TextField(
-        controller: controller,
-        minLines: 4,
-        maxLines: 8,
-        decoration: _decoration('$label - une ligne par élément'),
-      ),
-    );
-  }
+  Widget _multiLineField(
+    TextEditingController controller,
+    String label,
+  ) =>
+      SizedBox(
+        width: 420,
+        child: TextField(
+          controller: controller,
+          minLines: 4,
+          maxLines: 8,
+          decoration: _decoration('$label - une ligne par élément'),
+        ),
+      );
 }
