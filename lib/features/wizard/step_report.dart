@@ -21,6 +21,7 @@ import 'report/services/word_report_service.dart';
 import 'report/services/pdf_report_service.dart';
 
 class StepReport extends StatefulWidget {
+  final Map<String, String> generalities;
   final String missionId;
   final String missionType;
   final VisitReportSnapshot snapshot;
@@ -42,6 +43,7 @@ class StepReport extends StatefulWidget {
     this.referenceReport,
     this.comparisonRemarks = const <ComparisonRemark>[],
     this.handover,
+    this.generalities = const <String, String>{},
   });
 
   @override

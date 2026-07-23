@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 
+import 'keys_meters/models/mission_handover_data.dart';
 import 'keys_meters/tabs/documents_tab.dart';
 import 'keys_meters/tabs/keys_tab.dart';
 import 'keys_meters/tabs/maintenance_tab.dart';
 import 'keys_meters/tabs/meters_tab.dart';
 
-class StepKeysMeters extends StatelessWidget {
-  const StepKeysMeters({super.key});
+class StepKeysMeters extends StatefulWidget {
+  const StepKeysMeters({super.key, this.data});
+
+  final MissionHandoverData? data;
+
+  @override
+  State<StepKeysMeters> createState() => _StepKeysMetersState();
+}
+
+class _StepKeysMetersState extends State<StepKeysMeters> {
+  late final MissionHandoverData _fallbackData = MissionHandoverData();
+
+  MissionHandoverData get _data => widget.data ?? _fallbackData;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +56,9 @@ class StepKeysMeters extends StatelessWidget {
                 ),
                 child: TabBar(
                   isScrollable: isMobile,
-                  tabAlignment: isMobile ? TabAlignment.start : TabAlignment.fill,
+                  tabAlignment: isMobile
+                      ? TabAlignment.start
+                      : TabAlignment.fill,
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
                   labelPadding: EdgeInsets.symmetric(
@@ -65,13 +79,13 @@ class StepKeysMeters extends StatelessWidget {
                 ),
               ),
               SizedBox(height: isMobile ? 16 : 24),
-              const Expanded(
+              Expanded(
                 child: TabBarView(
                   children: [
-                    KeysTab(),
-                    MetersTab(),
-                    DocumentsTab(),
-                    MaintenanceTab(),
+                    KeysTab(data: _data),
+                    const MetersTab(),
+                    DocumentsTab(data: _data),
+                    MaintenanceTab(data: _data),
                   ],
                 ),
               ),
