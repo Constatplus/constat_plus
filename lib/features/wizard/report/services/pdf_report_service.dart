@@ -26,18 +26,27 @@ class PdfReportService {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
-        header: (context) => pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: <pw.Widget>[
-            if (preview)
-              _text(
-                'APERCU - NON DEFINITIF',
-                style: pw.TextStyle(
-                  color: PdfColors.red700,
-                  fontWeight: pw.FontWeight.bold,
+        header: (context) => pw.Table(
+          columnWidths: const <int, pw.TableColumnWidth>{
+            0: pw.FlexColumnWidth(),
+            1: pw.FlexColumnWidth(),
+          },
+          children: <pw.TableRow>[
+            pw.TableRow(
+              children: <pw.Widget>[
+                _text(
+                  preview ? 'APERCU - NON DEFINITIF' : '',
+                  style: pw.TextStyle(
+                    color: PdfColors.red700,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
-            _text('Constat+ - ${settings.reportType.label}'),
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: _text('Constat+ - ${settings.reportType.label}'),
+                ),
+              ],
+            ),
           ],
         ),
         footer: (context) => pw.Align(
@@ -50,7 +59,6 @@ class PdfReportService {
           pw.SizedBox(height: 40),
           if (preview) ...<pw.Widget>[
             pw.Container(
-              width: double.infinity,
               padding: const pw.EdgeInsets.all(12),
               color: PdfColors.red50,
               child: _text(
@@ -85,10 +93,25 @@ class PdfReportService {
           pw.SizedBox(height: 24),
           _text('Signatures', style: _heading()),
           pw.SizedBox(height: 30),
-          pw.Row(
-            children: <pw.Widget>[
-              pw.Expanded(child: _text('Expert : ${settings.expertName}')),
-              pw.Expanded(child: _text('Partie : ____________________')),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey400),
+            columnWidths: const <int, pw.TableColumnWidth>{
+              0: pw.FlexColumnWidth(),
+              1: pw.FlexColumnWidth(),
+            },
+            children: <pw.TableRow>[
+              pw.TableRow(
+                children: <pw.Widget>[
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: _text('Expert : ${settings.expertName}'),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: _text('Partie : ____________________'),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -244,7 +267,9 @@ class PdfReportService {
         .replaceAll('\u2014', '-')
         .replaceAll('\u2022', '-')
         .replaceAll('\u2026', '...')
-        .replaceAll('\u00A0', ' ');
+        .replaceAll('\u00A0', ' ')
+        .replaceAll('ÔÇö', '-')
+        .replaceAll('ÔÇÖ', "'");
   }
 
   pw.TextStyle _heading() => pw.TextStyle(
