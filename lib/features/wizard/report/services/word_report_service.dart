@@ -50,8 +50,6 @@ class WordReportService {
     _buildCover(document, settings);
     document.addPageBreak();
 
-    // Seuls les titres de pièces utilisent le niveau Heading 1.
-    // La table des matières ne reprend donc que les pièces.
     _addMainTitle(document, 'TABLE DES MATIÈRES');
     document.addTableOfContents(minHeadingLevel: 1, maxHeadingLevel: 1);
     document.addPageBreak();
@@ -84,14 +82,21 @@ class WordReportService {
   }
 
   void _buildCover(dynamic document, ReportSettings settings) {
-    document.addParagraph(text: settings.reportTitle, style: 'Title');
-    document.addParagraph(text: settings.propertyAddress);
+    document.addParagraph(text: 'CONSTAT+', style: 'Title');
+    document.addParagraph(text: settings.reportTitle.toUpperCase());
+    document.addParagraph(text: '');
 
-    if (settings.visitDate.trim().isNotEmpty) {
-      document.addParagraph(text: 'Date : ${settings.visitDate.trim()}');
-    }
+    final propertyTable = document.addTable(3, 2, style: 'Table Grid');
+    propertyTable.cell(0, 0).text = 'BIEN CONCERNÉ';
+    propertyTable.cell(0, 1).text = _emptyFallback(settings.propertyAddress);
+    propertyTable.cell(1, 0).text = 'DATE DE VISITE';
+    propertyTable.cell(1, 1).text = _emptyFallback(settings.visitDate);
+    propertyTable.cell(2, 0).text = 'TYPE DE RAPPORT';
+    propertyTable.cell(2, 1).text = settings.reportType.label;
 
     document.addParagraph(text: '');
+    _addSubtitle(document, 'AUTEUR DU RAPPORT');
+
     if (settings.companyName.trim().isNotEmpty) {
       document.addParagraph(text: settings.companyName.trim());
     }
@@ -321,10 +326,14 @@ class WordReportService {
         .toList();
     if (paths.isEmpty) return;
 
-    _addSubtitle(document, 'PHOTOS');
+    _addColoredSectionTitle(document, 'PHOTOS DE LA PIÈCE');
+    document.addParagraph(
+      text: '${paths.length} photographie${paths.length > 1 ? 's' : ''} annexée${paths.length > 1 ? 's' : ''} à cette pièce.',
+    );
+
     for (var index = 0; index < paths.length; index++) {
       try {
-        document.addPicture(paths[index], width: docx.Inches(3));
+        document.addPicture(paths[index], width: docx.Inches(3.15));
         document.addParagraph(text: '${room.name} - Photo ${index + 1}');
       } catch (_) {
         document.addParagraph(
@@ -382,7 +391,7 @@ class WordReportService {
   }
 
   String _safeFileName(String value) {
-    final cleaned = value.replaceAll(RegExp(r'[\\/:*?"<>|]'), '-').trim();
+    final cleaned = value.replaceAll(RegExp(r'[\/:*?"<>|]'), '-').trim();
     return cleaned.isEmpty ? 'etat_des_lieux.docx' : cleaned;
   }
 }
