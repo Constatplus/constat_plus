@@ -226,23 +226,88 @@ class PdfReportService {
   }
 
   pw.Widget _photos(List<String> paths) {
-    final images = <pw.Widget>[];
-    for (final path in paths) {
+    final cards = <pw.Widget>[];
+
+    for (var index = 0; index < paths.length; index++) {
+      final path = paths[index];
       try {
         final bytes = File(path).readAsBytesSync();
-        images.add(
-          pw.Image(
-            pw.MemoryImage(bytes),
-            width: 150,
-            height: 110,
-            fit: pw.BoxFit.cover,
+        cards.add(
+          pw.Container(
+            padding: const pw.EdgeInsets.all(5),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey400, width: .6),
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: <pw.Widget>[
+                pw.ClipRRect(
+                  horizontalRadius: 3,
+                  verticalRadius: 3,
+                  child: pw.Image(
+                    pw.MemoryImage(bytes),
+                    width: 240,
+                    height: 180,
+                    fit: pw.BoxFit.cover,
+                  ),
+                ),
+                pw.SizedBox(height: 5),
+                _text(
+                  'Photo ${index + 1}',
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey800,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       } catch (_) {
-        images.add(_text('Photographie non disponible : $path'));
+        cards.add(
+          pw.Container(
+            padding: const pw.EdgeInsets.all(8),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey400),
+            ),
+            child: _text('Photographie non disponible : $path'),
+          ),
+        );
       }
     }
-    return pw.Wrap(spacing: 8, runSpacing: 8, children: images);
+
+    final rows = <pw.TableRow>[];
+    for (var index = 0; index < cards.length; index += 2) {
+      rows.add(
+        pw.TableRow(
+          children: <pw.Widget>[
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(right: 4, bottom: 8),
+              child: cards[index],
+            ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(left: 4, bottom: 8),
+              child: index + 1 < cards.length
+                  ? cards[index + 1]
+                  : pw.SizedBox(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(top: 8, bottom: 8),
+      child: pw.Table(
+        columnWidths: const <int, pw.TableColumnWidth>{
+          0: pw.FlexColumnWidth(),
+          1: pw.FlexColumnWidth(),
+        },
+        children: rows,
+      ),
+    );
   }
 
   pw.Text _text(
