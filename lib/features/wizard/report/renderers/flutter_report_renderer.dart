@@ -160,39 +160,64 @@ class FlutterReportRenderer extends StatelessWidget {
         border: Border.all(color: const Color(0xFFD9E0E4)),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 170,
-            child: Text(
-              block.label,
-              style: _bodyStyle().copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(block.value, style: _bodyStyle())),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.hasBoundedWidth && constraints.maxWidth < 430;
+          if (compact || !constraints.hasBoundedWidth) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  block.label,
+                  style: _bodyStyle().copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(block.value, style: _bodyStyle()),
+              ],
+            );
+          }
+
+          return Table(
+            columnWidths: const {
+              0: FixedColumnWidth(170),
+              1: FlexColumnWidth(),
+            },
+            children: [
+              TableRow(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Text(
+                      block.label,
+                      style: _bodyStyle().copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Text(block.value, style: _bodyStyle()),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildDescriptionTable(ReportDescriptionTableBlock block) {
     final rows = <TableRow>[];
+    final hasCondition = block.rows.any((row) => row.condition != null);
+
     for (final row in block.rows) {
       rows.add(
         TableRow(
           children: [
             _tableCell(row.label, bold: true),
             _tableCell(row.description),
-            if (block.rows.any((item) => item.condition != null))
-              _tableCell(row.condition ?? ''),
+            if (hasCondition) _tableCell(row.condition ?? ''),
           ],
         ),
       );
     }
 
-    final hasCondition = block.rows.any((row) => row.condition != null);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Table(
@@ -211,53 +236,91 @@ class FlutterReportRenderer extends StatelessWidget {
     BuildContext context,
     ReportPhotoGridBlock block,
   ) {
-    final columns = block.columns.clamp(1, 4);
+    if (block.photos.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: block.photos.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: block.showCaptions ? 1.22 : 1.45,
-        ),
-        itemBuilder: (context, index) {
-          final photo = block.photos[index];
-          return Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFD9E0E4)),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: photoBuilder?.call(context, photo) ??
-                      const ColoredBox(
-                        color: Color(0xFFF2F5F6),
-                        child: Center(child: Icon(Icons.photo_outlined)),
-                      ),
-                ),
-                if (block.showCaptions)
-                  Padding(
-                    padding: const EdgeInsets.all(7),
-                    child: Text(
-                      photo.caption,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: _bodyStyle().copyWith(
-                        fontSize: document.theme.bodyFontSize - 1,
-                      ),
-                    ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const spacing = 12.0;
+          final boundedWidth = constraints.hasBoundedWidth
+              ? constraints.maxWidth
+              : pageWidth;
+          final useTwoColumns = boundedWidth >= 520;
+          final itemWidth = useTwoColumns
+              ? (boundedWidth - spacing) / 2
+              : boundedWidth;
+
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [
+              for (var index = 0; index < block.photos.length; index++)
+                SizedBox(
+                  width: itemWidth,
+                  child: _buildPhotoCard(
+                    context,
+                    block.photos[index],
+                    index: index,
+                    showCaption: block.showCaptions,
                   ),
-              ],
-            ),
+                ),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildPhotoCard(
+    BuildContext context,
+    ReportPhoto photo, {
+    required int index,
+    required bool showCaption,
+  }) {
+    final caption = photo.caption.trim().isEmpty
+        ? 'Photo ${index + 1}'
+        : 'Photo ${index + 1} - ${photo.caption.trim()}';
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFD9E0E4)),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 8,
+            offset: Offset(0, 3),
+            color: Color(0x14000000),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 4 / 3,
+            child: photoBuilder?.call(context, photo) ??
+                const ColoredBox(
+                  color: Color(0xFFF2F5F6),
+                  child: Center(child: Icon(Icons.photo_outlined, size: 36)),
+                ),
+          ),
+          if (showCaption)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              child: Text(
+                caption,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: _bodyStyle().copyWith(
+                  fontSize: document.theme.bodyFontSize - 1,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -265,40 +328,38 @@ class FlutterReportRenderer extends StatelessWidget {
   Widget _buildCalculationTable(ReportCalculationTableBlock block) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
+      child: Table(
+        border: TableBorder.all(color: const Color(0xFFD9E0E4)),
+        columnWidths: const {
+          0: FlexColumnWidth(4),
+          1: FlexColumnWidth(3),
+          2: FlexColumnWidth(2),
+        },
         children: [
           for (final row in block.rows)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            TableRow(
               children: [
-                Expanded(flex: 4, child: _tableCell(row.label)),
-                Expanded(flex: 3, child: _tableCell(row.calculation)),
-                Expanded(
-                  flex: 2,
-                  child: _tableCell(
-                    _money(row.amount, block.currency),
-                    alignRight: true,
-                  ),
+                _tableCell(row.label),
+                _tableCell(row.calculation),
+                _tableCell(
+                  _money(row.amount, block.currency),
+                  alignRight: true,
                 ),
               ],
             ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-            color: _color(document.theme.primaryColorHex).withValues(alpha: .10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    block.totalLabel,
-                    style: _bodyStyle().copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                Text(
-                  _money(block.totalAmount, block.currency),
-                  style: _bodyStyle().copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
+          TableRow(
+            decoration: BoxDecoration(
+              color: _color(document.theme.primaryColorHex).withValues(alpha: .10),
             ),
+            children: [
+              _tableCell(block.totalLabel, bold: true),
+              _tableCell('', bold: true),
+              _tableCell(
+                _money(block.totalAmount, block.currency),
+                bold: true,
+                alignRight: true,
+              ),
+            ],
           ),
         ],
       ),
@@ -366,9 +427,6 @@ class FlutterReportRenderer extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFD9E0E4), width: .5),
-      ),
       child: Text(
         text,
         textAlign: alignRight ? TextAlign.right : TextAlign.start,
